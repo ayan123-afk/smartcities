@@ -1,10 +1,8 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import './index.css'
-import SmartCityScene from './App.jsx'   // this is the SmartCity.jsx code you pasted
+import App from './App.jsx'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <React.StrictMode>
-    <SmartCityScene />
-  </React.StrictMode>
+  <React.StrictMode><App /></React.StrictMode>
 )
