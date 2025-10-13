@@ -33,15 +33,20 @@ function CameraController() {
   return null
 }
 
-/* ----- ModelLoader with enhanced error handling ----- */
+/* ----- Simple ModelLoader with better error handling ----- */
 function ModelLoader({ src, fallback: Fallback, ...props }) {
-  if (!src) return Fallback ? <Fallback {...props} /> : null
+  const [error, setError] = useState(false)
+  
+  if (!src || error) {
+    return Fallback ? <Fallback {...props} /> : null
+  }
   
   try {
     const gltf = useGLTF(src)
-    return <primitive object={gltf.scene.clone()} {...props} dispose={null} />
+    return <primitive object={gltf.scene} {...props} />
   } catch (e) {
     console.warn(`Failed to load ${src}, using fallback`)
+    setError(true)
     return Fallback ? <Fallback {...props} /> : null
   }
 }
@@ -131,7 +136,6 @@ function SmartBuilding({
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
-        font="/fonts/Inter-Bold.woff"
       >
         {name}
       </Text>
@@ -690,7 +694,6 @@ function PlazaFallback({ position = [0, 0, 8] }) {
           position={[0, 1.2, 0]} 
           fontSize={0.2} 
           color="#2c3e50"
-          font="/fonts/Inter-Bold.woff"
           anchorX="center" 
           anchorY="middle"
         >
@@ -993,10 +996,12 @@ export default function App() {
         
         <Suspense fallback={
           <Html center>
-            <div style={{ color: 'white', fontSize: '18px' }}>Loading Smart City...</div>
+            <div style={{ color: 'white', fontSize: '18px', background: 'rgba(0,0,0,0.7)', padding: '20px', borderRadius: '10px' }}>
+              Loading Smart City...
+            </div>
           </Html>
         }>
-          <Environment preset="city" />
+          {/* Remove Environment preset if it's causing issues */}
           <Sky {...skyConfig[timeOfDay]} />
           
           <Ground />
@@ -1007,11 +1012,11 @@ export default function App() {
           {/* Animated People */}
           <PeopleSystem />
           
-          {/* Main Features */}
-          <ModelLoader src="/models/hub.glb" fallback={HubFallback} position={[-8, 0, -2]} />
+          {/* Main Features - Using fallbacks directly since models might not exist */}
+          <HubFallback position={[-8, 0, -2]} />
           <SolarBus />
-          <ModelLoader src="/models/garden.glb" fallback={GardenFallback} position={[8, 0, -6]} />
-          <ModelLoader src="/models/plaza.glb" fallback={PlazaFallback} position={[0, 0, 8]} />
+          <GardenFallback position={[8, 0, -6]} />
+          <PlazaFallback position={[0, 0, 8]} />
           
           <ContactShadows position={[0, -0.1, 0]} opacity={0.4} width={40} blur={2} far={10} />
         </Suspense>
