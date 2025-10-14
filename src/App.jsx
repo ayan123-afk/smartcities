@@ -22,7 +22,17 @@ const useStore = create((set) => ({
     wasteBins: { ...state.wasteBins, [id]: level } 
   })),
   alertWasteManagement: false,
-  setAlertWasteManagement: (alert) => set({ alertWasteManagement: alert })
+  setAlertWasteManagement: (alert) => set({ alertWasteManagement: alert }),
+  emergencyAlarm: false,
+  setEmergencyAlarm: (alarm) => set({ emergencyAlarm: alarm }),
+  wasteProcessing: {
+    isProcessing: false,
+    processTime: 0,
+    recycledWaste: 0,
+    reducedWaste: 0,
+    reusedWaste: 0
+  },
+  setWasteProcessing: (processing) => set({ wasteProcessing: processing })
 }))
 
 /* ----- Enhanced Camera Controller ----- */
@@ -402,7 +412,7 @@ function StreetLightSystem() {
   )
 }
 
-/* ----- Enhanced Vehicle System ----- */
+/* ----- Enhanced Vehicle System with Proper Road Movement ----- */
 function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) {
   const carRef = useRef()
   const [t, setT] = useState(Math.random() * 10)
@@ -419,7 +429,10 @@ function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) 
       const pos = a.clone().lerp(b, f)
       
       carRef.current.position.lerp(pos, 0.1)
-      carRef.current.lookAt(b)
+      
+      // Proper rotation based on road direction
+      const direction = new THREE.Vector3().subVectors(b, a).normalize()
+      carRef.current.lookAt(carRef.current.position.clone().add(direction))
     }
   })
 
@@ -474,7 +487,7 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
       return
     }
 
-    setT(prev => prev + dt * 0.5)
+    setT(prev => prev + dt * 0.3) // Slower speed for buses
     
     if (busRef.current && path.length > 0) {
       const tt = t % path.length
@@ -491,7 +504,10 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
       
       if (!isStopped) {
         busRef.current.position.lerp(pos, 0.1)
-        busRef.current.lookAt(b)
+        
+        // Proper rotation based on road direction
+        const direction = new THREE.Vector3().subVectors(b, a).normalize()
+        busRef.current.lookAt(busRef.current.position.clone().add(direction))
       }
     }
   })
@@ -561,17 +577,19 @@ function TrafficSystem() {
   const trafficDensity = useStore((s) => s.trafficDensity)
   
   const carPaths = [
-    // Horizontal routes
+    // Horizontal routes - PROPER VERTICAL MOVEMENT
     [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
     [[-35, 0.3, -20], [-25, 0.3, -20], [-15, 0.3, -20], [-5, 0.3, -20], [5, 0.3, -20], [15, 0.3, -20], [25, 0.3, -20], [35, 0.3, -20]],
     
-    // Vertical routes
+    // Vertical routes - PROPER HORIZONTAL MOVEMENT
     [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35]],
     [[20, 0.3, -35], [20, 0.3, -25], [20, 0.3, -15], [20, 0.3, -5], [20, 0.3, 5], [20, 0.3, 15], [20, 0.3, 25], [20, 0.3, 35]]
   ]
 
   const busPaths = [
+    // Horizontal bus routes
     [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
+    // Vertical bus routes
     [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]],
     // Bus route that stops at cultural center
     [[-30, 0.4, 25], [-15, 0.4, 25], [0, 0.4, 25], [15, 0.4, 25], [30, 0.4, 25]]
@@ -588,7 +606,7 @@ function TrafficSystem() {
         <Car
           key={`car-${i}`}
           color={carColors[i % carColors.length]}
-          speed={0.5 + Math.random() * 0.5}
+          speed={0.3 + Math.random() * 0.3} // Slower speed
           path={carPaths[i % carPaths.length]}
         />
       ))}
@@ -681,6 +699,70 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
         <boxGeometry args={[1.6, 0.08, 1.1]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
+    </group>
+  )
+}
+
+/* ----- Vertical Garden ----- */
+function VerticalGarden({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Main structure */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[8, 6, 1]} />
+        <meshStandardMaterial color="#27ae60" roughness={0.7} />
+      </mesh>
+      
+      {/* Plant shelves */}
+      {Array.from({ length: 5 }).map((_, i) => (
+        <group key={i}>
+          {/* Shelf */}
+          <mesh position={[0, -4 + i * 2, 0.6]} castShadow>
+            <boxGeometry args={[7, 0.1, 0.8]} />
+            <meshStandardMaterial color="#8b4513" />
+          </mesh>
+          
+          {/* Plants */}
+          {Array.from({ length: 6 }).map((_, j) => (
+            <mesh key={j} position={[-3 + j * 1.2, -4 + i * 2 + 0.3, 0.8]} castShadow>
+              <sphereGeometry args={[0.2, 8, 8]} />
+              <meshStandardMaterial color="#2ecc71" />
+            </mesh>
+          ))}
+        </group>
+      ))}
+      
+      {/* Watering system */}
+      <mesh position={[0, 3, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.3, 4, 8]} />
+        <meshStandardMaterial color="#3498db" />
+      </mesh>
+
+      <Text
+        position={[0, 7, 0]}
+        fontSize={0.4}
+        color="#27ae60"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Vertical Garden
+      </Text>
+
+      <Html position={[0, 4, 0]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '10px',
+          borderRadius: '8px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+          minWidth: '200px',
+          textAlign: 'center'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#27ae60' }}>🌱 Vertical Farm</h4>
+          <div>🥬 Fresh Vegetables</div>
+          <div>💧 Automated Irrigation</div>
+          <div>☀️ Natural Lighting</div>
+        </div>
+      </Html>
     </group>
   )
 }
@@ -826,15 +908,23 @@ function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
 }
 
 /* ----- Waste Collection Truck ----- */
-function WasteTruck({ position = [0, 0, 0], isCollecting = false }) {
+function WasteTruck({ position = [0, 0, 0], isCollecting = false, onCollectionComplete }) {
   const truckRef = useRef()
   const [positionState, setPositionState] = useState(position)
+  const [collectionProgress, setCollectionProgress] = useState(0)
 
   useFrame((_, dt) => {
     if (truckRef.current && isCollecting) {
       // Move truck to simulate collection
-      truckRef.current.position.x += dt * 2
-      setPositionState([truckRef.current.position.x, position[1], position[2]])
+      const progress = collectionProgress + dt * 0.5
+      setCollectionProgress(progress)
+      
+      if (progress < 1) {
+        truckRef.current.position.x = position[0] + progress * 20 // Move 20 units
+        setPositionState([truckRef.current.position.x, position[1], position[2]])
+      } else if (progress >= 1 && onCollectionComplete) {
+        onCollectionComplete()
+      }
     }
   })
 
@@ -888,7 +978,7 @@ function WasteTruck({ position = [0, 0, 0], isCollecting = false }) {
             fontSize: '10px',
             fontWeight: 'bold'
           }}>
-            🚛 COLLECTING
+            🚛 COLLECTING: {Math.round(collectionProgress * 100)}%
           </div>
         </Html>
       )}
@@ -896,47 +986,71 @@ function WasteTruck({ position = [0, 0, 0], isCollecting = false }) {
   )
 }
 
-/* ----- Enhanced Waste Management System ----- */
+/* ----- Enhanced Waste Management System with 4-Hour Processing ----- */
 function WasteManagementSystem({ position = [15, 0, 15] }) {
-  const [processTime, setProcessTime] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [wasteCollected, setWasteCollected] = useState(0)
   const [isTruckCollecting, setIsTruckCollecting] = useState(false)
+  const [wasteCollected, setWasteCollected] = useState(0)
   const alertWasteManagement = useStore((s) => s.alertWasteManagement)
   const wasteBins = useStore((s) => s.wasteBins)
+  const wasteProcessing = useStore((s) => s.wasteProcessing)
+  const setWasteProcessing = useStore((s) => s.setWasteProcessing)
+  const setEmergencyAlarm = useStore((s) => s.setEmergencyAlarm)
   
   const startProcessing = () => {
-    if (wasteCollected > 0 && !isProcessing) {
-      setIsProcessing(true)
-      setProcessTime(0)
+    if (wasteCollected > 0 && !wasteProcessing.isProcessing) {
+      setWasteProcessing({
+        isProcessing: true,
+        processTime: 0,
+        recycledWaste: 0,
+        reducedWaste: 0,
+        reusedWaste: 0
+      })
     }
   }
 
   useFrame((_, dt) => {
-    if (isProcessing) {
-      setProcessTime(prev => {
-        const newTime = prev + dt
-        if (newTime >= 4) { // 4 seconds process
-          setIsProcessing(false)
-          setWasteCollected(0)
-        }
-        return newTime
-      })
-    }
-
     // Check if any bin is full and send truck
     const anyBinFull = Object.values(wasteBins).some(level => level >= 1)
     if (anyBinFull && alertWasteManagement && !isTruckCollecting) {
       setIsTruckCollecting(true)
-      setTimeout(() => {
-        setIsTruckCollecting(false)
-        // Reset all bins after collection
-        Object.keys(wasteBins).forEach(id => {
-          useStore.getState().updateWasteBin(id, 0)
+    }
+
+    // Waste processing simulation
+    if (wasteProcessing.isProcessing) {
+      const newTime = wasteProcessing.processTime + dt
+      
+      // Simulate 4-hour processing (4 seconds in simulation)
+      if (newTime >= 4) {
+        setWasteProcessing({
+          isProcessing: false,
+          processTime: 4,
+          recycledWaste: Math.floor(wasteCollected * 0.6), // 60% recycled
+          reducedWaste: Math.floor(wasteCollected * 0.2),  // 20% reduced
+          reusedWaste: Math.floor(wasteCollected * 0.15)  // 15% reused
         })
-      }, 5000)
+        setWasteCollected(0)
+      } else {
+        setWasteProcessing({
+          ...wasteProcessing,
+          processTime: newTime
+        })
+      }
     }
   })
+
+  const handleCollectionComplete = () => {
+    setIsTruckCollecting(false)
+    setWasteCollected(prev => prev + 5) // Add collected waste
+    // Reset all bins after collection
+    Object.keys(wasteBins).forEach(id => {
+      useStore.getState().updateWasteBin(id, 0)
+    })
+  }
+
+  const triggerEmergency = () => {
+    setEmergencyAlarm(true)
+    setTimeout(() => setEmergencyAlarm(false), 3000)
+  }
 
   return (
     <group position={position}>
@@ -954,6 +1068,27 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
         </mesh>
       </group>
 
+      {/* Recycling bins */}
+      <group position={[3, 1, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 1, 16]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+        <Text position={[0, 1.2, 0]} fontSize={0.2} color="white" anchorX="center">
+          ♻️ Recycle
+        </Text>
+      </group>
+
+      <group position={[-3, 1, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 1, 16]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        <Text position={[0, 1.2, 0]} fontSize={0.2} color="white" anchorX="center">
+          🔄 Reuse
+        </Text>
+      </group>
+
       {/* Solar panels */}
       <group position={[0, 3.5, 0]}>
         {Array.from({ length: 6 }).map((_, i) => (
@@ -969,7 +1104,17 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
       <WindTurbine position={[0, 3, 0]} />
 
       {/* Waste Collection Truck */}
-      <WasteTruck position={[-10, 0, 5]} isCollecting={isTruckCollecting} />
+      <WasteTruck 
+        position={[-10, 0, 5]} 
+        isCollecting={isTruckCollecting}
+        onCollectionComplete={handleCollectionComplete}
+      />
+
+      {/* Emergency Alarm */}
+      <mesh position={[0, 8, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.3, 0.5, 8]} />
+        <meshStandardMaterial color="#e74c3c" emissive="#e74c3c" emissiveIntensity={0.5} />
+      </mesh>
 
       {/* Information display */}
       <Html position={[0, 5, 0]} transform>
@@ -978,36 +1123,62 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
           padding: '15px',
           borderRadius: '12px',
           boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '250px',
+          minWidth: '280px',
           textAlign: 'center'
         }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Waste Management</h3>
           
           <div style={{ marginBottom: '10px' }}>
-            <div>🗑️ Waste Collected: {wasteCollected}</div>
-            <div>⏱️ Process Time: {Math.min(4, processTime).toFixed(1)}/4 hrs</div>
+            <div>🗑️ Waste Collected: {wasteCollected} units</div>
+            <div>⏱️ Process Time: {Math.min(4, wasteProcessing.processTime).toFixed(1)}/4 hrs</div>
             <div>🚛 Truck Status: {isTruckCollecting ? 'COLLECTING' : 'READY'}</div>
+            
+            {wasteProcessing.processTime >= 4 && (
+              <div style={{ marginTop: '8px', padding: '8px', background: '#ecf0f1', borderRadius: '6px' }}>
+                <div>♻️ Recycled: {wasteProcessing.recycledWaste} units</div>
+                <div>📉 Reduced: {wasteProcessing.reducedWaste} units</div>
+                <div>🔄 Reused: {wasteProcessing.reusedWaste} units</div>
+              </div>
+            )}
+            
             {alertWasteManagement && (
-              <div style={{ color: '#e74c3c', fontWeight: 'bold' }}>⚠️ ALERT: Bin Full!</div>
+              <div style={{ color: '#e74c3c', fontWeight: 'bold', marginTop: '5px' }}>
+                ⚠️ ALERT: Bin Full! Collection started
+              </div>
             )}
           </div>
 
-          <button 
-            onClick={startProcessing}
-            disabled={isProcessing || wasteCollected === 0}
-            style={{
-              background: isProcessing ? '#95a5a6' : wasteCollected === 0 ? '#95a5a6' : '#27ae60',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: wasteCollected > 0 && !isProcessing ? 'pointer' : 'not-allowed',
-              marginTop: '5px',
-              width: '100%'
-            }}
-          >
-            {isProcessing ? '🔄 Processing...' : wasteCollected === 0 ? 'No Waste' : 'Start Processing'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+            <button 
+              onClick={startProcessing}
+              disabled={wasteProcessing.isProcessing || wasteCollected === 0}
+              style={{
+                background: wasteProcessing.isProcessing ? '#95a5a6' : wasteCollected === 0 ? '#95a5a6' : '#27ae60',
+                color: 'white',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                cursor: wasteCollected > 0 && !wasteProcessing.isProcessing ? 'pointer' : 'not-allowed',
+                flex: 1
+              }}
+            >
+              {wasteProcessing.isProcessing ? '🔄 Processing...' : 'Start 4H Process'}
+            </button>
+            
+            <button 
+              onClick={triggerEmergency}
+              style={{
+                background: '#e74c3c',
+                color: 'white',
+                border: 'none',
+                padding: '8px 12px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
+              🚨 Emergency
+            </button>
+          </div>
         </div>
       </Html>
 
@@ -1051,6 +1222,9 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
+      {/* Vertical Garden */}
+      <VerticalGarden position={[-15, 0, -25]} />
+      
       {/* Regular buildings */}
       {buildings.map((building, index) => (
         <SmartBuilding
@@ -1075,7 +1249,7 @@ function CityLayout() {
       <WasteBin position={[-15, 0, -18]} id="bin5" />
       <WasteBin position={[5, 0, 20]} id="bin6" /> {/* Near cultural center */}
       
-      {/* Walking people around cultural center */}
+      {/* More walking people around the city */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
         [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
       ]} />
@@ -1087,6 +1261,19 @@ function CityLayout() {
       <Person position={[8, 0, 28]} color="#8b4513" speed={0.2} path={[
         [8, 0.5, 28], [10, 0.5, 26], [12, 0.5, 28], [10, 0.5, 30], [8, 0.5, 28]
       ]} />
+
+      {/* People walking on roads */}
+      <Person position={[-10, 0, 5]} color="#8b4513" speed={0.3} path={[
+        [-10, 0.5, 5], [-5, 0.5, 5], [0, 0.5, 5], [5, 0.5, 5], [10, 0.5, 5]
+      ]} />
+      
+      <Person position={[5, 0, -10]} color="#2c3e50" speed={0.4} path={[
+        [5, 0.5, -10], [5, 0.5, -5], [5, 0.5, 0], [5, 0.5, 5], [5, 0.5, 10]
+      ]} />
+
+      <Person position={[-20, 0, -15]} color="#8b4513" speed={0.2} path={[
+        [-20, 0.5, -15], [-15, 0.5, -15], [-10, 0.5, -15], [-15, 0.5, -20], [-20, 0.5, -15]
+      ]} />
     </group>
   )
 }
@@ -1096,6 +1283,7 @@ function HUD() {
   const alert = useStore((s) => s.alert)
   const timeOfDay = useStore((s) => s.timeOfDay)
   const alertWasteManagement = useStore((s) => s.alertWasteManagement)
+  const emergencyAlarm = useStore((s) => s.emergencyAlarm)
   
   const alertStyles = {
     info: { background: 'linear-gradient(135deg, #d2691e, #8b4513)', color: 'white' },
@@ -1105,7 +1293,21 @@ function HUD() {
 
   return (
     <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 50 }}>
-      {alertWasteManagement ? (
+      {emergencyAlarm ? (
+        <div style={{ 
+          background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
+          color: 'white',
+          padding: '12px 16px', 
+          borderRadius: '12px', 
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+          minWidth: '280px',
+          fontSize: '14px',
+          fontWeight: 'bold',
+          animation: 'pulse 0.5s infinite'
+        }}>
+          🚨 EMERGENCY ALARM ACTIVATED! 🚨
+        </div>
+      ) : alertWasteManagement ? (
         <div style={{ 
           background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
           color: 'white',
@@ -1166,6 +1368,7 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
+    '🌱 Vertical Garden': { x: -15, y: 10, z: -25, lookAt: { x: -15, y: 0, z: -25 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
@@ -1281,6 +1484,7 @@ function ControlPanel() {
 /* ----- Main App Component ----- */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
+  const emergencyAlarm = useStore((s) => s.emergencyAlarm)
   
   const skyConfig = {
     day: { sunPosition: [100, 20, 100], inclination: 0, azimuth: 0.25 },
@@ -1289,7 +1493,25 @@ export default function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
+    <div style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+      animation: emergencyAlarm ? 'emergencyFlash 0.5s infinite' : 'none'
+    }}>
+      <style>
+        {`
+          @keyframes emergencyFlash {
+            0%, 100% { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+            50% { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+          }
+        `}
+      </style>
+      
       <HUD />
       <ControlPanel />
       
@@ -1347,6 +1569,9 @@ export default function App() {
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           🗑️ Click waste bins to fill them • Full bins trigger collection alerts!
+        </div>
+        <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2 }}>
+          🚨 Emergency alarm with visual effects!
         </div>
       </div>
     </div>
