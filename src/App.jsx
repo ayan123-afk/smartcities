@@ -453,11 +453,11 @@ function SmartBuilding({
       
       {/* Windows */}
       <group>
-        {Array.from({ length: Math.floor(height / 2) }).map((_, floor) => 
+        {Array.from({ length: Math.floor(height / 2) }).map((_, floor) =>
           [-1, 1].map((side, i) => (
             <group key={`${floor}-${side}`}>
-              <mesh 
-                position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]} 
+              <mesh
+                position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]}
                 castShadow
               >
                 <boxGeometry args={[0.02, 1.2, 0.8]} />
@@ -471,7 +471,7 @@ function SmartBuilding({
             </group>
           ))
         )}
-      </div>
+      </div>   // ❌ this should not be </div>
       
       {/* Rooftop */}
       <mesh position={[0, height/2 + 0.2, 0]} castShadow>
