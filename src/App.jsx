@@ -51,25 +51,36 @@ function ModelLoader({ src, fallback: Fallback, ...props }) {
   }
 }
 
-/* ----- Enhanced Ground with texture and grid ----- */
+/* ----- Desert-themed Ground with sand texture ----- */
 function Ground() {
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color={"#2d5016"} roughness={0.8} metalness={0.2} />
+        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
       </mesh>
-      <gridHelper args={[200, 200, '#444444', '#444444']} position={[0, 0.01, 0]} />
-      <ContactShadows position={[0, -0.03, 0]} opacity={0.4} width={50} blur={2} far={20} />
+      {/* Sand dunes */}
+      {Array.from({ length: 50 }).map((_, i) => (
+        <mesh key={i} position={[
+          Math.random() * 180 - 90,
+          Math.random() * 0.5,
+          Math.random() * 180 - 90
+        ]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <sphereGeometry args={[Math.random() * 3 + 1, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.3]} />
+          <meshStandardMaterial color={"#c19a6b"} roughness={0.9} />
+        </mesh>
+      ))}
+      <gridHelper args={[200, 200, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
+      <ContactShadows position={[0, -0.03, 0]} opacity={0.3} width={50} blur={2} far={20} />
     </>
   )
 }
 
-/* ----- Enhanced Smart Buildings ----- */
+/* ----- Desert-style Smart Buildings ----- */
 function SmartBuilding({ 
   position = [0, 0, 0], 
   height = 8, 
-  color = "#4a6572", 
+  color = "#a67c52", 
   windows = true,
   name = "Building"
 }) {
@@ -95,47 +106,60 @@ function SmartBuilding({
 
   return (
     <group ref={buildingRef} position={position}>
-      {/* Main structure */}
+      {/* Main structure with desert architecture */}
       <mesh castShadow receiveShadow onClick={handleClick}>
         <boxGeometry args={[3, height, 3]} />
-        <meshStandardMaterial color={color} roughness={0.7} />
+        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
       </mesh>
       
-      {/* Windows */}
+      {/* Enhanced windows with shutters */}
       {windows && (
         <group>
           {Array.from({ length: Math.floor(height / 2) }).map((_, floor) => 
             [-1, 1].map((side, i) => (
-              <mesh 
-                key={`${floor}-${side}`} 
-                position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]} 
-                castShadow
-              >
-                <boxGeometry args={[0.02, 1.2, 0.8]} />
-                <meshStandardMaterial 
-                  color={lightsOn ? "#fff9c4" : "#2c3e50"} 
-                  emissive={lightsOn ? "#fff9c4" : "#000000"} 
-                  emissiveIntensity={lightsOn ? 0.8 : 0} 
-                />
-              </mesh>
+              <group key={`${floor}-${side}`}>
+                <mesh 
+                  position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]} 
+                  castShadow
+                >
+                  <boxGeometry args={[0.02, 1.2, 0.8]} />
+                  <meshStandardMaterial 
+                    color={lightsOn ? "#fff9c4" : "#8b7355"} 
+                    emissive={lightsOn ? "#fff9c4" : "#000000"} 
+                    emissiveIntensity={lightsOn ? 0.8 : 0} 
+                  />
+                </mesh>
+                {/* Window frames */}
+                <mesh position={[1.5, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
+                  <boxGeometry args={[0.04, 1.3, 0.85]} />
+                  <meshStandardMaterial color="#8b4513" />
+                </mesh>
+              </group>
             ))
           )}
         </group>
       )}
       
-      {/* Rooftop garden/equipment */}
+      {/* Enhanced rooftop with desert style */}
       <mesh position={[0, height/2 + 0.2, 0]} castShadow>
         <boxGeometry args={[3.2, 0.4, 3.2]} />
-        <meshStandardMaterial color="#34495e" />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+
+      {/* Decorative elements - desert architecture */}
+      <mesh position={[0, height/2 - 0.5, 1.51]} castShadow>
+        <boxGeometry args={[2, 0.5, 0.1]} />
+        <meshStandardMaterial color="#cd853f" />
       </mesh>
 
       {/* Building label */}
       <Text
         position={[0, height/2 + 1, 0]}
         fontSize={0.3}
-        color="#ffffff"
+        color="#8b4513"
         anchorX="center"
         anchorY="middle"
+        font="/fonts/Inter-Bold.woff"
       >
         {name}
       </Text>
@@ -143,30 +167,30 @@ function SmartBuilding({
   )
 }
 
-/* ----- City Layout with Multiple Buildings ----- */
+/* ----- City Layout with Desert Color Scheme ----- */
 function CityLayout() {
   const buildings = [
-    // Residential area
-    { position: [-25, 0, 15], height: 6, color: "#4a6572", name: "Residence A" },
-    { position: [-20, 0, 18], height: 8, color: "#556f7a", name: "Residence B" },
-    { position: [-30, 0, 20], height: 7, color: "#5d7580", name: "Residence C" },
+    // Residential area - light brown colors
+    { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Oasis A" },
+    { position: [-20, 0, 18], height: 8, color: "#b5651d", name: "Desert View" },
+    { position: [-30, 0, 20], height: 7, color: "#c19a6b", name: "Mirage Res" },
     
-    // Commercial area
-    { position: [20, 0, -15], height: 12, color: "#34495e", name: "Office A" },
-    { position: [25, 0, -18], height: 10, color: "#2c3e50", name: "Office B" },
-    { position: [15, 0, -20], height: 14, color: "#3a5169", name: "Tower" },
+    // Commercial area - earth tones
+    { position: [20, 0, -15], height: 12, color: "#8b4513", name: "Dunes Tower" },
+    { position: [25, 0, -18], height: 10, color: "#a0522d", name: "Sahara Plaza" },
+    { position: [15, 0, -20], height: 14, color: "#cd853f", name: "Oasis Tower" },
     
-    // Mixed use
-    { position: [-15, 0, -10], height: 9, color: "#46627f", name: "Mixed A" },
-    { position: [10, 0, 12], height: 11, color: "#3d5a73", name: "Mixed B" },
-    { position: [-5, 0, -15], height: 8, color: "#527089", name: "Mixed C" },
+    // Mixed use - warm desert colors
+    { position: [-15, 0, -10], height: 9, color: "#deb887", name: "Sunset A" },
+    { position: [10, 0, 12], height: 11, color: "#d2b48c", name: "Palm Court" },
+    { position: [-5, 0, -15], height: 8, color: "#f4a460", name: "Desert Bloom" },
     
     // More buildings for dense city feel
-    { position: [30, 0, 5], height: 13, color: "#2c3e50", name: "Plaza Tower" },
-    { position: [-28, 0, -5], height: 7, color: "#4a6572", name: "Garden View" },
-    { position: [8, 0, -25], height: 10, color: "#3a5169", name: "Horizon" },
-    { position: [-12, 0, 25], height: 9, color: "#46627f", name: "Skyline" },
-    { position: [22, 0, 22], height: 15, color: "#2c3e50", name: "Central Tower" }
+    { position: [30, 0, 5], height: 13, color: "#8b4513", name: "Plaza Tower" },
+    { position: [-28, 0, -5], height: 7, color: "#a67c52", name: "Garden View" },
+    { position: [8, 0, -25], height: 10, color: "#b8860b", name: "Golden Sands" },
+    { position: [-12, 0, 25], height: 9, color: "#daa520", name: "Sun Valley" },
+    { position: [22, 0, 22], height: 15, color: "#8b4513", name: "Central Oasis" }
   ]
 
   return (
@@ -179,6 +203,38 @@ function CityLayout() {
           color={building.color}
           name={building.name}
         />
+      ))}
+      
+      {/* Add some palm trees for desert feel */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <PalmTree 
+          key={i}
+          position={[
+            Math.random() * 80 - 40,
+            0,
+            Math.random() * 80 - 40
+          ]}
+        />
+      ))}
+    </group>
+  )
+}
+
+/* ----- Palm Tree for desert environment ----- */
+function PalmTree({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Trunk */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.4, 4, 8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      {/* Leaves */}
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} position={[0, 4, 0]} rotation={[0, (i * Math.PI) / 2, 0.7]} castShadow>
+          <coneGeometry args={[1.5, 3, 4]} />
+          <meshStandardMaterial color="#228B22" />
+        </mesh>
       ))}
     </group>
   )
@@ -207,10 +263,10 @@ function Person({ position = [0, 0, 0], speed = 1, path = [] }) {
 
   return (
     <group ref={personRef} position={position}>
-      {/* Body */}
+      {/* Body with desert clothing colors */}
       <mesh position={[0, 0.9, 0]} castShadow>
         <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
-        <meshStandardMaterial color="#3498db" />
+        <meshStandardMaterial color="#d2691e" />
       </mesh>
       {/* Head */}
       <mesh position={[0, 1.5, 0]} castShadow>
@@ -256,15 +312,15 @@ function EcoBench({ position = [0, 0, 0] }) {
     <group position={position}>
       <mesh position={[0, 0.38, 0]} castShadow>
         <boxGeometry args={[1.6, 0.12, 0.4]} />
-        <meshStandardMaterial color={"#6b8f65"} roughness={0.8} />
+        <meshStandardMaterial color={"#8b4513"} roughness={0.8} />
       </mesh>
       <mesh position={[-0.6, 0.12, 0]} castShadow>
         <boxGeometry args={[0.12, 0.24, 0.12]} />
-        <meshStandardMaterial color={"#4a4a4a"} metalness={0.5} />
+        <meshStandardMaterial color={"#654321"} metalness={0.5} />
       </mesh>
       <mesh position={[0.6, 0.12, 0]} castShadow>
         <boxGeometry args={[0.12, 0.24, 0.12]} />
-        <meshStandardMaterial color={"#4a4a4a"} metalness={0.5} />
+        <meshStandardMaterial color={"#654321"} metalness={0.5} />
       </mesh>
     </group>
   )
@@ -283,13 +339,13 @@ function HubFallback({ position = [-8, 0, -2] }) {
 
   return (
     <group position={position}>
-      {/* Main platform */}
+      {/* Main platform with desert stone */}
       <mesh position={[0, 0.02, 0]} receiveShadow>
         <boxGeometry args={[12, 0.04, 10]} />
-        <meshStandardMaterial color={"#f6f4f1"} roughness={0.9} />
+        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} />
       </mesh>
 
-      {/* Solar roof structure */}
+      {/* Enhanced solar roof structure */}
       <mesh position={[0, 3.5, -2]} castShadow>
         <boxGeometry args={[8, 0.15, 4]} />
         <meshStandardMaterial color={"#2d2d2d"} metalness={0.8} roughness={0.1} />
@@ -300,7 +356,7 @@ function HubFallback({ position = [-8, 0, -2] }) {
         <Float key={i} speed={2} rotationIntensity={0.1} floatIntensity={0.2}>
           <mesh position={[x, 3.6, -2]} castShadow>
             <boxGeometry args={[2, 0.02, 3]} />
-            <meshStandardMaterial color={"#083451"} metalness={0.9} roughness={0.05} />
+            <meshStandardMaterial color={"#1e3a8a"} metalness={0.9} roughness={0.05} />
           </mesh>
         </Float>
       ))}
@@ -310,12 +366,12 @@ function HubFallback({ position = [-8, 0, -2] }) {
         <group key={i} position={[x, 0, -1]}>
           <mesh rotation={[0, i === 0 ? 0.2 : -0.2, 0]} receiveShadow>
             <boxGeometry args={[2.5, 0.04, 1.5]} />
-            <meshStandardMaterial color={"#bdc3c7"} />
+            <meshStandardMaterial color={"#a67c52"} />
           </mesh>
           {/* Handrails */}
           <mesh position={[0, 0.8, -0.8]}>
             <cylinderGeometry args={[0.03, 0.03, 1.6, 8]} />
-            <meshStandardMaterial color={"#7f8c8d"} />
+            <meshStandardMaterial color={"#8b4513"} />
           </mesh>
         </group>
       ))}
@@ -323,7 +379,7 @@ function HubFallback({ position = [-8, 0, -2] }) {
       {/* Digital display */}
       <Html position={[0, 2.5, 4]} transform>
         <div style={{ 
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
+          background: 'linear-gradient(135deg, #d2691e 0%, #8b4513 100%)', 
           padding: '12px 20px', 
           borderRadius: '12px', 
           color: 'white', 
@@ -342,7 +398,7 @@ function HubFallback({ position = [-8, 0, -2] }) {
       <group position={[0, 0.6, 2]}>
         <mesh receiveShadow>
           <boxGeometry args={[6, 0.06, 2]} />
-          <meshStandardMaterial color={"#e9eef0"} />
+          <meshStandardMaterial color={"#f5deb3"} />
         </mesh>
         {[-2, 0, 2].map((x, i) => (
           <EcoBench key={i} position={[x, 0.3, 0]} />
@@ -351,11 +407,17 @@ function HubFallback({ position = [-8, 0, -2] }) {
 
       {/* Smart lighting */}
       <pointLight position={[0, 3, 0]} intensity={0.8} color="#fff9c4" distance={10} />
+      
+      {/* Enhanced 3D gateway */}
+      <mesh position={[0, 2, 5]} castShadow>
+        <boxGeometry args={[6, 4, 0.3]} />
+        <meshStandardMaterial color="#8b4513" metalness={0.3} />
+      </mesh>
     </group>
   )
 }
 
-/* ----- Enhanced Solar Bus with better visuals ----- */
+/* ----- Enhanced Solar Bus with yellow body and blue solar panels ----- */
 function SolarBus({ path = [[-20, 0, 12], [-12, 0, 5], [-8, 0, -2], [-4, 0, 8], [-15, 0, 15]] }) {
   const busRef = useRef()
   const doorRef = useRef()
@@ -375,7 +437,7 @@ function SolarBus({ path = [[-20, 0, 12], [-12, 0, 5], [-8, 0, -2], [-4, 0, 8], 
       if (idx === 2 && (nt % 1) > 0.85 && !stopped) {
         setStopped(true)
         if (doorRef.current) doorRef.current.rotation.y = Math.PI / 2
-        setAlert({ type: "info", message: "🚌 Bus arrived at Transportation Hub" })
+        setAlert({ type: "info", message: "🚌 Solar Bus arrived at Transportation Hub" })
         
         setTimeout(() => {
           // Simulate passengers boarding
@@ -411,37 +473,63 @@ function SolarBus({ path = [[-20, 0, 12], [-12, 0, 5], [-8, 0, -2], [-4, 0, 8], 
 
   return (
     <group ref={busRef}>
-      {/* Bus body */}
+      {/* Bus body - YELLOW */}
       <mesh castShadow>
         <boxGeometry args={[3, 1.2, 1.5]} />
-        <meshStandardMaterial color={"#3498db"} metalness={0.3} roughness={0.4} />
+        <meshStandardMaterial color={"#FFD700"} metalness={0.3} roughness={0.4} />
       </mesh>
 
-      {/* Windows */}
+      {/* Enhanced windows with frames */}
       <mesh position={[0, 0.4, 0]} castShadow>
         <boxGeometry args={[2.8, 0.5, 1.3]} />
         <meshStandardMaterial color={"#2c3e50"} transparent opacity={0.7} />
       </mesh>
+      
+      {/* Window frames */}
+      <mesh position={[0, 0.4, 0.66]} castShadow>
+        <boxGeometry args={[2.82, 0.52, 0.05]} />
+        <meshStandardMaterial color={"#8b4513"} />
+      </mesh>
 
-      {/* Solar panel roof */}
+      {/* Solar panel roof - BLUE */}
       <mesh position={[0, 0.9, 0]} castShadow>
         <boxGeometry args={[2.5, 0.05, 1.4]} />
-        <meshStandardMaterial color={"#1a237e"} metalness={0.9} roughness={0.1} />
+        <meshStandardMaterial color={"#1e40af"} metalness={0.9} roughness={0.1} />
       </mesh>
 
-      {/* Doors */}
-      <mesh ref={doorRef} position={[0.8, -0.1, 0.3]} castShadow>
-        <boxGeometry args={[0.4, 0.8, 0.05]} />
-        <meshStandardMaterial color={"#c0392b"} />
-      </mesh>
-
-      {/* Wheels */}
-      {[-1, 1].map((side, i) => (
-        <mesh key={i} position={[side * 0.8, -0.4, 0]} castShadow>
-          <cylinderGeometry args={[0.3, 0.3, 0.2, 16]} rotation={[0, 0, Math.PI/2]} />
+      {/* Enhanced doors with 3D details */}
+      <group ref={doorRef} position={[0.8, -0.1, 0.3]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.4, 0.8, 0.05]} />
+          <meshStandardMaterial color={"#c0392b"} />
+        </mesh>
+        {/* Door handle */}
+        <mesh position={[-0.15, 0, 0.03]} castShadow>
+          <cylinderGeometry args={[0.02, 0.02, 0.1, 8]} rotation={[0, Math.PI/2, 0]} />
           <meshStandardMaterial color={"#2c3e50"} />
         </mesh>
+      </group>
+
+      {/* Enhanced wheels with rims */}
+      {[-1, 1].map((side, i) => (
+        <group key={i} position={[side * 0.8, -0.4, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.3, 0.3, 0.2, 16]} rotation={[0, 0, Math.PI/2]} />
+            <meshStandardMaterial color={"#2c3e50"} />
+          </mesh>
+          {/* Wheel rim */}
+          <mesh castShadow>
+            <cylinderGeometry args={[0.15, 0.15, 0.22, 12]} rotation={[0, 0, Math.PI/2]} />
+            <meshStandardMaterial color={"#c0c0c0"} metalness={0.8} />
+          </mesh>
+        </group>
       ))}
+
+      {/* Headlights */}
+      <mesh position={[1.51, 0, 0.3]} castShadow>
+        <sphereGeometry args={[0.08, 8, 8]} />
+        <meshStandardMaterial color={"#ffffff"} emissive={"#ffffff"} emissiveIntensity={0.5} />
+      </mesh>
 
       {/* Passenger counter display */}
       <Html position={[0, 1.3, 0]} transform>
@@ -496,10 +584,10 @@ function GardenFallback({ position = [8, 0, -6] }) {
 
   return (
     <group position={position}>
-      {/* Garden base */}
+      {/* Garden base with desert soil */}
       <mesh position={[0, 0.02, 0]} receiveShadow>
         <boxGeometry args={[12, 0.04, 8]} />
-        <meshStandardMaterial color={"#27ae60"} roughness={0.9} />
+        <meshStandardMaterial color={"#a67c52"} roughness={0.9} />
       </mesh>
 
       {/* Enhanced raised beds */}
@@ -521,7 +609,7 @@ function GardenFallback({ position = [8, 0, -6] }) {
                   castShadow
                 >
                   <cylinderGeometry args={[0.1, 0.2, plantHeight, 8]} />
-                  <meshStandardMaterial color={"#2ecc71"} />
+                  <meshStandardMaterial color={"#2e8b57"} />
                 </mesh>
               )
             })}
@@ -618,7 +706,7 @@ function GardenFallback({ position = [8, 0, -6] }) {
       <group position={[0, 1.8, -3]}>
         <mesh castShadow>
           <cylinderGeometry args={[0.25, 0.25, 1.2, 16]} />
-          <meshStandardMaterial color={"#34495e"} />
+          <meshStandardMaterial color={"#8b4513"} />
         </mesh>
         <mesh position={[0, 0.7, 0]} castShadow>
           <sphereGeometry args={[0.2, 16, 16]} />
@@ -676,38 +764,71 @@ function PlazaFallback({ position = [0, 0, 8] }) {
 
   return (
     <group position={position}>
-      {/* Main plaza */}
+      {/* Main plaza with desert stone */}
       <mesh position={[0, 0.02, 0]} receiveShadow>
         <boxGeometry args={[18, 0.04, 18]} />
-        <meshStandardMaterial color={"#ecf0f1"} roughness={0.8} />
+        <meshStandardMaterial color={"#f5f5dc"} roughness={0.8} />
       </mesh>
 
-      {/* Decorative pathways */}
+      {/* Enhanced decorative pathways with geometric patterns */}
       <mesh position={[0, 0.05, 0]} receiveShadow>
         <ringGeometry args={[0, 8, 32, 6, 0, Math.PI * 2]} />
-        <meshStandardMaterial color={"#bdc3c7"} />
+        <meshStandardMaterial color={"#d2b48c"} />
       </mesh>
 
-      {/* Quiet zone with enhanced bench */}
+      {/* Pattern details */}
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <mesh key={i} position={[0, 0.06, 0]} rotation={[-Math.PI/2, 0, i * Math.PI/3]} receiveShadow>
+          <boxGeometry args={[12, 0.5, 0.2]} />
+          <meshStandardMaterial color={"#8b4513"} />
+        </mesh>
+      ))}
+
+      {/* Enhanced quiet zone with decorative elements */}
       <group position={[-6, 0.25, 3]}>
         <Text 
           position={[0, 1.2, 0]} 
           fontSize={0.2} 
-          color="#2c3e50"
+          color="#8b4513"
           anchorX="center" 
           anchorY="middle"
+          font="/fonts/Inter-Bold.woff"
         >
           Quiet Zone
         </Text>
         <EcoBench position={[0, 0, 0]} />
-        <Sparkles count={10} scale={[3, 2, 2]} size={1} speed={0.05} />
+        
+        {/* Decorative fountain */}
+        <group position={[2, 0, 0]}>
+          <mesh position={[0, 0.3, 0]} castShadow>
+            <cylinderGeometry args={[0.8, 1, 0.6, 16]} />
+            <meshStandardMaterial color={"#a67c52"} />
+          </mesh>
+          <mesh position={[0, 0.7, 0]} castShadow>
+            <cylinderGeometry args={[0.6, 0.8, 0.4, 16]} />
+            <meshStandardMaterial color={"#d2b48c"} />
+          </mesh>
+          {/* Water */}
+          <mesh position={[0, 0.9, 0]} castShadow>
+            <cylinderGeometry args={[0.5, 0.5, 0.1, 16]} />
+            <meshStandardMaterial color={"#3498db"} transparent opacity={0.7} />
+          </mesh>
+        </group>
+        
+        <Sparkles count={15} scale={[4, 2, 3]} size={1} speed={0.05} />
       </group>
 
-      {/* Enhanced EV/Wheelchair Charger */}
+      {/* Enhanced EV/Wheelchair Charger with modern design */}
       <group position={[6, 0.4, 2]}>
         <mesh castShadow>
           <boxGeometry args={[1.2, 1.2, 0.6]} />
           <meshStandardMaterial color={"#2c3e50"} metalness={0.3} />
+        </mesh>
+        
+        {/* Charging cable */}
+        <mesh position={[0.8, 0.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
+          <cylinderGeometry args={[0.05, 0.05, 1, 8]} />
+          <meshStandardMaterial color={"#7f8c8d"} />
         </mesh>
         
         {/* Charging status light */}
@@ -722,14 +843,14 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         
         <Html position={[0, 1.6, 0]}>
           <div style={{ 
-            background: 'rgba(255,255,255,0.95)', 
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', 
             padding: 12, 
             borderRadius: 12, 
             boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
             textAlign: 'center',
             minWidth: '180px'
           }}>
-            <div style={{fontWeight: 'bold', marginBottom: 8}}>⚡ Charging Station</div>
+            <div style={{fontWeight: 'bold', marginBottom: 8}}>⚡ Smart Charger</div>
             {charging ? (
               <div>
                 <div>Charging: {chargeLevel}%</div>
@@ -769,17 +890,21 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         </Html>
       </group>
 
-      {/* Enhanced Interactive Kiosk */}
+      {/* Enhanced Interactive Kiosk with modern design */}
       <group position={[0, 1.05, -5]}>
         <mesh castShadow>
           <boxGeometry args={[0.8, 1.5, 0.3]} />
           <meshStandardMaterial color={"#34495e"} metalness={0.2} roughness={0.6} />
         </mesh>
         
-        {/* Screen */}
+        {/* Enhanced screen with frame */}
         <mesh position={[0, 0.3, 0.16]} castShadow>
           <boxGeometry args={[0.6, 0.8, 0.05]} />
           <meshStandardMaterial color={"#1a1a1a"} />
+        </mesh>
+        <mesh position={[0, 0.3, 0.18]} castShadow>
+          <boxGeometry args={[0.65, 0.85, 0.02]} />
+          <meshStandardMaterial color={"#c0c0c0"} metalness={0.8} />
         </mesh>
         
         <Html position={[0, 1.1, 0.18]}>
@@ -836,19 +961,36 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         </Html>
       </group>
 
-      {/* Decorative elements */}
-      <Sparkles count={30} scale={[15, 2, 15]} size={1} speed={0.1} />
+      {/* Enhanced decorative gateway/arch */}
+      <group position={[0, 3, 8]}>
+        <mesh castShadow>
+          <torusGeometry args={[4, 0.3, 16, 32, Math.PI]} />
+          <meshStandardMaterial color="#8b4513" metalness={0.4} />
+        </mesh>
+        <mesh position={[-4, 1.5, 0]} castShadow>
+          <boxGeometry args={[0.5, 3, 0.5]} />
+          <meshStandardMaterial color="#a67c52" />
+        </mesh>
+        <mesh position={[4, 1.5, 0]} castShadow>
+          <boxGeometry args={[0.5, 3, 0.5]} />
+          <meshStandardMaterial color="#a67c52" />
+        </mesh>
+      </group>
+
+      {/* Enhanced lighting and decorative elements */}
+      <pointLight position={[0, 5, 0]} intensity={0.5} color="#fff9c4" distance={15} />
+      <Sparkles count={40} scale={[16, 3, 16]} size={1.5} speed={0.1} color="#FFD700" />
     </group>
   )
 }
 
-/* ----- Enhanced HUD with multiple alerts ----- */
+/* ----- Enhanced HUD with desert theme ----- */
 function HUD() {
   const alert = useStore((s) => s.alert)
   const timeOfDay = useStore((s) => s.timeOfDay)
   
   const alertStyles = {
-    info: { background: 'linear-gradient(135deg, #3498db, #2980b9)', color: 'white' },
+    info: { background: 'linear-gradient(135deg, #d2691e, #8b4513)', color: 'white' },
     emergency: { background: 'linear-gradient(135deg, #e74c3c, #c0392b)', color: 'white' },
     success: { background: 'linear-gradient(135deg, #27ae60, #229954)', color: 'white' },
     warning: { background: 'linear-gradient(135deg, #f39c12, #e67e22)', color: 'white' }
@@ -876,9 +1018,9 @@ function HUD() {
           boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
           fontSize: '13px',
           fontWeight: 'bold',
-          color: '#2c3e50'
+          color: '#8b4513'
         }}>
-          🏙️ Smart City Dashboard • Time: {timeOfDay} • Systems: ✅ Nominal
+          🏜️ Desert Smart City • Time: {timeOfDay} • Systems: ✅ Nominal
         </div>
       )}
     </div>
@@ -910,7 +1052,7 @@ function ControlPanel() {
       boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
       minWidth: '200px'
     }}>
-      <h3 style={{ margin: '0 0 12px 0', color: '#2c3e50' }}>City Controls</h3>
+      <h3 style={{ margin: '0 0 12px 0', color: '#8b4513' }}>Desert City Controls</h3>
       
       <div style={{ marginBottom: 12 }}>
         <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
@@ -918,7 +1060,7 @@ function ControlPanel() {
         </label>
         <select 
           onChange={(e) => setTimeOfDay(e.target.value)}
-          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #bdc3c7' }}
+          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #d2b48c' }}
         >
           <option value="day">☀️ Day</option>
           <option value="evening">🌆 Evening</option>
@@ -932,7 +1074,7 @@ function ControlPanel() {
         </label>
         <select 
           onChange={(e) => setTrafficDensity(e.target.value)}
-          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #bdc3c7' }}
+          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #d2b48c' }}
         >
           <option value="low">🟢 Low</option>
           <option value="medium">🟡 Medium</option>
@@ -950,7 +1092,7 @@ function ControlPanel() {
             onClick={() => setFocus(pos)}
             style={{ 
               width: '100%', 
-              background: '#3498db', 
+              background: '#d2691e', 
               color: 'white', 
               border: 'none', 
               padding: '6px 8px', 
@@ -979,7 +1121,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+    <div style={{ width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
       <HUD />
       <ControlPanel />
       
@@ -996,12 +1138,11 @@ export default function App() {
         
         <Suspense fallback={
           <Html center>
-            <div style={{ color: 'white', fontSize: '18px', background: 'rgba(0,0,0,0.7)', padding: '20px', borderRadius: '10px' }}>
-              Loading Smart City...
+            <div style={{ color: 'white', fontSize: '18px', background: 'rgba(139, 69, 19, 0.8)', padding: '20px', borderRadius: '10px' }}>
+              Loading Desert Smart City...
             </div>
           </Html>
         }>
-          {/* Remove Environment preset if it's causing issues */}
           <Sky {...skyConfig[timeOfDay]} />
           
           <Ground />
@@ -1012,7 +1153,7 @@ export default function App() {
           {/* Animated People */}
           <PeopleSystem />
           
-          {/* Main Features - Using fallbacks directly since models might not exist */}
+          {/* Main Features */}
           <HubFallback position={[-8, 0, -2]} />
           <SolarBus />
           <GardenFallback position={[8, 0, -6]} />
@@ -1042,11 +1183,11 @@ export default function App() {
         borderRadius: 12, 
         boxShadow: '0 4px 15px rgba(0,0,0,0.1)' 
       }}>
-        <div style={{ fontSize: 13, fontWeight: 'bold', color: '#2c3e50' }}>
+        <div style={{ fontSize: 13, fontWeight: 'bold', color: '#8b4513' }}>
           🎮 Controls: Drag to rotate • Scroll to zoom • Click interactive elements
         </div>
-        <div style={{ fontSize: 11, color: '#7f8c8d', marginTop: 4 }}>
-          Explore the smart city features including transportation, gardens, and public spaces
+        <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
+          Explore the desert smart city with solar transportation and sustainable features
         </div>
       </div>
     </div>
