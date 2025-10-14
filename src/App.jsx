@@ -262,9 +262,9 @@ function VerticalFarm({ position = [0, 0, 0] }) {
     
     // Randomly adjust moisture levels
     if (Math.random() < 0.02) {
-      setMoistureLevels(prev => 
-        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1))
-      )
+      setMoistureLevelssetMoistureLevels(prev =>
+  prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
+);
     }
     
     // Auto irrigation when moisture is low
