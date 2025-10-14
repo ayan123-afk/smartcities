@@ -32,8 +32,386 @@ const useStore = create((set) => ({
     reducedWaste: 0,
     reusedWaste: 0
   },
-  setWasteProcessing: (processing) => set({ wasteProcessing: processing })
+  setWasteProcessing: (processing) => set({ wasteProcessing: processing }),
+  showCityControl: false,
+  setShowCityControl: (show) => set({ showCityControl: show })
 }))
+
+/* ----- Vertical Farming Components ----- */
+function LemonTree({ position = [0, 0, 0], growthStage = 1 }) {
+  return (
+    <group position={position}>
+      {/* Tree trunk */}
+      <mesh position={[0, 1.5, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.3, 3, 8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      
+      {/* Tree leaves */}
+      <mesh position={[0, 3, 0]} castShadow>
+        <sphereGeometry args={[1.2, 8, 8]} />
+        <meshStandardMaterial color="#27ae60" />
+      </mesh>
+      
+      {/* Lemons */}
+      {growthStage > 0.5 && Array.from({ length: Math.floor(growthStage * 8) }).map((_, i) => {
+        const angle = (i / 8) * Math.PI * 2
+        const radius = 0.8
+        return (
+          <mesh 
+            key={i}
+            position={[
+              Math.cos(angle) * radius,
+              2.5 + Math.sin(i * 2) * 0.3,
+              Math.sin(angle) * radius
+            ]} 
+            castShadow
+          >
+            <sphereGeometry args={[0.15, 8, 8]} />
+            <meshStandardMaterial color="#ffff00" />
+          </mesh>
+        )
+      })}
+    </group>
+  )
+}
+
+function TomatoPlant({ position = [0, 0, 0], growthStage = 1 }) {
+  return (
+    <group position={position}>
+      {/* Plant stem */}
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.08, 1.6, 8]} />
+        <meshStandardMaterial color="#2ecc71" />
+      </mesh>
+      
+      {/* Leaves */}
+      {[0.4, 0.8, 1.2].map((y, i) => (
+        <mesh key={i} position={[0.3, y, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
+          <sphereGeometry args={[0.2, 6, 6]} />
+          <meshStandardMaterial color="#27ae60" />
+        </mesh>
+      ))}
+      
+      {/* Tomatoes */}
+      {growthStage > 0.6 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => (
+        <mesh 
+          key={i}
+          position={[
+            Math.cos(i * 1.5) * 0.2,
+            0.5 + i * 0.15,
+            Math.sin(i * 1.5) * 0.2
+          ]} 
+          castShadow
+        >
+          <sphereGeometry args={[0.1, 6, 6]} />
+          <meshStandardMaterial color="#ff4444" />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+function AppleTree({ position = [0, 0, 0], growthStage = 1 }) {
+  return (
+    <group position={position}>
+      {/* Tree trunk */}
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <cylinderGeometry args={[0.15, 0.2, 2.4, 8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      
+      {/* Tree leaves */}
+      <mesh position={[0, 2.5, 0]} castShadow>
+        <sphereGeometry args={[1, 8, 8]} />
+        <meshStandardMaterial color="#2ecc71" />
+      </mesh>
+      
+      {/* Apples */}
+      {growthStage > 0.7 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => {
+        const angle = (i / 6) * Math.PI * 2
+        const radius = 0.7
+        return (
+          <mesh 
+            key={i}
+            position={[
+              Math.cos(angle) * radius,
+              2.2 + Math.sin(i * 3) * 0.2,
+              Math.sin(angle) * radius
+            ]} 
+            castShadow
+          >
+            <sphereGeometry args={[0.12, 6, 6]} />
+            <meshStandardMaterial color="#ff4444" />
+          </mesh>
+        )
+      })}
+    </group>
+  )
+}
+
+function SoilSensor({ position = [0, 0, 0], moistureLevel = 0.7 }) {
+  return (
+    <group position={position}>
+      {/* Sensor base */}
+      <mesh castShadow>
+        <cylinderGeometry args={[0.1, 0.12, 0.3, 8]} />
+        <meshStandardMaterial color="#3498db" />
+      </mesh>
+      
+      {/* Sensor probe */}
+      <mesh position={[0, -0.4, 0]} castShadow>
+        <cylinderGeometry args={[0.03, 0.03, 0.8, 8]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+      
+      {/* Status light */}
+      <mesh position={[0, 0.25, 0]} castShadow>
+        <sphereGeometry args={[0.05, 6, 6]} />
+        <meshStandardMaterial 
+          color={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
+          emissive={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
+          emissiveIntensity={0.5}
+        />
+      </mesh>
+      
+      <Html position={[0, 0.6, 0]}>
+        <div style={{
+          background: 'rgba(255,255,255,0.9)',
+          padding: '4px 8px',
+          borderRadius: '6px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          color: moistureLevel > 0.3 ? '#27ae60' : '#e74c3c'
+        }}>
+          💧 {Math.round(moistureLevel * 100)}%
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+function AutomatedIrrigation({ position = [0, 0, 0], isActive = true }) {
+  return (
+    <group position={position}>
+      {/* Water tank */}
+      <mesh castShadow>
+        <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
+        <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
+      </mesh>
+      
+      {/* Water level */}
+      <mesh position={[0, -0.5, 0]} castShadow>
+        <cylinderGeometry args={[0.75, 0.75, 1, 16]} />
+        <meshStandardMaterial color="#2980b9" />
+      </mesh>
+      
+      {/* Pipes */}
+      <mesh position={[0.9, 0.5, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
+        <meshStandardMaterial color="#95a5a6" />
+      </mesh>
+      
+      {/* Control unit */}
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <boxGeometry args={[0.6, 0.3, 0.6]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+      
+      {/* Status indicator */}
+      <mesh position={[0, 1.35, 0.31]} castShadow>
+        <sphereGeometry args={[0.08, 6, 6]} />
+        <meshStandardMaterial 
+          color={isActive ? "#00ff00" : "#ff4444"}
+          emissive={isActive ? "#00ff00" : "#ff4444"}
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+      
+      <Html position={[0, 2, 0]}>
+        <div style={{
+          background: 'rgba(255,255,255,0.9)',
+          padding: '6px 10px',
+          borderRadius: '8px',
+          fontSize: '11px',
+          fontWeight: 'bold',
+          color: isActive ? '#27ae60' : '#e74c3c'
+        }}>
+          {isActive ? '🚰 IRRIGATION ACTIVE' : '🚰 IRRIGATION OFF'}
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+function VerticalFarm({ position = [0, 0, 0] }) {
+  const [growthProgress, setGrowthProgress] = useState(0)
+  const [moistureLevels, setMoistureLevels] = useState([0.8, 0.6, 0.7, 0.5])
+  const [irrigationActive, setIrrigationActive] = useState(true)
+
+  // Simulate plant growth and moisture changes
+  useFrame((_, dt) => {
+    setGrowthProgress(prev => Math.min(1, prev + dt * 0.1))
+    
+    // Randomly adjust moisture levels
+    if (Math.random() < 0.02) {
+      setMoistureLevels(prev => 
+        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1))
+      )
+    }
+    
+    // Auto irrigation when moisture is low
+    if (moistureLevels.some(level => level < 0.3)) {
+      setIrrigationActive(true)
+      setMoistureLevels(prev => prev.map(level => Math.min(1, level + 0.05)))
+    }
+  })
+
+  return (
+    <group position={position}>
+      {/* Main vertical farm structure */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[12, 8, 6]} />
+        <meshStandardMaterial color="#34495e" roughness={0.8} />
+      </mesh>
+
+      {/* Glass walls */}
+      <mesh position={[0, 0, 3.01]} castShadow>
+        <boxGeometry args={[11.8, 7.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      </mesh>
+      <mesh position={[0, 0, -3.01]} castShadow>
+        <boxGeometry args={[11.8, 7.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      </mesh>
+
+      {/* Growing levels */}
+      {[0, 1, 2, 3].map(level => (
+        <group key={level} position={[0, -2 + level * 2, 0]}>
+          {/* Growing shelf */}
+          <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
+            <boxGeometry args={[10, 0.1, 4]} />
+            <meshStandardMaterial color="#8b4513" />
+          </mesh>
+          
+          {/* Soil */}
+          <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
+            <boxGeometry args={[10, 0.1, 4]} />
+            <meshStandardMaterial color="#a67c52" />
+          </mesh>
+          
+          {/* Plants on this level */}
+          <group>
+            {/* Lemon trees on level 0 */}
+            {level === 0 && [-3, 0, 3].map((x, i) => (
+              <LemonTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            ))}
+            
+            {/* Tomato plants on level 1 */}
+            {level === 1 && [-4, -2, 0, 2, 4].map((x, i) => (
+              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            ))}
+            
+            {/* Apple trees on level 2 */}
+            {level === 2 && [-3, 0, 3].map((x, i) => (
+              <AppleTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            ))}
+            
+            {/* Mixed plants on level 3 */}
+            {level === 3 && [-3, 0, 3].map((x, i) => (
+              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            ))}
+          </group>
+          
+          {/* Soil sensors for each level */}
+          <SoilSensor 
+            position={[4, 1, 1]} 
+            moistureLevel={moistureLevels[level]} 
+          />
+        </group>
+      ))}
+
+      {/* Automated irrigation system */}
+      <AutomatedIrrigation 
+        position={[-5, 0, 0]} 
+        isActive={irrigationActive} 
+      />
+
+      {/* Control room */}
+      <mesh position={[5, 1, 2.9]} castShadow>
+        <boxGeometry args={[2, 2, 0.2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {/* Monitoring screens in control room */}
+      {[0, 1].map(i => (
+        <mesh key={i} position={[4.5 + i * 1, 1.5, 2.91]} castShadow>
+          <planeGeometry args={[0.8, 0.6]} />
+          <meshStandardMaterial color={i === 0 ? "#00ff00" : "#0000ff"} />
+        </mesh>
+      ))}
+
+      <Text
+        position={[0, 5, 0]}
+        fontSize={0.5}
+        color="#27ae60"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🍋 Vertical Farm
+      </Text>
+
+      <Html position={[0, 6, 0]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '15px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '300px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', color: '#27ae60' }}>🏢 Vertical Farming System</h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '10px',
+            marginBottom: '12px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🌱 Growth Progress: {Math.round(growthProgress * 100)}%</div>
+              <div>💧 Moisture Levels:</div>
+              {moistureLevels.map((level, i) => (
+                <div key={i} style={{ fontSize: '12px', marginLeft: '10px' }}>
+                  Level {i+1}: {Math.round(level * 100)}%
+                </div>
+              ))}
+            </div>
+            
+            <div style={{ textAlign: 'left' }}>
+              <div>🍋 Lemons: {Math.floor(growthProgress * 8)}</div>
+              <div>🍅 Tomatoes: {Math.floor(growthProgress * 6)}</div>
+              <div>🍎 Apples: {Math.floor(growthProgress * 6)}</div>
+              <div>🚰 Irrigation: {irrigationActive ? 'ACTIVE' : 'IDLE'}</div>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: '#ecf0f1', 
+            padding: '8px', 
+            borderRadius: '6px',
+            fontSize: '12px'
+          }}>
+            <div>✅ Automated Soil Monitoring</div>
+            <div>✅ Smart Irrigation System</div>
+            <div>✅ Multi-Level Cultivation</div>
+            <div>✅ Real-time Growth Tracking</div>
+          </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
 
 /* ----- Enhanced Camera Controller ----- */
 function CameraController() {
@@ -772,70 +1150,6 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
         <boxGeometry args={[1.6, 0.08, 1.1]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
-    </group>
-  )
-}
-
-/* ----- Vertical Garden ----- */
-function VerticalGarden({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Main structure */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[8, 6, 1]} />
-        <meshStandardMaterial color="#27ae60" roughness={0.7} />
-      </mesh>
-      
-      {/* Plant shelves */}
-      {Array.from({ length: 5 }).map((_, i) => (
-        <group key={i}>
-          {/* Shelf */}
-          <mesh position={[0, -4 + i * 2, 0.6]} castShadow>
-            <boxGeometry args={[7, 0.1, 0.8]} />
-            <meshStandardMaterial color="#8b4513" />
-          </mesh>
-          
-          {/* Plants */}
-          {Array.from({ length: 6 }).map((_, j) => (
-            <mesh key={j} position={[-3 + j * 1.2, -4 + i * 2 + 0.3, 0.8]} castShadow>
-              <sphereGeometry args={[0.2, 8, 8]} />
-              <meshStandardMaterial color="#2ecc71" />
-            </mesh>
-          ))}
-        </group>
-      ))}
-      
-      {/* Watering system */}
-      <mesh position={[0, 3, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.3, 4, 8]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-
-      <Text
-        position={[0, 7, 0]}
-        fontSize={0.4}
-        color="#27ae60"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Vertical Garden
-      </Text>
-
-      <Html position={[0, 4, 0]} transform>
-        <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '10px',
-          borderRadius: '8px',
-          boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
-          minWidth: '200px',
-          textAlign: 'center'
-        }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#27ae60' }}>🌱 Vertical Farm</h4>
-          <div>🥬 Fresh Vegetables</div>
-          <div>💧 Automated Irrigation</div>
-          <div>☀️ Natural Lighting</div>
-        </div>
-      </Html>
     </group>
   )
 }
@@ -1592,10 +1906,10 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Vertical Garden */}
-      <VerticalGarden position={[-15, 0, -25]} />
+      {/* Vertical Farm */}
+      <VerticalFarm position={[-15, 0, -25]} />
       
-      {/* Energy Efficient Society behind Vertical Garden */}
+      {/* Energy Efficient Society behind Vertical Farm */}
       <EnergyEfficientSociety position={[0, 0, 0]} />
       
       {/* Regular buildings */}
@@ -1722,13 +2036,46 @@ function HUD() {
   )
 }
 
-/* ----- Control Panel ----- */
+/* ----- Settings Icon ----- */
+function SettingsIcon() {
+  const setShowCityControl = useStore((s) => s.setShowCityControl)
+  const showCityControl = useStore((s) => s.showCityControl)
+
+  return (
+    <div 
+      style={{
+        position: 'absolute',
+        right: 20,
+        top: 20,
+        zIndex: 100,
+        background: 'rgba(255,255,255,0.95)',
+        borderRadius: '50%',
+        width: '50px',
+        height: '50px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+        cursor: 'pointer',
+        fontSize: '24px',
+        transition: 'all 0.3s ease'
+      }}
+      onClick={() => setShowCityControl(!showCityControl)}
+    >
+      ⚙️
+    </div>
+  )
+}
+
+/* ----- SMALLER Control Panel ----- */
 function ControlPanel() {
   const setTimeOfDay = useStore((s) => s.setTimeOfDay)
   const setTrafficDensity = useStore((s) => s.setTrafficDensity)
   const setStreetLightsOn = useStore((s) => s.setStreetLightsOn)
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
+  const showCityControl = useStore((s) => s.showCityControl)
+  const setShowCityControl = useStore((s) => s.setShowCityControl)
 
   // Auto street lights at night
   useEffect(() => {
@@ -1741,28 +2088,45 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🌱 Vertical Garden': { x: -15, y: 10, z: -25, lookAt: { x: -15, y: 0, z: -25 } },
+    '🏢 Vertical Farm': { x: -15, y: 10, z: -25, lookAt: { x: -15, y: 0, z: -25 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
+  if (!showCityControl) return null
+
   return (
     <div style={{ 
       position: 'absolute', 
-      right: 12, 
+      right: 80, 
       top: 12, 
       zIndex: 50, 
       background: 'rgba(255,255,255,0.95)', 
       padding: 16, 
       borderRadius: 12, 
       boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
-      minWidth: '200px'
+      minWidth: '180px',
+      maxWidth: '200px'
     }}>
-      <h3 style={{ margin: '0 0 12px 0', color: '#8b4513' }}>City Controls</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+        <h3 style={{ margin: 0, color: '#8b4513', fontSize: '16px' }}>City Controls</h3>
+        <button 
+          onClick={() => setShowCityControl(false)}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            fontSize: '18px', 
+            cursor: 'pointer',
+            color: '#8b4513'
+          }}
+        >
+          ✕
+        </button>
+      </div>
       
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
           Time of Day:
         </label>
         <select 
@@ -1771,7 +2135,7 @@ function ControlPanel() {
             setTimeOfDay(e.target.value)
             setStreetLightsOn(e.target.value === 'night')
           }}
-          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #d2b48c' }}
+          style={{ width: '100%', padding: '4px', borderRadius: '6px', border: '1px solid #d2b48c', fontSize: '11px' }}
         >
           <option value="day">☀️ Day</option>
           <option value="evening">🌆 Evening</option>
@@ -1779,13 +2143,13 @@ function ControlPanel() {
         </select>
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
           Traffic Density:
         </label>
         <select 
           onChange={(e) => setTrafficDensity(e.target.value)}
-          style={{ width: '100%', padding: '6px', borderRadius: '6px', border: '1px solid #d2b48c' }}
+          style={{ width: '100%', padding: '4px', borderRadius: '6px', border: '1px solid #d2b48c', fontSize: '11px' }}
         >
           <option value="low">🟢 Low</option>
           <option value="medium">🟡 Medium</option>
@@ -1793,64 +2157,69 @@ function ControlPanel() {
         </select>
       </div>
 
-      <div style={{ marginBottom: 12 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
+      <div style={{ marginBottom: 10 }}>
+        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
           Street Lights:
         </label>
-        <button 
-          onClick={() => setStreetLightsOn(true)}
-          style={{ 
-            width: '48%', 
-            background: '#27ae60', 
-            color: 'white', 
-            border: 'none', 
-            padding: '6px', 
-            borderRadius: '6px',
-            cursor: 'pointer',
-            marginRight: '2%'
-          }}
-        >
-          ON
-        </button>
-        <button 
-          onClick={() => setStreetLightsOn(false)}
-          style={{ 
-            width: '48%', 
-            background: '#e74c3c', 
-            color: 'white', 
-            border: 'none', 
-            padding: '6px', 
-            borderRadius: '6px',
-            cursor: 'pointer'
-          }}
-        >
-          OFF
-        </button>
+        <div style={{ display: 'flex', gap: '4px' }}>
+          <button 
+            onClick={() => setStreetLightsOn(true)}
+            style={{ 
+              flex: 1, 
+              background: '#27ae60', 
+              color: 'white', 
+              border: 'none', 
+              padding: '4px', 
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '10px'
+            }}
+          >
+            ON
+          </button>
+          <button 
+            onClick={() => setStreetLightsOn(false)}
+            style={{ 
+              flex: 1, 
+              background: '#e74c3c', 
+              color: 'white', 
+              border: 'none', 
+              padding: '4px', 
+              borderRadius: '6px',
+              cursor: 'pointer',
+              fontSize: '10px'
+            }}
+          >
+            OFF
+          </button>
+        </div>
       </div>
 
       <div>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
-          Quick Navigation:
+        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
+          Quick Nav:
         </label>
-        {Object.entries(locations).map(([name, pos]) => (
-          <button 
-            key={name}
-            onClick={() => setFocus(pos)}
-            style={{ 
-              width: '100%', 
-              background: '#d2691e', 
-              color: 'white', 
-              border: 'none', 
-              padding: '6px 8px', 
-              borderRadius: '6px',
-              cursor: 'pointer',
-              marginBottom: '4px',
-              fontSize: '11px'
-            }}
-          >
-            {name}
-          </button>
-        ))}
+        <div style={{ maxHeight: '120px', overflowY: 'auto' }}>
+          {Object.entries(locations).map(([name, pos]) => (
+            <button 
+              key={name}
+              onClick={() => setFocus(pos)}
+              style={{ 
+                width: '100%', 
+                background: '#d2691e', 
+                color: 'white', 
+                border: 'none', 
+                padding: '4px 6px', 
+                borderRadius: '6px',
+                cursor: 'pointer',
+                marginBottom: '3px',
+                fontSize: '10px'
+              }}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   )
@@ -1888,6 +2257,7 @@ export default function App() {
       </style>
       
       <HUD />
+      <SettingsIcon />
       <ControlPanel />
       
       <Canvas shadows camera={{ position: [30, 20, 30], fov: 50 }}>
@@ -1940,16 +2310,13 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          🌟 Features: Cultural Center • Energy Efficient Society • Accessible Homes • Smart Traffic
+          🌟 Features: Cultural Center • Vertical Farming • Energy Society • Accessible Homes
         </div>
         <div style={{ fontSize: 11, color: '#3498db', marginTop: 2 }}>
-          🔵 Special Blue House: Double glass windows • Wheelchair ramps • Interior view
+          🍋 Vertical Farm: Lemons • Tomatoes • Apples • Automated Systems
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
-          🗑️ Click waste bins to fill them • Full bins trigger collection alerts!
-        </div>
-        <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2 }}>
-          🚨 Emergency alarm with visual effects!
+          ⚙️ Click settings icon (top-right) for city controls
         </div>
       </div>
     </div>
