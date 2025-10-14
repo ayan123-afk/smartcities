@@ -1,7 +1,7 @@
 // src/App.jsx
 import React, { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Environment, Sparkles, Float } from '@react-three/drei'
+import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Float } from '@react-three/drei'
 import * as THREE from 'three'
 import create from 'zustand'
 
@@ -60,7 +60,7 @@ function Ground() {
         <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
       </mesh>
       {/* Sand dunes */}
-      {Array.from({ length: 50 }).map((_, i) => (
+      {Array.from({ length: 20 }).map((_, i) => (
         <mesh key={i} position={[
           Math.random() * 180 - 90,
           Math.random() * 0.5,
@@ -159,10 +159,29 @@ function SmartBuilding({
         color="#8b4513"
         anchorX="center"
         anchorY="middle"
-        font="/fonts/Inter-Bold.woff"
       >
         {name}
       </Text>
+    </group>
+  )
+}
+
+/* ----- Palm Tree for desert environment ----- */
+function PalmTree({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Trunk */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.4, 4, 8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      {/* Leaves */}
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} position={[0, 4, 0]} rotation={[0, (i * Math.PI) / 2, 0.7]} castShadow>
+          <coneGeometry args={[1.5, 3, 4]} />
+          <meshStandardMaterial color="#228B22" />
+        </mesh>
+      ))}
     </group>
   )
 }
@@ -206,7 +225,7 @@ function CityLayout() {
       ))}
       
       {/* Add some palm trees for desert feel */}
-      {Array.from({ length: 20 }).map((_, i) => (
+      {Array.from({ length: 15 }).map((_, i) => (
         <PalmTree 
           key={i}
           position={[
@@ -215,26 +234,6 @@ function CityLayout() {
             Math.random() * 80 - 40
           ]}
         />
-      ))}
-    </group>
-  )
-}
-
-/* ----- Palm Tree for desert environment ----- */
-function PalmTree({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Trunk */}
-      <mesh position={[0, 2, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.4, 4, 8]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-      {/* Leaves */}
-      {[0, 1, 2, 3].map((i) => (
-        <mesh key={i} position={[0, 4, 0]} rotation={[0, (i * Math.PI) / 2, 0.7]} castShadow>
-          <coneGeometry args={[1.5, 3, 4]} />
-          <meshStandardMaterial color="#228B22" />
-        </mesh>
       ))}
     </group>
   )
@@ -290,7 +289,7 @@ function PeopleSystem() {
 
   return (
     <group>
-      {Array.from({ length: 15 }).map((_, i) => (
+      {Array.from({ length: 10 }).map((_, i) => (
         <Person
           key={i}
           position={[
@@ -484,12 +483,6 @@ function SolarBus({ path = [[-20, 0, 12], [-12, 0, 5], [-8, 0, -2], [-4, 0, 8], 
         <boxGeometry args={[2.8, 0.5, 1.3]} />
         <meshStandardMaterial color={"#2c3e50"} transparent opacity={0.7} />
       </mesh>
-      
-      {/* Window frames */}
-      <mesh position={[0, 0.4, 0.66]} castShadow>
-        <boxGeometry args={[2.82, 0.52, 0.05]} />
-        <meshStandardMaterial color={"#8b4513"} />
-      </mesh>
 
       {/* Solar panel roof - BLUE */}
       <mesh position={[0, 0.9, 0]} castShadow>
@@ -503,33 +496,17 @@ function SolarBus({ path = [[-20, 0, 12], [-12, 0, 5], [-8, 0, -2], [-4, 0, 8], 
           <boxGeometry args={[0.4, 0.8, 0.05]} />
           <meshStandardMaterial color={"#c0392b"} />
         </mesh>
-        {/* Door handle */}
-        <mesh position={[-0.15, 0, 0.03]} castShadow>
-          <cylinderGeometry args={[0.02, 0.02, 0.1, 8]} rotation={[0, Math.PI/2, 0]} />
-          <meshStandardMaterial color={"#2c3e50"} />
-        </mesh>
       </group>
 
-      {/* Enhanced wheels with rims */}
+      {/* Enhanced wheels */}
       {[-1, 1].map((side, i) => (
         <group key={i} position={[side * 0.8, -0.4, 0]}>
           <mesh castShadow>
             <cylinderGeometry args={[0.3, 0.3, 0.2, 16]} rotation={[0, 0, Math.PI/2]} />
             <meshStandardMaterial color={"#2c3e50"} />
           </mesh>
-          {/* Wheel rim */}
-          <mesh castShadow>
-            <cylinderGeometry args={[0.15, 0.15, 0.22, 12]} rotation={[0, 0, Math.PI/2]} />
-            <meshStandardMaterial color={"#c0c0c0"} metalness={0.8} />
-          </mesh>
         </group>
       ))}
-
-      {/* Headlights */}
-      <mesh position={[1.51, 0, 0.3]} castShadow>
-        <sphereGeometry args={[0.08, 8, 8]} />
-        <meshStandardMaterial color={"#ffffff"} emissive={"#ffffff"} emissiveIntensity={0.5} />
-      </mesh>
 
       {/* Passenger counter display */}
       <Html position={[0, 1.3, 0]} transform>
@@ -664,12 +641,6 @@ function GardenFallback({ position = [8, 0, -6] }) {
           <meshStandardMaterial color={"#8b4513"} />
         </mesh>
         
-        {/* Compost level */}
-        <mesh position={[0, (compost - 0.5) * 0.5, 0]} castShadow>
-          <boxGeometry args={[0.9, compost * 0.5, 0.9]} />
-          <meshStandardMaterial color={"#7d3c0"} />
-        </mesh>
-        
         <Html position={[0, 1.1, 0]}>
           <div style={{ 
             background: 'rgba(255,255,255,0.95)', 
@@ -776,14 +747,6 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         <meshStandardMaterial color={"#d2b48c"} />
       </mesh>
 
-      {/* Pattern details */}
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <mesh key={i} position={[0, 0.06, 0]} rotation={[-Math.PI/2, 0, i * Math.PI/3]} receiveShadow>
-          <boxGeometry args={[12, 0.5, 0.2]} />
-          <meshStandardMaterial color={"#8b4513"} />
-        </mesh>
-      ))}
-
       {/* Enhanced quiet zone with decorative elements */}
       <group position={[-6, 0.25, 3]}>
         <Text 
@@ -792,28 +755,10 @@ function PlazaFallback({ position = [0, 0, 8] }) {
           color="#8b4513"
           anchorX="center" 
           anchorY="middle"
-          font="/fonts/Inter-Bold.woff"
         >
           Quiet Zone
         </Text>
         <EcoBench position={[0, 0, 0]} />
-        
-        {/* Decorative fountain */}
-        <group position={[2, 0, 0]}>
-          <mesh position={[0, 0.3, 0]} castShadow>
-            <cylinderGeometry args={[0.8, 1, 0.6, 16]} />
-            <meshStandardMaterial color={"#a67c52"} />
-          </mesh>
-          <mesh position={[0, 0.7, 0]} castShadow>
-            <cylinderGeometry args={[0.6, 0.8, 0.4, 16]} />
-            <meshStandardMaterial color={"#d2b48c"} />
-          </mesh>
-          {/* Water */}
-          <mesh position={[0, 0.9, 0]} castShadow>
-            <cylinderGeometry args={[0.5, 0.5, 0.1, 16]} />
-            <meshStandardMaterial color={"#3498db"} transparent opacity={0.7} />
-          </mesh>
-        </group>
         
         <Sparkles count={15} scale={[4, 2, 3]} size={1} speed={0.05} />
       </group>
@@ -823,12 +768,6 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         <mesh castShadow>
           <boxGeometry args={[1.2, 1.2, 0.6]} />
           <meshStandardMaterial color={"#2c3e50"} metalness={0.3} />
-        </mesh>
-        
-        {/* Charging cable */}
-        <mesh position={[0.8, 0.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
-          <cylinderGeometry args={[0.05, 0.05, 1, 8]} />
-          <meshStandardMaterial color={"#7f8c8d"} />
         </mesh>
         
         {/* Charging status light */}
@@ -901,10 +840,6 @@ function PlazaFallback({ position = [0, 0, 8] }) {
         <mesh position={[0, 0.3, 0.16]} castShadow>
           <boxGeometry args={[0.6, 0.8, 0.05]} />
           <meshStandardMaterial color={"#1a1a1a"} />
-        </mesh>
-        <mesh position={[0, 0.3, 0.18]} castShadow>
-          <boxGeometry args={[0.65, 0.85, 0.02]} />
-          <meshStandardMaterial color={"#c0c0c0"} metalness={0.8} />
         </mesh>
         
         <Html position={[0, 1.1, 0.18]}>
