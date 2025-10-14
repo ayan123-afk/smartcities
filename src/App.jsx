@@ -17,7 +17,7 @@ const useStore = create((set) => ({
   setTrafficDensity: (d) => set({ trafficDensity: d })
 }))
 
-/* ----- Enhanced Camera Controller ----- */
+/* ----- Enhanced Camera Controller with Tinkercad-like Zoom ----- */
 function CameraController() {
   const { camera } = useThree()
   const focus = useStore((s) => s.focus)
@@ -31,6 +31,58 @@ function CameraController() {
   })
   
   return null
+}
+
+/* ----- Custom Orbit Controls for Tinkercad-like Experience ----- */
+function CustomOrbitControls() {
+  const { camera, gl } = useThree()
+  const controlsRef = useRef()
+  const [isUserInteracting, setIsUserInteracting] = useState(false)
+
+  useEffect(() => {
+    const controls = controlsRef.current
+    if (!controls) return
+
+    const handleStart = () => setIsUserInteracting(true)
+    const handleEnd = () => {
+      setIsUserInteracting(false)
+      // Auto-focus to the point where user stopped interacting
+      setTimeout(() => {
+        if (controls.target) {
+          useStore.getState().setFocus({
+            x: controls.target.x,
+            y: controls.target.y + 5,
+            z: controls.target.z,
+            lookAt: controls.target
+          })
+        }
+      }, 100)
+    }
+
+    controls.addEventListener('start', handleStart)
+    controls.addEventListener('end', handleEnd)
+
+    return () => {
+      controls.removeEventListener('start', handleStart)
+      controls.removeEventListener('end', handleEnd)
+    }
+  }, [])
+
+  return (
+    <OrbitControls
+      ref={controlsRef}
+      makeDefault
+      enablePan={true}
+      enableRotate={true}
+      enableZoom={true}
+      minDistance={3}
+      maxDistance={50}
+      rotateSpeed={0.5}
+      zoomSpeed={0.8}
+      panSpeed={0.5}
+      screenSpacePanning={true}
+    />
+  )
 }
 
 /* ----- Simple ModelLoader with better error handling ----- */
@@ -76,7 +128,7 @@ function Ground() {
   )
 }
 
-/* ----- Wind Turbine Component ----- */
+/* ----- SMALLER Wind Turbine Component ----- */
 function WindTurbine({ position = [0, 0, 0] }) {
   const turbineRef = useRef()
   
@@ -87,30 +139,30 @@ function WindTurbine({ position = [0, 0, 0] }) {
   })
 
   return (
-    <group position={position}>
+    <group position={position} scale={[0.7, 0.7, 0.7]}>
       {/* Tower */}
       <mesh position={[0, 5, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.4, 10, 8]} />
+        <cylinderGeometry args={[0.2, 0.3, 8, 8]} />
         <meshStandardMaterial color="#708090" />
       </mesh>
       
       {/* Rotating blades */}
-      <group ref={turbineRef} position={[0, 10, 0]}>
+      <group ref={turbineRef} position={[0, 8, 0]}>
         {/* Hub */}
         <mesh castShadow>
-          <sphereGeometry args={[0.5, 8, 8]} />
+          <sphereGeometry args={[0.4, 8, 8]} />
           <meshStandardMaterial color="#2c3e50" />
         </mesh>
         
-        {/* Blades */}
+        {/* Blades - Smaller */}
         {[0, 1, 2].map((i) => (
           <mesh 
             key={i} 
             rotation={[0, 0, (i * Math.PI * 2) / 3]} 
-            position={[2, 0, 0]}
+            position={[1.5, 0, 0]}
             castShadow
           >
-            <boxGeometry args={[4, 0.2, 0.5]} />
+            <boxGeometry args={[3, 0.15, 0.4]} />
             <meshStandardMaterial color="#ecf0f1" />
           </mesh>
         ))}
@@ -216,7 +268,7 @@ function SmartBuilding({
         </group>
       )}
 
-      {/* Wind Turbine on roof */}
+      {/* SMALLER Wind Turbine on roof */}
       {hasTurbine && (
         <WindTurbine position={[0, height/2, 0]} />
       )}
@@ -303,7 +355,7 @@ function CultureCenter({ position = [0, 0, 0] }) {
         <SolarPanel position={[-1.5, 0.3, -1.5]} rotation={[0, -Math.PI/4, 0]} />
       </group>
 
-      {/* Wind turbine on roof */}
+      {/* SMALLER Wind turbine on roof */}
       <WindTurbine position={[0, 4, 0]} />
 
       {/* Entrance */}
@@ -320,6 +372,274 @@ function CultureCenter({ position = [0, 0, 0] }) {
         anchorY="middle"
       >
         Culture Center
+      </Text>
+    </group>
+  )
+}
+
+/* ----- GREEN Waste Bin Component ----- */
+function WasteBin({ position = [0, 0, 0], onWasteThrow }) {
+  const [fillLevel, setFillLevel] = useState(0)
+
+  const handleClick = () => {
+    if (fillLevel < 1) {
+      setFillLevel(prev => Math.min(1, prev + 0.25))
+      if (onWasteThrow) {
+        onWasteThrow()
+      }
+    }
+  }
+
+  return (
+    <group position={position}>
+      {/* Bin body - GREEN */}
+      <mesh castShadow onClick={handleClick}>
+        <cylinderGeometry args={[0.4, 0.5, 1, 16]} />
+        <meshStandardMaterial color="#27ae60" />
+      </mesh>
+      
+      {/* Waste level indicator */}
+      <mesh position={[0, (fillLevel - 0.5) * 0.5, 0]} castShadow>
+        <cylinderGeometry args={[0.35, 0.45, fillLevel * 0.8, 16]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {/* Lid */}
+      <mesh position={[0, 0.6, 0]} castShadow>
+        <cylinderGeometry args={[0.52, 0.52, 0.05, 16]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+
+      <Html position={[0, 1.2, 0]}>
+        <div style={{
+          background: '#27ae60',
+          color: 'white',
+          padding: '4px 8px',
+          borderRadius: '6px',
+          fontSize: '10px',
+          fontWeight: 'bold'
+        }}>
+          🗑️ {Math.round(fillLevel * 100)}%
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+/* ----- Enhanced Waste Management System with Recycling Plant ----- */
+function WasteManagementSystem({ position = [15, 0, 15] }) {
+  const [processTime, setProcessTime] = useState(0)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [wasteCollected, setWasteCollected] = useState(0)
+  const [totalWasteProcessed, setTotalWasteProcessed] = useState(0)
+  const [recycledMaterials, setRecycledMaterials] = useState({
+    plastic: 0,
+    paper: 0,
+    metal: 0,
+    glass: 0
+  })
+  
+  const [wasteStages, setWasteStages] = useState([
+    { name: "Collection", progress: 0, color: "#e74c3c" },
+    { name: "Sorting", progress: 0, color: "#f39c12" },
+    { name: "Processing", progress: 0, color: "#3498db" },
+    { name: "Recycling", progress: 0, color: "#27ae60" }
+  ])
+
+  const startProcessing = () => {
+    if (wasteCollected > 0 && !isProcessing) {
+      setIsProcessing(true)
+      setProcessTime(0)
+      setWasteStages(stages => stages.map(stage => ({ ...stage, progress: 0 })))
+    }
+  }
+
+  useFrame((_, dt) => {
+    if (isProcessing) {
+      setProcessTime(prev => {
+        const newTime = prev + dt
+        const progress = Math.min(newTime / 4, 1) // 4 hours process
+        
+        // Update stages based on progress
+        setWasteStages([
+          { name: "Collection", progress: Math.min(progress * 4, 1), color: "#e74c3c" },
+          { name: "Sorting", progress: Math.max(0, Math.min((progress - 0.25) * 4, 1)), color: "#f39c12" },
+          { name: "Processing", progress: Math.max(0, Math.min((progress - 0.5) * 4, 1)), color: "#3498db" },
+          { name: "Recycling", progress: Math.max(0, Math.min((progress - 0.75) * 4, 1)), color: "#27ae60" }
+        ])
+
+        if (progress >= 1) {
+          setIsProcessing(false)
+          setTotalWasteProcessed(prev => prev + wasteCollected)
+          // Simulate recycled materials
+          setRecycledMaterials({
+            plastic: Math.floor(Math.random() * 50) + 20,
+            paper: Math.floor(Math.random() * 40) + 15,
+            metal: Math.floor(Math.random() * 30) + 10,
+            glass: Math.floor(Math.random() * 25) + 5
+          })
+          setWasteCollected(0)
+        }
+        return newTime
+      })
+    }
+  })
+
+  const handleWasteThrow = () => {
+    setWasteCollected(prev => prev + 1)
+  }
+
+  return (
+    <group position={position}>
+      {/* Main waste management building */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[8, 6, 8]} />
+        <meshStandardMaterial color="#2c3e50" roughness={0.7} />
+      </mesh>
+
+      {/* Recycling Plant Section */}
+      <group position={[4, 3, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[6, 4, 6]} />
+          <meshStandardMaterial color="#34495e" />
+        </mesh>
+        <Text
+          position={[0, 3, 3.5]}
+          fontSize={0.3}
+          color="#27ae60"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ♻️ Recycling Plant
+        </Text>
+      </group>
+
+      {/* Processing tanks */}
+      {wasteStages.map((stage, index) => (
+        <group key={stage.name} position={[-2 + index * 1.5, 3.5, 2]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.6, 0.6, 2, 16]} />
+            <meshStandardMaterial color="#34495e" />
+          </mesh>
+          {/* Liquid level */}
+          <mesh position={[0, (stage.progress - 0.5) * 1, 0]} castShadow>
+            <cylinderGeometry args={[0.55, 0.55, stage.progress * 1.8, 16]} />
+            <meshStandardMaterial color={stage.color} transparent opacity={0.8} />
+          </mesh>
+        </group>
+      ))}
+
+      {/* Control room */}
+      <mesh position={[0, 4, -3.5]} castShadow>
+        <boxGeometry args={[3, 2, 1]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+
+      {/* Solar panels */}
+      <group position={[0, 3.5, 0]}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <SolarPanel 
+            key={i}
+            position={[-3 + i * 1.2, 0.5, 3.5]} 
+            rotation={[0, Math.PI/2, 0]} 
+          />
+        ))}
+      </group>
+
+      {/* SMALLER Wind turbine */}
+      <WindTurbine position={[0, 3, 0]} />
+
+      {/* Information display */}
+      <Html position={[0, 5, 0]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '15px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '350px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Smart Waste Management</h3>
+          
+          <div style={{ marginBottom: '10px' }}>
+            <div>🗑️ Waste Collected: {wasteCollected}</div>
+            <div>📊 Total Processed: {totalWasteProcessed} units</div>
+            <div>⏱️ Process Time: {Math.min(4, processTime).toFixed(1)}/4 hrs</div>
+            <div>📶 WiFi Connected: ✅</div>
+          </div>
+
+          {/* Process stages */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+            {wasteStages.map((stage, index) => (
+              <div key={stage.name} style={{ textAlign: 'left' }}>
+                <div style={{ fontSize: '12px', fontWeight: 'bold', color: stage.color }}>
+                  {stage.name}
+                </div>
+                <div style={{
+                  width: '100%',
+                  height: '6px',
+                  background: '#ecf0f1',
+                  borderRadius: '3px',
+                  marginTop: '2px'
+                }}>
+                  <div style={{
+                    width: `${stage.progress * 100}%`,
+                    height: '100%',
+                    background: stage.color,
+                    borderRadius: '3px',
+                    transition: 'width 0.3s'
+                  }}></div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recycled Materials */}
+          {recycledMaterials.plastic > 0 && (
+            <div style={{ marginBottom: '10px', padding: '8px', background: '#ecf0f1', borderRadius: '6px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#2c3e50' }}>♻️ Recycled Materials:</div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px', fontSize: '10px' }}>
+                <div>Plastic: {recycledMaterials.plastic}kg</div>
+                <div>Paper: {recycledMaterials.paper}kg</div>
+                <div>Metal: {recycledMaterials.metal}kg</div>
+                <div>Glass: {recycledMaterials.glass}kg</div>
+              </div>
+            </div>
+          )}
+
+          <button 
+            onClick={startProcessing}
+            disabled={isProcessing || wasteCollected === 0}
+            style={{
+              background: isProcessing ? '#95a5a6' : wasteCollected === 0 ? '#95a5a6' : '#27ae60',
+              color: 'white',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '6px',
+              cursor: wasteCollected > 0 && !isProcessing ? 'pointer' : 'not-allowed',
+              marginTop: '5px',
+              width: '100%'
+            }}
+          >
+            {isProcessing ? '🔄 Processing...' : wasteCollected === 0 ? 'No Waste' : 'Start Processing'}
+          </button>
+        </div>
+      </Html>
+
+      {/* GREEN Waste bins around the facility */}
+      <WasteBin position={[4, 0, 2]} onWasteThrow={handleWasteThrow} />
+      <WasteBin position={[4, 0, -2]} onWasteThrow={handleWasteThrow} />
+      <WasteBin position={[-4, 0, 2]} onWasteThrow={handleWasteThrow} />
+      <WasteBin position={[-4, 0, -2]} onWasteThrow={handleWasteThrow} />
+
+      <Text
+        position={[0, 7, 0]}
+        fontSize={0.4}
+        color="#2c3e50"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Smart Waste Management
       </Text>
     </group>
   )
@@ -703,227 +1023,6 @@ function GardenFallback({ position = [8, 0, -6] }) {
   )
 }
 
-/* ----- Waste Bin Component ----- */
-function WasteBin({ position = [0, 0, 0], onWasteThrow }) {
-  const [fillLevel, setFillLevel] = useState(0)
-
-  const handleClick = () => {
-    if (fillLevel < 1) {
-      setFillLevel(prev => Math.min(1, prev + 0.25))
-      if (onWasteThrow) {
-        onWasteThrow()
-      }
-    }
-  }
-
-  return (
-    <group position={position}>
-      {/* Bin body */}
-      <mesh castShadow onClick={handleClick}>
-        <cylinderGeometry args={[0.4, 0.5, 1, 16]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-      
-      {/* Waste level indicator */}
-      <mesh position={[0, (fillLevel - 0.5) * 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.45, fillLevel * 0.8, 16]} />
-        <meshStandardMaterial color="#27ae60" />
-      </mesh>
-
-      {/* Lid */}
-      <mesh position={[0, 0.6, 0]} castShadow>
-        <cylinderGeometry args={[0.52, 0.52, 0.05, 16]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
-      <Html position={[0, 1.2, 0]}>
-        <div style={{
-          background: '#e74c3c',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontWeight: 'bold'
-        }}>
-          🗑️ {Math.round(fillLevel * 100)}%
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-/* ----- Waste Management System ----- */
-function WasteManagementSystem({ position = [15, 0, 15] }) {
-  const [processTime, setProcessTime] = useState(0)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [wasteCollected, setWasteCollected] = useState(0)
-  const [wasteStages, setWasteStages] = useState([
-    { name: "Collection", progress: 0, color: "#e74c3c" },
-    { name: "Sorting", progress: 0, color: "#f39c12" },
-    { name: "Processing", progress: 0, color: "#3498db" },
-    { name: "Recycling", progress: 0, color: "#27ae60" }
-  ])
-
-  const startProcessing = () => {
-    if (wasteCollected > 0 && !isProcessing) {
-      setIsProcessing(true)
-      setProcessTime(0)
-      setWasteStages(stages => stages.map(stage => ({ ...stage, progress: 0 })))
-    }
-  }
-
-  useFrame((_, dt) => {
-    if (isProcessing) {
-      setProcessTime(prev => {
-        const newTime = prev + dt
-        const progress = Math.min(newTime / 4, 1) // 4 hours process
-        
-        // Update stages based on progress
-        setWasteStages([
-          { name: "Collection", progress: Math.min(progress * 4, 1), color: "#e74c3c" },
-          { name: "Sorting", progress: Math.max(0, Math.min((progress - 0.25) * 4, 1)), color: "#f39c12" },
-          { name: "Processing", progress: Math.max(0, Math.min((progress - 0.5) * 4, 1)), color: "#3498db" },
-          { name: "Recycling", progress: Math.max(0, Math.min((progress - 0.75) * 4, 1)), color: "#27ae60" }
-        ])
-
-        if (progress >= 1) {
-          setIsProcessing(false)
-          setWasteCollected(0)
-        }
-        return newTime
-      })
-    }
-  })
-
-  const handleWasteThrow = () => {
-    setWasteCollected(prev => prev + 1)
-  }
-
-  return (
-    <group position={position}>
-      {/* Main waste management building */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[8, 6, 8]} />
-        <meshStandardMaterial color="#2c3e50" roughness={0.7} />
-      </mesh>
-
-      {/* Processing tanks */}
-      {wasteStages.map((stage, index) => (
-        <group key={stage.name} position={[-2 + index * 1.5, 3.5, 2]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.6, 0.6, 2, 16]} />
-            <meshStandardMaterial color="#34495e" />
-          </mesh>
-          {/* Liquid level */}
-          <mesh position={[0, (stage.progress - 0.5) * 1, 0]} castShadow>
-            <cylinderGeometry args={[0.55, 0.55, stage.progress * 1.8, 16]} />
-            <meshStandardMaterial color={stage.color} transparent opacity={0.8} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Control room */}
-      <mesh position={[0, 4, -3.5]} castShadow>
-        <boxGeometry args={[3, 2, 1]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      {/* Solar panels */}
-      <group position={[0, 3.5, 0]}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SolarPanel 
-            key={i}
-            position={[-3 + i * 1.2, 0.5, 3.5]} 
-            rotation={[0, Math.PI/2, 0]} 
-          />
-        ))}
-      </group>
-
-      {/* Wind turbine */}
-      <WindTurbine position={[0, 3, 0]} />
-
-      {/* Information display */}
-      <Html position={[0, 5, 0]} transform>
-        <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '15px',
-          borderRadius: '12px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Waste Management System</h3>
-          
-          <div style={{ marginBottom: '10px' }}>
-            <div>🗑️ Waste Collected: {wasteCollected}</div>
-            <div>⏱️ Process Time: {Math.min(4, processTime).toFixed(1)}/4 hrs</div>
-            <div>📶 WiFi Connected: ✅</div>
-          </div>
-
-          {/* Process stages */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-            {wasteStages.map((stage, index) => (
-              <div key={stage.name} style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '12px', fontWeight: 'bold', color: stage.color }}>
-                  {stage.name}
-                </div>
-                <div style={{
-                  width: '100%',
-                  height: '6px',
-                  background: '#ecf0f1',
-                  borderRadius: '3px',
-                  marginTop: '2px'
-                }}>
-                  <div style={{
-                    width: `${stage.progress * 100}%`,
-                    height: '100%',
-                    background: stage.color,
-                    borderRadius: '3px',
-                    transition: 'width 0.3s'
-                  }}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <button 
-            onClick={startProcessing}
-            disabled={isProcessing || wasteCollected === 0}
-            style={{
-              background: isProcessing ? '#95a5a6' : wasteCollected === 0 ? '#95a5a6' : '#27ae60',
-              color: 'white',
-              border: 'none',
-              padding: '8px 16px',
-              borderRadius: '6px',
-              cursor: wasteCollected > 0 && !isProcessing ? 'pointer' : 'not-allowed',
-              marginTop: '10px',
-              width: '100%'
-            }}
-          >
-            {isProcessing ? '🔄 Processing...' : wasteCollected === 0 ? 'No Waste' : 'Start Processing'}
-          </button>
-        </div>
-      </Html>
-
-      {/* Waste bins around the facility */}
-      <WasteBin position={[4, 0, 2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[4, 0, -2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[-4, 0, 2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[-4, 0, -2]} onWasteThrow={handleWasteThrow} />
-
-      <Text
-        position={[0, 7, 0]}
-        fontSize={0.4}
-        color="#2c3e50"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Waste Management
-      </Text>
-    </group>
-  )
-}
-
 /* ----- Palm Tree for desert environment ----- */
 function PalmTree({ position = [0, 0, 0] }) {
   return (
@@ -1074,7 +1173,7 @@ function CityLayout() {
         />
       ))}
       
-      {/* Waste Management System */}
+      {/* Enhanced Waste Management System with Recycling Plant */}
       <WasteManagementSystem position={[15, 0, 15]} />
       
       {/* Transportation Hub */}
@@ -1086,7 +1185,7 @@ function CityLayout() {
       {/* Solar Bus */}
       <SolarBus />
       
-      {/* Additional waste bins around town */}
+      {/* Additional GREEN waste bins around town */}
       <WasteBin position={[-10, 0, 8]} />
       <WasteBin position={[12, 0, -5]} />
       <WasteBin position={[-5, 0, -12]} />
@@ -1149,7 +1248,7 @@ function HUD() {
           fontWeight: 'bold',
           color: '#8b4513'
         }}>
-          🏜️ Desert Smart City • Time: {timeOfDay} • Systems: ✅ Nominal
+          🏜️ Smart Desert City • Time: {timeOfDay} • Systems: ✅ Nominal
         </div>
       )}
     </div>
@@ -1182,7 +1281,7 @@ function ControlPanel() {
       boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
       minWidth: '200px'
     }}>
-      <h3 style={{ margin: '0 0 12px 0', color: '#8b4513' }}>Desert City Controls</h3>
+      <h3 style={{ margin: '0 0 12px 0', color: '#8b4513' }}>Smart City Controls</h3>
       
       <div style={{ marginBottom: 12 }}>
         <label style={{ display: 'block', marginBottom: 4, fontSize: '12px', fontWeight: 'bold' }}>
@@ -1240,7 +1339,7 @@ function ControlPanel() {
   )
 }
 
-/* ===== Enhanced Main App ===== */
+/* ===== Enhanced Main App with Tinkercad-like Controls ===== */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
   
@@ -1269,7 +1368,7 @@ export default function App() {
         <Suspense fallback={
           <Html center>
             <div style={{ color: 'white', fontSize: '18px', background: 'rgba(139, 69, 19, 0.8)', padding: '20px', borderRadius: '10px' }}>
-              Loading Desert Smart City...
+              Loading Smart Desert City...
             </div>
           </Html>
         }>
@@ -1286,14 +1385,8 @@ export default function App() {
           <ContactShadows position={[0, -0.1, 0]} opacity={0.4} width={40} blur={2} far={10} />
         </Suspense>
         
-        <OrbitControls 
-          makeDefault 
-          enablePan 
-          enableRotate 
-          enableZoom 
-          minDistance={5} 
-          maxDistance={100} 
-        />
+        {/* Custom Tinkercad-like Controls */}
+        <CustomOrbitControls />
         <CameraController />
       </Canvas>
 
@@ -1308,10 +1401,10 @@ export default function App() {
         boxShadow: '0 4px 15px rgba(0,0,0,0.1)' 
       }}>
         <div style={{ fontSize: 13, fontWeight: 'bold', color: '#8b4513' }}>
-          🎮 Controls: Drag to rotate • Scroll to zoom • Click interactive elements
+          🎮 Tinkercad-like Controls: Drag to rotate • Scroll to zoom • Click to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          Explore the desert smart city with wind turbines, solar panels, and waste management
+          Smart City with Waste Management, Recycling Plant, and Sustainable Features
         </div>
       </div>
     </div>
