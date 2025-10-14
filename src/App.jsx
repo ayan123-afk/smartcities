@@ -471,7 +471,7 @@ function SmartBuilding({
             </group>
           ))
         )}
-      </div>   // ❌ this should not be </div>
+      </group>
       
       {/* Rooftop */}
       <mesh position={[0, height/2 + 0.2, 0]} castShadow>
