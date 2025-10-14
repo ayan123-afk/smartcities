@@ -251,6 +251,7 @@ function AutomatedIrrigation({ position = [0, 0, 0], isActive = true }) {
   )
 }
 
+/* ----- STANDALONE VERTICAL FARM (Alag Building) ----- */
 function VerticalFarm({ position = [0, 0, 0] }) {
   const [growthProgress, setGrowthProgress] = useState(0)
   const [moistureLevels, setMoistureLevels] = useState([0.8, 0.6, 0.7, 0.5])
@@ -276,63 +277,81 @@ function VerticalFarm({ position = [0, 0, 0] }) {
 
   return (
     <group position={position}>
-      {/* Main vertical farm structure */}
+      {/* Main vertical farm structure - GLASS BUILDING */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[12, 8, 6]} />
+        <boxGeometry args={[15, 12, 8]} />
         <meshStandardMaterial color="#34495e" roughness={0.8} />
       </mesh>
 
-      {/* Glass walls */}
-      <mesh position={[0, 0, 3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      {/* Glass walls - FULL GLASS */}
+      <mesh position={[0, 0, 4.01]} castShadow>
+        <boxGeometry args={[14.8, 11.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.2} />
       </mesh>
-      <mesh position={[0, 0, -3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      <mesh position={[0, 0, -4.01]} castShadow>
+        <boxGeometry args={[14.8, 11.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.2} />
       </mesh>
+      <mesh position={[7.51, 0, 0]} rotation={[0, Math.PI/2, 0]} castShadow>
+        <boxGeometry args={[7.8, 11.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.2} />
+      </mesh>
+      <mesh position={[-7.51, 0, 0]} rotation={[0, Math.PI/2, 0]} castShadow>
+        <boxGeometry args={[7.8, 11.8, 0.1]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.2} />
+      </mesh>
+
+      {/* Solar panels on roof */}
+      <group position={[0, 6.5, 0]}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <mesh key={i} position={[-6 + i * 2.4, 0.1, 0]} castShadow>
+            <boxGeometry args={[2, 0.02, 4]} />
+            <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
+          </mesh>
+        ))}
+      </group>
 
       {/* Growing levels */}
       {[0, 1, 2, 3].map(level => (
-        <group key={level} position={[0, -2 + level * 2, 0]}>
+        <group key={level} position={[0, -4 + level * 3, 0]}>
           {/* Growing shelf */}
-          <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
+          <mesh position={[0, 1.2, 0]} castShadow receiveShadow>
+            <boxGeometry args={[12, 0.1, 6]} />
             <meshStandardMaterial color="#8b4513" />
           </mesh>
           
           {/* Soil */}
-          <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
+          <mesh position={[0, 1.15, 0]} castShadow receiveShadow>
+            <boxGeometry args={[12, 0.1, 6]} />
             <meshStandardMaterial color="#a67c52" />
           </mesh>
           
           {/* Plants on this level */}
           <group>
             {/* Lemon trees on level 0 */}
-            {level === 0 && [-3, 0, 3].map((x, i) => (
-              <LemonTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 0 && [-4, 0, 4].map((x, i) => (
+              <LemonTree key={i} position={[x, 1.5, -2]} growthStage={growthProgress} />
             ))}
             
             {/* Tomato plants on level 1 */}
-            {level === 1 && [-4, -2, 0, 2, 4].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 1 && [-5, -2.5, 0, 2.5, 5].map((x, i) => (
+              <TomatoPlant key={i} position={[x, 1.5, -2]} growthStage={growthProgress} />
             ))}
             
             {/* Apple trees on level 2 */}
-            {level === 2 && [-3, 0, 3].map((x, i) => (
-              <AppleTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 2 && [-4, 0, 4].map((x, i) => (
+              <AppleTree key={i} position={[x, 1.5, -2]} growthStage={growthProgress} />
             ))}
             
             {/* Mixed plants on level 3 */}
-            {level === 3 && [-3, 0, 3].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 3 && [-4, -1, 2, 5].map((x, i) => (
+              <TomatoPlant key={i} position={[x, 1.5, -2]} growthStage={growthProgress} />
             ))}
           </group>
           
           {/* Soil sensors for each level */}
           <SoilSensor 
-            position={[4, 1, 1]} 
+            position={[5, 1.5, 2]} 
             moistureLevel={moistureLevels[level]} 
           />
         </group>
@@ -340,44 +359,44 @@ function VerticalFarm({ position = [0, 0, 0] }) {
 
       {/* Automated irrigation system */}
       <AutomatedIrrigation 
-        position={[-5, 0, 0]} 
+        position={[-6, -2, 0]} 
         isActive={irrigationActive} 
       />
 
       {/* Control room */}
-      <mesh position={[5, 1, 2.9]} castShadow>
-        <boxGeometry args={[2, 2, 0.2]} />
+      <mesh position={[6, 2, 3.9]} castShadow>
+        <boxGeometry args={[3, 4, 0.2]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
 
       {/* Monitoring screens in control room */}
-      {[0, 1].map(i => (
-        <mesh key={i} position={[4.5 + i * 1, 1.5, 2.91]} castShadow>
-          <planeGeometry args={[0.8, 0.6]} />
-          <meshStandardMaterial color={i === 0 ? "#00ff00" : "#0000ff"} />
+      {[0, 1, 2].map(i => (
+        <mesh key={i} position={[5 + i * 1.5, 3, 3.91]} castShadow>
+          <planeGeometry args={[1, 0.8]} />
+          <meshStandardMaterial color={i === 0 ? "#00ff00" : i === 1 ? "#0000ff" : "#ff0000"} />
         </mesh>
       ))}
 
       <Text
-        position={[0, 5, 0]}
-        fontSize={0.5}
+        position={[0, 7, 0]}
+        fontSize={0.6}
         color="#27ae60"
         anchorX="center"
         anchorY="middle"
       >
-        🍋 Vertical Farm
+        🍋 Vertical Farming Tower
       </Text>
 
-      <Html position={[0, 6, 0]} transform>
+      <Html position={[0, 9, 0]} transform>
         <div style={{
           background: 'rgba(255,255,255,0.95)',
           padding: '15px',
           borderRadius: '12px',
           boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
+          minWidth: '320px',
           textAlign: 'center'
         }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#27ae60' }}>🏢 Vertical Farming System</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: '#27ae60' }}>🏢 Vertical Farming Tower</h3>
           
           <div style={{ 
             display: 'grid', 
@@ -400,6 +419,7 @@ function VerticalFarm({ position = [0, 0, 0] }) {
               <div>🍅 Tomatoes: {Math.floor(growthProgress * 6)}</div>
               <div>🍎 Apples: {Math.floor(growthProgress * 6)}</div>
               <div>🚰 Irrigation: {irrigationActive ? 'ACTIVE' : 'IDLE'}</div>
+              <div>☀️ Solar Powered</div>
             </div>
           </div>
 
@@ -412,8 +432,237 @@ function VerticalFarm({ position = [0, 0, 0] }) {
             <div>✅ Automated Soil Monitoring</div>
             <div>✅ Smart Irrigation System</div>
             <div>✅ Multi-Level Cultivation</div>
-            <div>✅ Real-time Growth Tracking</div>
+            <div>✅ Solar Powered</div>
+            <div>✅ Glass Building Design</div>
           </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+/* ----- ROOFTOP FARMING for Buildings ----- */
+function RooftopFarm({ position = [0, 0, 0], size = [5, 5] }) {
+  const [growthProgress, setGrowthProgress] = useState(Math.random() * 0.5 + 0.3)
+
+  useFrame((_, dt) => {
+    setGrowthProgress(prev => Math.min(1, prev + dt * 0.05))
+  })
+
+  return (
+    <group position={position}>
+      {/* Farm base */}
+      <mesh position={[0, 0.1, 0]} castShadow receiveShadow>
+        <boxGeometry args={[size[0], 0.2, size[1]]} />
+        <meshStandardMaterial color="#a67c52" />
+      </mesh>
+      
+      {/* Soil */}
+      <mesh position={[0, 0.25, 0]} castShadow receiveShadow>
+        <boxGeometry args={[size[0] - 0.2, 0.1, size[1] - 0.2]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      
+      {/* Plants in grid pattern */}
+      {Array.from({ length: Math.floor(size[0]) }).map((_, i) =>
+        Array.from({ length: Math.floor(size[1]) }).map((_, j) => (
+          <group key={`${i}-${j}`} position={[
+            i - size[0]/2 + 0.5,
+            0.5,
+            j - size[1]/2 + 0.5
+          ]}>
+            {/* Plant stem */}
+            <mesh castShadow>
+              <cylinderGeometry args={[0.03, 0.05, 0.4, 4]} />
+              <meshStandardMaterial color="#2ecc71" />
+            </mesh>
+            
+            {/* Plant top */}
+            <mesh position={[0, 0.3, 0]} castShadow>
+              <sphereGeometry args={[0.15, 4, 4]} />
+              <meshStandardMaterial color="#27ae60" />
+            </mesh>
+            
+            {/* Vegetables/fruits */}
+            {growthProgress > 0.6 && (
+              <mesh position={[0.1, 0.2, 0]} castShadow>
+                <sphereGeometry args={[0.08, 4, 4]} />
+                <meshStandardMaterial color={Math.random() > 0.5 ? "#ff4444" : "#ffff00"} />
+              </mesh>
+            )}
+          </group>
+        ))
+      )}
+      
+      {/* Farm border */}
+      <mesh position={[0, 0.15, 0]} castShadow>
+        <boxGeometry args={[size[0], 0.3, 0.1]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      <mesh position={[0, 0.15, 0]} castShadow>
+        <boxGeometry args={[0.1, 0.3, size[1]]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+    </group>
+  )
+}
+
+/* ----- GLASS HOSPITAL with Solar Panels ----- */
+function Hospital({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+
+  return (
+    <group position={position}>
+      {/* Main hospital structure - GLASS */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[20, 10, 15]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      </mesh>
+      
+      {/* Glass frame structure */}
+      <mesh castShadow>
+        <boxGeometry args={[20.2, 10.2, 15.2]} />
+        <meshStandardMaterial color="#2c3e50" wireframe />
+      </mesh>
+      
+      {/* Floors */}
+      {[0, 1, 2].map(floor => (
+        <mesh key={floor} position={[0, -3 + floor * 3.3, 0]} castShadow>
+          <boxGeometry args={[19.8, 0.1, 14.8]} />
+          <meshStandardMaterial color="#ecf0f1" />
+        </mesh>
+      ))}
+      
+      {/* Solar panels on roof */}
+      <group position={[0, 5.5, 0]}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <mesh key={i} position={[-8 + i * 2.3, 0.1, 0]} castShadow>
+            <boxGeometry args={[2, 0.02, 3]} />
+            <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
+          </mesh>
+        ))}
+      </group>
+      
+      {/* Hospital sign */}
+      <Text
+        position={[0, 6, 8]}
+        fontSize={0.5}
+        color="#e74c3c"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🏥 City Hospital
+      </Text>
+      
+      {/* Emergency entrance */}
+      <mesh position={[0, 2, 7.6]} castShadow>
+        <boxGeometry args={[4, 3, 0.2]} />
+        <meshStandardMaterial color="#e74c3c" />
+      </mesh>
+      
+      {/* Helipad on roof */}
+      <mesh position={[0, 5.1, 0]} castShadow>
+        <cylinderGeometry args={[3, 3, 0.1, 32]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+      <Text position={[0, 5.2, 0]} fontSize={0.3} color="white" anchorX="center">
+        H
+      </Text>
+      
+      {/* Rooftop garden */}
+      <RooftopFarm position={[6, 5.2, -4]} size={[6, 4]} />
+      
+      <Html position={[0, 8, 0]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '12px',
+          borderRadius: '10px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+          minWidth: '250px',
+          textAlign: 'center'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#e74c3c' }}>🏥 Modern Hospital</h4>
+          <div>🪟 Glass Building Design</div>
+          <div>☀️ Solar Powered</div>
+          <div>🏗️ Rooftop Farming</div>
+          <div>🚁 Helipad Emergency Access</div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+/* ----- GLASS SCHOOL with Solar Panels ----- */
+function School({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+
+  return (
+    <group position={position}>
+      {/* Main school structure - GLASS */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[18, 8, 12]} />
+        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      </mesh>
+      
+      {/* Glass frame */}
+      <mesh castShadow>
+        <boxGeometry args={[18.2, 8.2, 12.2]} />
+        <meshStandardMaterial color="#2c3e50" wireframe />
+      </mesh>
+      
+      {/* Floors */}
+      {[0, 1].map(floor => (
+        <mesh key={floor} position={[0, -2 + floor * 4, 0]} castShadow>
+          <boxGeometry args={[17.8, 0.1, 11.8]} />
+          <meshStandardMaterial color="#ecf0f1" />
+        </mesh>
+      ))}
+      
+      {/* Solar panels on roof */}
+      <group position={[0, 4.5, 0]}>
+        {Array.from({ length: 6 }).map((_, i) => (
+          <mesh key={i} position={[-7 + i * 2.8, 0.1, 0]} castShadow>
+            <boxGeometry args={[2.5, 0.02, 2]} />
+            <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
+          </mesh>
+        ))}
+      </group>
+      
+      {/* School sign */}
+      <Text
+        position={[0, 5, 6.5]}
+        fontSize={0.4}
+        color="#3498db"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🏫 Smart School
+      </Text>
+      
+      {/* Playground */}
+      <mesh position={[8, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+        <planeGeometry args={[6, 8]} />
+        <meshStandardMaterial color="#2ecc71" />
+      </mesh>
+      
+      {/* Rooftop farming */}
+      <RooftopFarm position={[-5, 4.2, 0]} size={[5, 4]} />
+      <RooftopFarm position={[0, 4.2, -3]} size={[4, 3]} />
+      
+      <Html position={[0, 6, 0]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '12px',
+          borderRadius: '10px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+          minWidth: '250px',
+          textAlign: 'center'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3498db' }}>🏫 Modern School</h4>
+          <div>🪟 Glass Building Design</div>
+          <div>☀️ Solar Powered</div>
+          <div>🏗️ Rooftop Farming</div>
+          <div>🌳 Green Playground</div>
         </div>
       </Html>
     </group>
@@ -1161,6 +1410,157 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
   )
 }
 
+/* ----- ENERGY EFFICIENT SOCIETY (Different Design) ----- */
+function EnergyEfficientSociety({ position = [0, 0, 0] }) {
+  const houses = [
+    // Row 1 - MODERN GREEN HOUSES
+    { position: [-18, 0, -35], name: "Eco Home 1", color: "#27ae60" },
+    { position: [-12, 0, -35], name: "Eco Home 2", color: "#2ecc71" },
+    { position: [-6, 0, -35], name: "Eco Home 3", color: "#3498db" },
+    { position: [0, 0, -35], name: "Eco Home 4", color: "#9b59b6" },
+    { position: [6, 0, -35], name: "Eco Home 5", color: "#e74c3c" },
+    { position: [12, 0, -35], name: "Eco Home 6", color: "#f39c12" },
+    { position: [18, 0, -35], name: "Eco Home 7", color: "#1abc9c" },
+    
+    // Row 2 - DIFFERENT COLORS
+    { position: [-18, 0, -28], name: "Eco Home 8", color: "#e67e22" },
+    { position: [-12, 0, -28], name: "Eco Home 9", color: "#d35400" },
+    { position: [-6, 0, -28], name: "Eco Home 10", color: "#c0392b" },
+    { position: [0, 0, -28], name: "Accessible Home", color: "#3498db", isSpecial: true },
+    { position: [6, 0, -28], name: "Eco Home 12", color: "#8e44ad" },
+    { position: [12, 0, -28], name: "Eco Home 13", color: "#2980b9" },
+    { position: [18, 0, -28], name: "Eco Home 14", color: "#16a085" },
+    
+    // Row 3 - MORE COLORS
+    { position: [-18, 0, -21], name: "Eco Home 15", color: "#27ae60" },
+    { position: [-12, 0, -21], name: "Eco Home 16", color: "#2ecc71" },
+    { position: [-6, 0, -21], name: "Eco Home 17", color: "#3498db" },
+    { position: [0, 0, -21], name: "Eco Home 18", color: "#9b59b6" },
+    { position: [6, 0, -21], name: "Eco Home 19", color: "#e74c3c" },
+    { position: [12, 0, -21], name: "Eco Home 20", color: "#f39c12" },
+    { position: [18, 0, -21], name: "Eco Home 21", color: "#1abc9c" }
+  ]
+
+  return (
+    <group position={position}>
+      {/* Society boundary and roads */}
+      <mesh position={[0, 0.01, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[40, 20]} />
+        <meshStandardMaterial color="#27ae60" transparent opacity={0.1} />
+      </mesh>
+      
+      {/* Internal roads */}
+      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[2, 20]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+      
+      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, Math.PI/2]} receiveShadow>
+        <planeGeometry args={[2, 40]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+
+      {/* Society label */}
+      <Text
+        position={[0, 8, -28]}
+        fontSize={0.8}
+        color="#27ae60"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🌟 Modern Energy Society
+      </Text>
+
+      {/* Generate all houses */}
+      {houses.map((house, index) => (
+        <EnergyEfficientHouse
+          key={index}
+          position={house.position}
+          name={house.name}
+          isSpecial={house.isSpecial}
+          showInterior={house.isSpecial}
+          color={house.color}
+          hasSolar={true}
+          hasTurbine={index % 3 === 0} // Every 3rd house has turbine
+        />
+      ))}
+
+      {/* Central park area with wind turbines */}
+      <mesh position={[0, 0.03, -35]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[10, 32]} />
+        <meshStandardMaterial color="#2ecc71" />
+      </mesh>
+
+      {/* Wind turbines in park */}
+      <WindTurbine position={[-5, 0, -35]} />
+      <WindTurbine position={[5, 0, -35]} />
+      <WindTurbine position={[0, 0, -30]} />
+
+      {/* Park trees */}
+      {Array.from({ length: 12 }).map((_, i) => {
+        const angle = (i / 12) * Math.PI * 2
+        const radius = 8
+        return (
+          <group key={i} position={[Math.cos(angle) * radius, 0, Math.sin(angle) * radius - 35]}>
+            {/* Tree trunk */}
+            <mesh position={[0, 1.5, 0]} castShadow>
+              <cylinderGeometry args={[0.3, 0.4, 3, 8]} />
+              <meshStandardMaterial color="#8b4513" />
+            </mesh>
+            {/* Tree top */}
+            <mesh position={[0, 3.5, 0]} castShadow>
+              <sphereGeometry args={[1.2, 8, 8]} />
+              <meshStandardMaterial color="#27ae60" />
+            </mesh>
+          </group>
+        )
+      })}
+
+      {/* People in society */}
+      <Person position={[5, 0, -30]} color="#8b4513" speed={0.2} path={[
+        [5, 0.5, -30], [3, 0.5, -32], [1, 0.5, -30], [3, 0.5, -28], [5, 0.5, -30]
+      ]} />
+      
+      <Person position={[-5, 0, -32]} color="#2c3e50" speed={0.3} path={[
+        [-5, 0.5, -32], [-7, 0.5, -30], [-9, 0.5, -32], [-7, 0.5, -34], [-5, 0.5, -32]
+      ]} />
+
+      {/* Wheelchair user in society */}
+      <WheelchairUser position={[10, 0, -25]} moving={true} />
+
+      {/* Society information */}
+      <Html position={[0, 12, -28]} transform>
+        <div style={{
+          background: 'rgba(255,255,255,0.95)',
+          padding: '15px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '300px',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: '#27ae60' }}>🌟 Modern Energy Society</h3>
+          <div style={{ marginBottom: '10px' }}>
+            <div>🏠 21 Eco-Friendly Homes</div>
+            <div>☀️ Solar Powered</div>
+            <div>🌬️ Wind Turbines</div>
+            <div>♿ Accessible Design</div>
+            <div>🌳 Green Park Area</div>
+          </div>
+          <div style={{ 
+            background: 'linear-gradient(135deg, #27ae60, #3498db, #9b59b6)',
+            color: 'white',
+            padding: '8px',
+            borderRadius: '6px',
+            fontSize: '12px'
+          }}>
+            Colorful • Sustainable • Modern
+          </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
 /* ----- Energy Efficient House with Accessibility Features ----- */
 function EnergyEfficientHouse({ 
   position = [0, 0, 0], 
@@ -1185,10 +1585,10 @@ function EnergyEfficientHouse({
 
   return (
     <group position={position}>
-      {/* Main structure - BLUE for special house */}
+      {/* Main structure - COLORFUL */}
       <mesh castShadow receiveShadow onClick={handleClick}>
         <boxGeometry args={[4, height, 4]} />
-        <meshStandardMaterial color={isSpecial ? "#3498db" : color} roughness={0.8} metalness={0.1} />
+        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
       </mesh>
       
       {/* Double-sided glass windows */}
@@ -1248,6 +1648,11 @@ function EnergyEfficientHouse({
         <WindTurbine position={[0, height/2, 0]} />
       )}
 
+      {/* Rooftop farming for some houses */}
+      {Math.random() > 0.7 && (
+        <RooftopFarm position={[0, height/2 + 0.4, 0]} size={[3, 3]} />
+      )}
+
       {/* Accessibility ramp for special house */}
       {isSpecial && (
         <group position={[1.5, 0, 2]}>
@@ -1269,196 +1674,16 @@ function EnergyEfficientHouse({
         </group>
       )}
 
-      {/* Stairs with ramp beside for special house */}
-      {isSpecial && (
-        <group position={[-1.5, 0, 2]}>
-          {/* Stairs */}
-          {[0, 0.2, 0.4, 0.6].map((y, i) => (
-            <mesh key={i} position={[0, y + 0.05, -i * 0.3]} castShadow receiveShadow>
-              <boxGeometry args={[1, 0.1, 0.3]} />
-              <meshStandardMaterial color="#95a5a6" />
-            </mesh>
-          ))}
-          
-          {/* Ramp beside stairs */}
-          <mesh position={[0.8, 0.35, -0.45]} rotation={[0, 0, -Math.PI/8]} castShadow receiveShadow>
-            <boxGeometry args={[0.8, 0.1, 1.2]} />
-            <meshStandardMaterial color="#bdc3c7" />
-          </mesh>
-        </group>
-      )}
-
-      {/* Interior view for special house */}
-      {isSpecial && showInterior && (
-        <group position={[0, 0, -1]}>
-          {/* Ground floor interior */}
-          <mesh position={[0, 1.5, 0]} castShadow>
-            <boxGeometry args={[3.8, 3, 0.1]} />
-            <meshStandardMaterial color="#ecf0f1" />
-          </mesh>
-          
-          {/* First floor interior */}
-          <mesh position={[0, 4.5, 0]} castShadow>
-            <boxGeometry args={[3.8, 2, 0.1]} />
-            <meshStandardMaterial color="#dfe6e9" />
-          </mesh>
-
-          {/* Wheelchair users inside */}
-          <WheelchairUser position={[-1, 0.4, 0.1]} moving={true} />
-          <WheelchairUser position={[1, 0.4, 0.1]} moving={false} />
-          
-          {/* Person coming down from second floor using ramp */}
-          <WheelchairUser position={[-1.2, 2.8, 0.1]} moving={true} onRamp={true} />
-        </group>
-      )}
-
       {/* Building label */}
       <Text
         position={[0, height/2 + 1, 0]}
-        fontSize={0.3}
-        color={isSpecial ? "#e74c3c" : "#8b4513"}
+        fontSize={0.25}
+        color={isSpecial ? "#e74c3c" : "#2c3e50"}
         anchorX="center"
         anchorY="middle"
       >
-        {isSpecial ? "🏠 ACCESSIBLE HOME" : name}
+        {isSpecial ? "♿ " : ""}{name}
       </Text>
-
-      {/* Special house information */}
-      {isSpecial && (
-        <Html position={[0, height/2 + 2, 0]} transform>
-          <div style={{
-            background: 'rgba(52, 152, 219, 0.95)',
-            color: 'white',
-            padding: '12px',
-            borderRadius: '8px',
-            boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-            minWidth: '250px',
-            textAlign: 'center'
-          }}>
-            <h4 style={{ margin: '0 0 8px 0' }}>♿ Accessible Eco Home</h4>
-            <div>🔵 Blue Energy Efficient Design</div>
-            <div>🪟 Double-Sided Glass Windows</div>
-            <div>♿ Wheelchair Accessible</div>
-            <div>🛗 Stairs with Ramp System</div>
-            <div>☀️ Solar Powered</div>
-            <div>🌬️ Wind Turbine</div>
-          </div>
-        </Html>
-      )}
-    </group>
-  )
-}
-
-/* ----- Energy Efficient Society ----- */
-function EnergyEfficientSociety({ position = [0, 0, 0] }) {
-  const houses = [
-    // Row 1
-    { position: [-18, 0, -35], name: "Eco Home 1" },
-    { position: [-12, 0, -35], name: "Eco Home 2" },
-    { position: [-6, 0, -35], name: "Eco Home 3" },
-    { position: [0, 0, -35], name: "Eco Home 4" },
-    { position: [6, 0, -35], name: "Eco Home 5" },
-    { position: [12, 0, -35], name: "Eco Home 6" },
-    { position: [18, 0, -35], name: "Eco Home 7" },
-    
-    // Row 2
-    { position: [-18, 0, -28], name: "Eco Home 8" },
-    { position: [-12, 0, -28], name: "Eco Home 9" },
-    { position: [-6, 0, -28], name: "Eco Home 10" },
-    { position: [0, 0, -28], name: "Eco Home 11", isSpecial: true }, // Special accessible house
-    { position: [6, 0, -28], name: "Eco Home 12" },
-    { position: [12, 0, -28], name: "Eco Home 13" },
-    { position: [18, 0, -28], name: "Eco Home 14" },
-    
-    // Row 3
-    { position: [-18, 0, -21], name: "Eco Home 15" },
-    { position: [-12, 0, -21], name: "Eco Home 16" },
-    { position: [-6, 0, -21], name: "Eco Home 17" },
-    { position: [0, 0, -21], name: "Eco Home 18" },
-    { position: [6, 0, -21], name: "Eco Home 19" },
-    { position: [12, 0, -21], name: "Eco Home 20" },
-    { position: [18, 0, -21], name: "Eco Home 21" }
-  ]
-
-  return (
-    <group position={position}>
-      {/* Society boundary and roads */}
-      <mesh position={[0, 0.01, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[40, 20]} />
-        <meshStandardMaterial color="#27ae60" transparent opacity={0.1} />
-      </mesh>
-      
-      {/* Internal roads */}
-      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[2, 20]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-      
-      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, Math.PI/2]} receiveShadow>
-        <planeGeometry args={[2, 40]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      {/* Society label */}
-      <Text
-        position={[0, 5, -28]}
-        fontSize={0.6}
-        color="#27ae60"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🌱 Energy Efficient Society
-      </Text>
-
-      {/* Generate all houses */}
-      {houses.map((house, index) => (
-        <EnergyEfficientHouse
-          key={index}
-          position={house.position}
-          name={house.name}
-          isSpecial={house.isSpecial}
-          showInterior={house.isSpecial}
-          color={house.isSpecial ? "#3498db" : "#a67c52"}
-        />
-      ))}
-
-      {/* Society park area */}
-      <mesh position={[0, 0.03, -35]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <circleGeometry args={[8, 32]} />
-        <meshStandardMaterial color="#2ecc71" />
-      </mesh>
-
-      {/* Park trees */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const radius = 6
-        return (
-          <group key={i} position={[Math.cos(angle) * radius, 0, Math.sin(angle) * radius - 35]}>
-            {/* Tree trunk */}
-            <mesh position={[0, 1.5, 0]} castShadow>
-              <cylinderGeometry args={[0.3, 0.4, 3, 8]} />
-              <meshStandardMaterial color="#8b4513" />
-            </mesh>
-            {/* Tree top */}
-            <mesh position={[0, 3.5, 0]} castShadow>
-              <sphereGeometry args={[1.2, 8, 8]} />
-              <meshStandardMaterial color="#27ae60" />
-            </mesh>
-          </group>
-        )
-      })}
-
-      {/* People in society */}
-      <Person position={[5, 0, -30]} color="#8b4513" speed={0.2} path={[
-        [5, 0.5, -30], [3, 0.5, -32], [1, 0.5, -30], [3, 0.5, -28], [5, 0.5, -30]
-      ]} />
-      
-      <Person position={[-5, 0, -32]} color="#2c3e50" speed={0.3} path={[
-        [-5, 0.5, -32], [-7, 0.5, -30], [-9, 0.5, -32], [-7, 0.5, -34], [-5, 0.5, -32]
-      ]} />
-
-      {/* Wheelchair user in society */}
-      <WheelchairUser position={[10, 0, -25]} moving={true} />
     </group>
   )
 }
@@ -1531,6 +1756,11 @@ function SmartBuilding({
       {/* SMALLER Wind Turbine on roof */}
       {hasTurbine && (
         <WindTurbine position={[0, height/2, 0]} />
+      )}
+
+      {/* Rooftop farming for some buildings */}
+      {Math.random() > 0.5 && (
+        <RooftopFarm position={[0, height/2 + 0.4, 0]} size={[2, 2]} />
       )}
 
       {/* Building label */}
@@ -2059,10 +2289,16 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Vertical Farm - MOVED outside society */}
+      {/* STANDALONE VERTICAL FARM (Alag Building) */}
       <VerticalFarm position={[30, 0, -10]} />
       
-      {/* Energy Efficient Society behind Vertical Farm */}
+      {/* GLASS HOSPITAL */}
+      <Hospital position={[-25, 0, -15]} />
+      
+      {/* GLASS SCHOOL */}
+      <School position={[25, 0, 15]} />
+      
+      {/* MODERN ENERGY SOCIETY (Different Design) */}
       <EnergyEfficientSociety position={[0, 0, 0]} />
       
       {/* Regular buildings */}
@@ -2242,9 +2478,10 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🏢 Vertical Farm': { x: 30, y: 10, z: -10, lookAt: { x: 30, y: 0, z: -10 } },
-    '🏠 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
-    '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
+    '🏢 Vertical Farm': { x: 30, y: 15, z: -10, lookAt: { x: 30, y: 0, z: -10 } },
+    '🏥 Hospital': { x: -25, y: 12, z: -15, lookAt: { x: -25, y: 0, z: -15 } },
+    '🏫 School': { x: 25, y: 10, z: 15, lookAt: { x: 25, y: 0, z: 15 } },
+    '🌟 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
@@ -2415,7 +2652,7 @@ export default function App() {
       <SettingsIcon />
       <ControlPanel />
       
-      <Canvas shadows camera={{ position: [30, 20, 30], fov: 50 }}>
+      <Canvas shadows camera={{ position: [40, 25, 40], fov: 50 }}>
         <color attach="background" args={['#87CEEB']} />
         <ambientLight intensity={timeOfDay === 'night' ? 0.3 : 0.6} />
         <directionalLight 
@@ -2465,16 +2702,16 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          🌟 Features: Cultural Center • Vertical Farming • Energy Society • Accessible Homes
+          🌟 NEW: Glass Hospital • Glass School • Standalone Vertical Farm • Colorful Energy Society
         </div>
         <div style={{ fontSize: 11, color: '#3498db', marginTop: 2 }}>
-          🍋 Vertical Farm: Lemons • Tomatoes • Apples • Automated Systems
+          🏗️ Rooftop Farming on Buildings • Solar Panels Everywhere • Wind Turbines
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           ⚙️ Click settings icon (top-right) for city controls
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2, fontWeight: 'bold' }}>
-          🗑️ NEW: Auto waste collection! Click bins to fill them, truck collects automatically!
+          🗑️ Click waste bins to fill them, truck collects automatically!
         </div>
       </div>
     </div>
