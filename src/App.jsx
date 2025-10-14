@@ -1871,7 +1871,7 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
               <meshStandardMaterial color="#229954" />
             </mesh>
           )}
-        </div>
+        </group>
       </group>
 
       {/* Processing pipes connecting bins */}
@@ -2059,8 +2059,8 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Vertical Farm */}
-      <VerticalFarm position={[-15, 0, -25]} />
+      {/* Vertical Farm - MOVED outside society */}
+      <VerticalFarm position={[30, 0, -10]} />
       
       {/* Energy Efficient Society behind Vertical Farm */}
       <EnergyEfficientSociety position={[0, 0, 0]} />
@@ -2211,7 +2211,8 @@ function SettingsIcon() {
         boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
         cursor: 'pointer',
         fontSize: '24px',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
+        transform: showCityControl ? 'rotate(90deg)' : 'rotate(0deg)'
       }}
       onClick={() => setShowCityControl(!showCityControl)}
     >
@@ -2241,7 +2242,7 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🏢 Vertical Farm': { x: -15, y: 10, z: -25, lookAt: { x: -15, y: 0, z: -25 } },
+    '🏢 Vertical Farm': { x: 30, y: 10, z: -10, lookAt: { x: 30, y: 0, z: -10 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
@@ -2271,7 +2272,8 @@ function ControlPanel() {
             border: 'none', 
             fontSize: '18px', 
             cursor: 'pointer',
-            color: '#8b4513'
+            color: '#8b4513',
+            fontWeight: 'bold'
           }}
         >
           ✕
