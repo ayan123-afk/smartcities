@@ -1,11 +1,10 @@
-// src/App.jsx
 import React, { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Float, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { create } from 'zustand'
 
-/* ----- Enhanced store with more states ----- */
+
 const useStore = create((set) => ({
   alert: null,
   setAlert: (a) => set({ alert: a }),
@@ -36,7 +35,7 @@ const useStore = create((set) => ({
   showCityControl: false,
   setShowCityControl: (show) => set({ showCityControl: show }),
   // New states for enhanced waste management
-  truckStatus: 'idle', // 'idle', 'collecting', 'returning', 'unloading'
+  truckStatus: 'idle',
   setTruckStatus: (status) => set({ truckStatus: status }),
   currentBinTarget: null,
   setCurrentBinTarget: (target) => set({ currentBinTarget: target }),
@@ -262,16 +261,17 @@ function VerticalFarm({ position = [0, 0, 0] }) {
     
     // Randomly adjust moisture levels
     if (Math.random() < 0.02) {
-      setMoistureLevels(prev =>
-        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
+      setMoistureLevelssetMoistureLevels(prev =>
+  prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
+);
     }
     
     // Auto irrigation when moisture is low
     if (moistureLevels.some(level => level < 0.3)) {
       setIrrigationActive(true)
       setMoistureLevels(prev =>
-        prev.map(level => Math.min(1, level + 0.1))
-      )
+  prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
+);
     }
   })
 
@@ -692,29 +692,17 @@ function CulturalCenter({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- IMPROVED Road System with Proper Layout ----- */
+/* ----- Road System ----- */
 function RoadSystem() {
   const roadTexture = useTexture({
     map: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzMzMzMzIi8+CjxwYXRoIGQ9Ik0yNSA1TDI1IDQ1IiBzdHJva2U9IiNmZmZmMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNCA0Ii8+Cjwvc3ZnPg=='
   })
 
-  // Main roads that go AROUND buildings, not through them
   const mainRoads = [
-    // Horizontal main roads (avoid building areas)
-    { start: [-40, 0, 0], end: [-15, 0, 0], width: 4 }, // Left side
-    { start: [15, 0, 0], end: [40, 0, 0], width: 4 },   // Right side
-    
-    // Vertical main roads (avoid building areas)
-    { start: [0, 0, -40], end: [0, 0, -25], width: 4 }, // Bottom side
-    { start: [0, 0, 25], end: [0, 0, 40], width: 4 },   // Top side
-    
-    // Roads connecting to cultural center (around it)
-    { start: [-20, 0, 20], end: [20, 0, 20], width: 3 }, // Road in front of cultural center
-    { start: [15, 0, 15], end: [15, 0, 25], width: 3 },  // Road to waste management
-    
-    // Roads for energy society access
-    { start: [-15, 0, -25], end: [15, 0, -25], width: 3 }, // Road in front of society
-    { start: [0, 0, -30], end: [0, 0, -40], width: 3 },    // Road to society entrance
+    { start: [-40, 0, 0], end: [40, 0, 0], width: 4 },
+    { start: [0, 0, -40], end: [0, 0, 40], width: 4 },
+    { start: [-30, 0, -20], end: [30, 0, -20], width: 3 },
+    { start: [-20, 0, 30], end: [20, 0, 30], width: 3 }
   ]
 
   return (
@@ -767,120 +755,6 @@ function RoadSystem() {
           )
         })
       })}
-
-      {/* Road boundaries and sidewalks */}
-      {mainRoads.map((road, index) => {
-        const length = Math.sqrt(
-          Math.pow(road.end[0] - road.start[0], 2) +
-          Math.pow(road.end[2] - road.start[2], 2)
-        )
-        const center = [
-          (road.start[0] + road.end[0]) / 2,
-          0.02,
-          (road.start[2] + road.end[2]) / 2
-        ]
-        const angle = Math.atan2(road.end[2] - road.start[2], road.end[0] - road.start[0])
-
-        return (
-          <group key={`boundary-${index}`}>
-            {/* Left sidewalk */}
-            <mesh position={center} rotation={[-Math.PI / 2, 0, angle]}>
-              <planeGeometry args={[length, 0.5]} />
-              <meshStandardMaterial color="#7f8c8d" />
-            </mesh>
-            {/* Right sidewalk */}
-            <mesh position={center} rotation={[-Math.PI / 2, 0, angle]}>
-              <planeGeometry args={[length, 0.5]} />
-              <meshStandardMaterial color="#7f8c8d" />
-            </mesh>
-          </group>
-        )
-      })}
-    </group>
-  )
-}
-
-/* ----- Society Entrance with Dome ----- */
-function SocietyEntrance({ position = [0, 0, -35] }) {
-  return (
-    <group position={position}>
-      {/* Main Entrance Arch with Dome */}
-      <group position={[0, 0, 0]}>
-        {/* Left pillar */}
-        <mesh position={[-4, 3, 0]} castShadow>
-          <boxGeometry args={[1, 6, 1]} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        
-        {/* Right pillar */}
-        <mesh position={[4, 3, 0]} castShadow>
-          <boxGeometry args={[1, 6, 1]} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        
-        {/* Arch top */}
-        <mesh position={[0, 6, 0]} castShadow>
-          <boxGeometry args={[8, 0.5, 1]} />
-          <meshStandardMaterial color="#a67c52" />
-        </mesh>
-        
-        {/* Beautiful Dome on top */}
-        <mesh position={[0, 8, 0]} castShadow>
-          <sphereGeometry args={[2, 16, 16, 0, Math.PI, 0, Math.PI]} />
-          <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.2} />
-        </mesh>
-        
-        {/* Dome decorative elements */}
-        <mesh position={[0, 8.5, 0]} castShadow>
-          <sphereGeometry args={[0.3, 8, 8]} />
-          <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.5} />
-        </mesh>
-      </group>
-
-      {/* Entrance gates */}
-      <mesh position={[-1.5, 2, 0]} castShadow>
-        <boxGeometry args={[2.5, 4, 0.1]} />
-        <meshStandardMaterial color="#c19a6b" />
-      </mesh>
-      <mesh position={[1.5, 2, 0]} castShadow>
-        <boxGeometry args={[2.5, 4, 0.1]} />
-        <meshStandardMaterial color="#c19a6b" />
-      </mesh>
-
-      {/* Welcome sign */}
-      <Text
-        position={[0, 5, 0.1]}
-        fontSize={0.4}
-        color="#d4af37"
-        anchorX="center"
-        anchorY="middle"
-        fontWeight="bold"
-      >
-        🌟 Welcome to Eco Society 🌟
-      </Text>
-
-      {/* Security booth */}
-      <mesh position={[-6, 1.5, -2]} castShadow>
-        <boxGeometry args={[2, 3, 2]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      {/* Entrance road markings */}
-      <mesh position={[0, 0.03, -5]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[8, 10]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
-      {/* Entrance decorative lights */}
-      {Array.from({ length: 6 }).map((_, i) => (
-        <mesh key={i} position={[-7 + i * 2.8, 1, -1]} castShadow>
-          <sphereGeometry args={[0.2, 8, 8]} />
-          <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-        </mesh>
-      ))}
-
-      {/* Guard */}
-      <Person position={[-6, 0, -1.5]} color="#2c3e50" speed={0} />
     </group>
   )
 }
@@ -976,19 +850,16 @@ function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
 function StreetLightSystem() {
   const lightPositions = [
     // Main roads
-    ...Array.from({ length: 8 }).map((_, i) => [-35 + i * 5, 0, 0]),
-    ...Array.from({ length: 8 }).map((_, i) => [15 + i * 5, 0, 0]),
-    ...Array.from({ length: 6 }).map((_, i) => [0, 0, -35 + i * 5]),
-    ...Array.from({ length: 6 }).map((_, i) => [0, 0, 25 + i * 5]),
+    ...Array.from({ length: 16 }).map((_, i) => [-35 + i * 5, 0, 0]),
+    ...Array.from({ length: 16 }).map((_, i) => [0, 0, -35 + i * 5]),
+    ...Array.from({ length: 12 }).map((_, i) => [-25 + i * 5, 0, -20]),
+    ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
     
     // Around important buildings
     [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
     
     // Cultural center area
-    [10, 0, 25], [-10, 0, 25], [0, 0, 20],
-    
-    // Society entrance
-    [0, 0, -35], [-5, 0, -35], [5, 0, -35]
+    [10, 0, 25], [-10, 0, 25], [0, 0, 20]
   ]
 
   return (
@@ -1160,40 +1031,32 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
   )
 }
 
-/* ----- IMPROVED Traffic System with Roads that Avoid Buildings ----- */
+/* ----- Traffic System ----- */
 function TrafficSystem() {
   const trafficDensity = useStore((s) => s.trafficDensity)
   
-  // Updated car paths that go AROUND buildings, not through them
   const carPaths = [
-    // Horizontal routes - avoiding building areas
-    [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-10, 0.3, 0]],
-    [[10, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
+    // Horizontal routes - PROPER VERTICAL MOVEMENT
+    [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
+    [[-35, 0.3, -20], [-25, 0.3, -20], [-15, 0.3, -20], [-5, 0.3, -20], [5, 0.3, -20], [15, 0.3, -20], [25, 0.3, -20], [35, 0.3, -20]],
     
-    // Vertical routes - avoiding building areas
-    [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -20]],
-    [[0, 0.3, 25], [0, 0.3, 30], [0, 0.3, 35]],
-    
-    // Cultural center access roads
-    [[-20, 0.3, 20], [-10, 0.3, 20], [0, 0.3, 20], [10, 0.3, 20], [20, 0.3, 20]],
-    [[15, 0.3, 15], [15, 0.3, 20], [15, 0.3, 25]],
-    
-    // Society access roads
-    [[-15, 0.3, -25], [-10, 0.3, -25], [-5, 0.3, -25], [0, 0.3, -25], [5, 0.3, -25], [10, 0.3, -25], [15, 0.3, -25]],
-    [[0, 0.3, -30], [0, 0.3, -35]]
+    // Vertical routes - PROPER HORIZONTAL MOVEMENT
+    [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35]],
+    [[20, 0.3, -35], [20, 0.3, -25], [20, 0.3, -15], [20, 0.3, -5], [20, 0.3, 5], [20, 0.3, 15], [20, 0.3, 25], [20, 0.3, 35]]
   ]
 
   const busPaths = [
-    // Main bus routes around the city (avoiding buildings)
+    // Horizontal bus routes
     [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
+    // Vertical bus routes
     [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]],
     // Bus route that stops at cultural center
     [[-30, 0.4, 25], [-15, 0.4, 25], [0, 0.4, 25], [15, 0.4, 25], [30, 0.4, 25]]
   ]
 
   const carColors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"]
-  const carCount = trafficDensity === 'low' ? 6 : trafficDensity === 'medium' ? 12 : 20
-  const busCount = trafficDensity === 'low' ? 1 : trafficDensity === 'medium' ? 2 : 3
+  const carCount = trafficDensity === 'low' ? 8 : trafficDensity === 'medium' ? 15 : 25
+  const busCount = trafficDensity === 'low' ? 1 : trafficDensity === 'medium' ? 2 : 4
 
   return (
     <group>
@@ -1202,7 +1065,7 @@ function TrafficSystem() {
         <Car
           key={`car-${i}`}
           color={carColors[i % carColors.length]}
-          speed={0.3 + Math.random() * 0.3}
+          speed={0.3 + Math.random() * 0.3} // Slower speed
           path={carPaths[i % carPaths.length]}
         />
       ))}
@@ -1487,7 +1350,7 @@ function EnergyEfficientHouse({
   )
 }
 
-/* ----- Energy Efficient Society with Proper Entrance ----- */
+/* ----- Energy Efficient Society ----- */
 function EnergyEfficientSociety({ position = [0, 0, 0] }) {
   const houses = [
     // Row 1
@@ -2175,15 +2038,15 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
   )
 }
 
-/* ----- IMPROVED City Layout with Proper Road Management ----- */
+/* ----- City Layout ----- */
 function CityLayout() {
   const buildings = [
-    // Residential area - placed away from main roads
+    // Residential area
     { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Residence A", hasTurbine: true },
     { position: [-20, 0, 18], height: 8, color: "#b5651d", name: "Residence B", hasTurbine: false },
     { position: [-30, 0, 20], height: 7, color: "#c19a6b", name: "Residence C", hasTurbine: true },
     
-    // Commercial area - placed away from main roads
+    // Commercial area
     { position: [20, 0, -15], height: 12, color: "#8b4513", name: "Office A", hasTurbine: true },
     { position: [25, 0, -18], height: 10, color: "#a0522d", name: "Office B", hasTurbine: false },
     { position: [15, 0, -20], height: 14, color: "#cd853f", name: "Office C", hasTurbine: true }
@@ -2203,9 +2066,6 @@ function CityLayout() {
       {/* Energy Efficient Society behind Vertical Farm */}
       <EnergyEfficientSociety position={[0, 0, 0]} />
       
-      {/* Society Entrance with Beautiful Dome */}
-      <SocietyEntrance position={[0, 0, -35]} />
-      
       {/* Regular buildings */}
       {buildings.map((building, index) => (
         <SmartBuilding
@@ -2222,7 +2082,7 @@ function CityLayout() {
       {/* Enhanced Waste Management System */}
       <WasteManagementSystem position={[15, 0, 15]} />
       
-      {/* GREEN waste bins around town - placed near roads, not in buildings */}
+      {/* GREEN waste bins around town */}
       <WasteBin position={[-10, 0, 8]} id="bin1" />
       <WasteBin position={[12, 0, -5]} id="bin2" />
       <WasteBin position={[-5, 0, -12]} id="bin3" />
@@ -2230,7 +2090,7 @@ function CityLayout() {
       <WasteBin position={[-15, 0, -18]} id="bin5" />
       <WasteBin position={[5, 0, 20]} id="bin6" />
       
-      {/* More walking people around the city - on sidewalks, not roads */}
+      {/* More walking people around the city */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
         [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
       ]} />
@@ -2243,17 +2103,17 @@ function CityLayout() {
         [8, 0.5, 28], [10, 0.5, 26], [12, 0.5, 28], [10, 0.5, 30], [8, 0.5, 28]
       ]} />
 
-      {/* People walking on sidewalks, not on roads */}
-      <Person position={[-12, 0, 5]} color="#8b4513" speed={0.3} path={[
-        [-12, 0.5, 5], [-8, 0.5, 5], [-4, 0.5, 5]
+      {/* People walking on roads */}
+      <Person position={[-10, 0, 5]} color="#8b4513" speed={0.3} path={[
+        [-10, 0.5, 5], [-5, 0.5, 5], [0, 0.5, 5], [5, 0.5, 5], [10, 0.5, 5]
       ]} />
       
-      <Person position={[4, 0, -12]} color="#2c3e50" speed={0.4} path={[
-        [4, 0.5, -12], [4, 0.5, -8], [4, 0.5, -4]
+      <Person position={[5, 0, -10]} color="#2c3e50" speed={0.4} path={[
+        [5, 0.5, -10], [5, 0.5, -5], [5, 0.5, 0], [5, 0.5, 5], [5, 0.5, 10]
       ]} />
 
-      <Person position={[-18, 0, -12]} color="#8b4513" speed={0.2} path={[
-        [-18, 0.5, -12], [-14, 0.5, -12], [-10, 0.5, -12]
+      <Person position={[-20, 0, -15]} color="#8b4513" speed={0.2} path={[
+        [-20, 0.5, -15], [-15, 0.5, -15], [-10, 0.5, -15], [-15, 0.5, -20], [-20, 0.5, -15]
       ]} />
     </group>
   )
@@ -2386,7 +2246,6 @@ function ControlPanel() {
     '🏢 Vertical Farm': { x: 30, y: 10, z: -10, lookAt: { x: 30, y: 0, z: -10 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
-    '🌟 Society Entrance': { x: 0, y: 10, z: -35, lookAt: { x: 0, y: 0, z: -35 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
@@ -2617,9 +2476,6 @@ export default function App() {
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2, fontWeight: 'bold' }}>
           🗑️ NEW: Auto waste collection! Click bins to fill them, truck collects automatically!
-        </div>
-        <div style={{ fontSize: 11, color: '#d4af37', marginTop: 2, fontWeight: 'bold' }}>
-          🏛️ NEW: Beautiful society entrance with golden dome!
         </div>
       </div>
     </div>
