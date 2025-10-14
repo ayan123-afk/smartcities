@@ -34,7 +34,14 @@ const useStore = create((set) => ({
   },
   setWasteProcessing: (processing) => set({ wasteProcessing: processing }),
   showCityControl: false,
-  setShowCityControl: (show) => set({ showCityControl: show })
+  setShowCityControl: (show) => set({ showCityControl: show }),
+  // New states for enhanced waste management
+  truckStatus: 'idle', // 'idle', 'collecting', 'returning', 'unloading'
+  setTruckStatus: (status) => set({ truckStatus: status }),
+  currentBinTarget: null,
+  setCurrentBinTarget: (target) => set({ currentBinTarget: target }),
+  collectedWaste: 0,
+  setCollectedWaste: (waste) => set({ collectedWaste: waste })
 }))
 
 /* ----- Vertical Farming Components ----- */
@@ -1555,7 +1562,6 @@ function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
       // Alert waste management when bin is full
       if (newLevel >= 1) {
         setAlertWasteManagement(true)
-        setTimeout(() => setAlertWasteManagement(false), 5000)
       }
     }
   }
@@ -1596,29 +1602,55 @@ function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
   )
 }
 
-/* ----- Waste Collection Truck ----- */
-function WasteTruck({ position = [0, 0, 0], isCollecting = false, onCollectionComplete }) {
+/* ----- Enhanced Waste Collection Truck with Animation ----- */
+function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComplete }) {
   const truckRef = useRef()
-  const [positionState, setPositionState] = useState(position)
+  const [currentPosition, setCurrentPosition] = useState(position)
+  const [isCollecting, setIsCollecting] = useState(false)
   const [collectionProgress, setCollectionProgress] = useState(0)
+  const [binLifted, setBinLifted] = useState(false)
 
   useFrame((_, dt) => {
-    if (truckRef.current && isCollecting) {
-      // Move truck to simulate collection
-      const progress = collectionProgress + dt * 0.5
+    if (!truckRef.current || !targetBin) return
+
+    const truckPos = truckRef.current.position
+    const targetPos = new THREE.Vector3(targetBin[0], targetBin[1], targetBin[2])
+
+    // Move truck towards bin
+    if (!isCollecting && truckPos.distanceTo(targetPos) > 2) {
+      const direction = new THREE.Vector3().subVectors(targetPos, truckPos).normalize()
+      truckPos.add(direction.multiplyScalar(dt * 4))
+      truckRef.current.lookAt(truckPos.clone().add(direction))
+      setCurrentPosition([truckPos.x, truckPos.y, truckPos.z])
+    } 
+    // Start collection when close to bin
+    else if (!isCollecting) {
+      setIsCollecting(true)
+    }
+    
+    // Collection animation
+    if (isCollecting) {
+      const progress = collectionProgress + dt * 2
       setCollectionProgress(progress)
-      
-      if (progress < 1) {
-        truckRef.current.position.x = position[0] + progress * 20 // Move 20 units
-        setPositionState([truckRef.current.position.x, position[1], position[2]])
-      } else if (progress >= 1 && onCollectionComplete) {
-        onCollectionComplete()
+
+      if (progress < 0.3) {
+        // Lift bin animation
+        truckRef.current.position.y = position[1] + Math.sin(progress * 10) * 0.1
+        if (progress > 0.2 && !binLifted) {
+          setBinLifted(true)
+        }
+      } else if (progress >= 1) {
+        // Collection complete
+        setIsCollecting(false)
+        setCollectionProgress(0)
+        setBinLifted(false)
+        if (onCollectionComplete) onCollectionComplete()
       }
     }
   })
 
   return (
-    <group ref={truckRef} position={positionState}>
+    <group ref={truckRef} position={currentPosition}>
       {/* Truck body - GREEN */}
       <mesh castShadow>
         <boxGeometry args={[2, 1, 1.5]} />
@@ -1631,11 +1663,25 @@ function WasteTruck({ position = [0, 0, 0], isCollecting = false, onCollectionCo
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
       
-      {/* Waste container */}
+      {/* Waste container with animated fill */}
       <mesh position={[-0.5, 1, 0]} castShadow>
         <boxGeometry args={[1.5, 1, 1.2]} />
         <meshStandardMaterial color="#34495e" />
       </mesh>
+      
+      {/* Animated waste level in container */}
+      <mesh position={[-0.5, 0.5 + collectionProgress * 0.4, 0]} castShadow>
+        <boxGeometry args={[1.4, collectionProgress * 0.8, 1.1]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {/* Lifting mechanism animation */}
+      {isCollecting && collectionProgress < 0.3 && (
+        <mesh position={[-1.2, 1.5 + Math.sin(collectionProgress * 20) * 0.5, 0]} castShadow>
+          <boxGeometry args={[0.3, 0.8, 0.8]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+      )}
       
       {/* Wheels */}
       {[-0.6, 0.6].map((x, i) => (
@@ -1675,18 +1721,25 @@ function WasteTruck({ position = [0, 0, 0], isCollecting = false, onCollectionCo
   )
 }
 
-/* ----- Enhanced Waste Management System with 4-Hour Processing ----- */
+/* ----- Enhanced Waste Management System with 3R Bins and Pipes ----- */
 function WasteManagementSystem({ position = [15, 0, 15] }) {
-  const [isTruckCollecting, setIsTruckCollecting] = useState(false)
-  const [wasteCollected, setWasteCollected] = useState(0)
+  const [isTruckActive, setIsTruckActive] = useState(false)
+  const [currentBinTarget, setCurrentBinTarget] = useState(null)
+  const [collectedWaste, setCollectedWaste] = useState(0)
   const alertWasteManagement = useStore((s) => s.alertWasteManagement)
   const wasteBins = useStore((s) => s.wasteBins)
   const wasteProcessing = useStore((s) => s.wasteProcessing)
   const setWasteProcessing = useStore((s) => s.setWasteProcessing)
   const setEmergencyAlarm = useStore((s) => s.setEmergencyAlarm)
+  const setAlertWasteManagement = useStore((s) => s.setAlertWasteManagement)
   
+  const binPositions = [
+    [-10, 0, 8], [12, 0, -5], [-5, 0, -12], 
+    [18, 0, 10], [-15, 0, -18], [5, 0, 20]
+  ]
+
   const startProcessing = () => {
-    if (wasteCollected > 0 && !wasteProcessing.isProcessing) {
+    if (collectedWaste > 0 && !wasteProcessing.isProcessing) {
       setWasteProcessing({
         isProcessing: true,
         processTime: 0,
@@ -1699,9 +1752,14 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
 
   useFrame((_, dt) => {
     // Check if any bin is full and send truck
-    const anyBinFull = Object.values(wasteBins).some(level => level >= 1)
-    if (anyBinFull && alertWasteManagement && !isTruckCollecting) {
-      setIsTruckCollecting(true)
+    const fullBins = Object.entries(wasteBins)
+      .filter(([_, level]) => level >= 1)
+      .map(([id]) => binPositions[parseInt(id.replace('bin', '')) - 1])
+
+    if (fullBins.length > 0 && !isTruckActive && !currentBinTarget) {
+      setCurrentBinTarget(fullBins[0])
+      setIsTruckActive(true)
+      setAlertWasteManagement(true)
     }
 
     // Waste processing simulation
@@ -1713,11 +1771,11 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
         setWasteProcessing({
           isProcessing: false,
           processTime: 4,
-          recycledWaste: Math.floor(wasteCollected * 0.6), // 60% recycled
-          reducedWaste: Math.floor(wasteCollected * 0.2),  // 20% reduced
-          reusedWaste: Math.floor(wasteCollected * 0.15)  // 15% reused
+          recycledWaste: Math.floor(collectedWaste * 0.6), // 60% recycled
+          reducedWaste: Math.floor(collectedWaste * 0.2),  // 20% reduced
+          reusedWaste: Math.floor(collectedWaste * 0.15)  // 15% reused
         })
-        setWasteCollected(0)
+        setCollectedWaste(0)
       } else {
         setWasteProcessing({
           ...wasteProcessing,
@@ -1728,12 +1786,22 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
   })
 
   const handleCollectionComplete = () => {
-    setIsTruckCollecting(false)
-    setWasteCollected(prev => prev + 5) // Add collected waste
-    // Reset all bins after collection
-    Object.keys(wasteBins).forEach(id => {
-      useStore.getState().updateWasteBin(id, 0)
-    })
+    // Reset the current bin
+    const binId = `bin${binPositions.findIndex(pos => 
+      pos[0] === currentBinTarget[0] && 
+      pos[1] === currentBinTarget[1] && 
+      pos[2] === currentBinTarget[2]
+    ) + 1}`
+    
+    useStore.getState().updateWasteBin(binId, 0)
+    
+    // Add collected waste
+    setCollectedWaste(prev => prev + 5)
+    
+    // Reset truck state
+    setCurrentBinTarget(null)
+    setIsTruckActive(false)
+    setAlertWasteManagement(false)
   }
 
   const triggerEmergency = () => {
@@ -1745,94 +1813,166 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
     <group position={position}>
       {/* Main waste management building */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[8, 6, 8]} />
+        <boxGeometry args={[12, 8, 10]} />
         <meshStandardMaterial color="#2c3e50" roughness={0.7} />
       </mesh>
+
+      {/* Processing area with 3R bins */}
+      <group position={[0, 4, -3]}>
+        {/* Reduce Bin (RED) */}
+        <group position={[-4, 0, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
+            <meshStandardMaterial color="#e74c3c" />
+          </mesh>
+          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
+            📉 REDUCE
+          </Text>
+          {/* Waste level in bin */}
+          {wasteProcessing.reducedWaste > 0 && (
+            <mesh position={[0, wasteProcessing.reducedWaste * 0.1 - 0.9, 0]} castShadow>
+              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.reducedWaste * 0.2, 16]} />
+              <meshStandardMaterial color="#c0392b" />
+            </mesh>
+          )}
+        </group>
+
+        {/* Reuse Bin (ORANGE) */}
+        <group position={[0, 0, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
+            <meshStandardMaterial color="#f39c12" />
+          </mesh>
+          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
+            🔄 REUSE
+          </Text>
+          {/* Waste level in bin */}
+          {wasteProcessing.reusedWaste > 0 && (
+            <mesh position={[0, wasteProcessing.reusedWaste * 0.1 - 0.9, 0]} castShadow>
+              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.reusedWaste * 0.2, 16]} />
+              <meshStandardMaterial color="#e67e22" />
+            </mesh>
+          )}
+        </group>
+
+        {/* Recycle Bin (GREEN) */}
+        <group position={[4, 0, 0]}>
+          <mesh castShadow>
+            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
+            <meshStandardMaterial color="#27ae60" />
+          </mesh>
+          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
+            ♻️ RECYCLE
+          </Text>
+          {/* Waste level in bin */}
+          {wasteProcessing.recycledWaste > 0 && (
+            <mesh position={[0, wasteProcessing.recycledWaste * 0.1 - 0.9, 0]} castShadow>
+              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.recycledWaste * 0.2, 16]} />
+              <meshStandardMaterial color="#229954" />
+            </mesh>
+          )}
+        </div>
+      </group>
+
+      {/* Processing pipes connecting bins */}
+      <group>
+        {/* Main input pipe */}
+        <mesh position={[0, 1, 2]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 8, 8]} />
+          <meshStandardMaterial color="#95a5a6" />
+        </mesh>
+        
+        {/* Pipe to Reduce bin */}
+        <mesh position={[-2, 1, -1]} rotation={[0, Math.PI/2, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 4, 8]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        
+        {/* Pipe to Reuse bin */}
+        <mesh position={[0, 1, -1]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 2, 8]} />
+          <meshStandardMaterial color="#f39c12" />
+        </mesh>
+        
+        {/* Pipe to Recycle bin */}
+        <mesh position={[2, 1, -1]} rotation={[0, -Math.PI/2, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 4, 8]} />
+          <meshStandardMaterial color="#27ae60" />
+        </mesh>
+      </group>
 
       {/* Processing tanks */}
       <group position={[0, 3.5, 2]}>
         <mesh castShadow>
-          <cylinderGeometry args={[0.6, 0.6, 2, 16]} />
+          <cylinderGeometry args={[1.2, 1.2, 3, 16]} />
           <meshStandardMaterial color="#34495e" />
         </mesh>
-      </group>
-
-      {/* Recycling bins */}
-      <group position={[3, 1, 0]}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.5, 0.5, 1, 16]} />
-          <meshStandardMaterial color="#3498db" />
-        </mesh>
-        <Text position={[0, 1.2, 0]} fontSize={0.2} color="white" anchorX="center">
-          ♻️ Recycle
-        </Text>
-      </group>
-
-      <group position={[-3, 1, 0]}>
-        <mesh castShadow>
-          <cylinderGeometry args={[0.5, 0.5, 1, 16]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-        <Text position={[0, 1.2, 0]} fontSize={0.2} color="white" anchorX="center">
-          🔄 Reuse
-        </Text>
+        {/* Animated processing liquid */}
+        {wasteProcessing.isProcessing && (
+          <mesh position={[0, wasteProcessing.processTime * 0.3 - 1.5, 0]} castShadow>
+            <cylinderGeometry args={[1.1, 1.1, wasteProcessing.processTime * 0.6, 16]} />
+            <meshStandardMaterial color="#3498db" transparent opacity={0.7} />
+          </mesh>
+        )}
       </group>
 
       {/* Solar panels */}
-      <group position={[0, 3.5, 0]}>
-        {Array.from({ length: 6 }).map((_, i) => (
+      <group position={[0, 4.5, 5]}>
+        {Array.from({ length: 8 }).map((_, i) => (
           <SolarPanel 
             key={i}
-            position={[-3 + i * 1.2, 0.5, 3.5]} 
-            rotation={[0, Math.PI/2, 0]} 
+            position={[-4.5 + i * 1.3, 0.5, 0]} 
+            rotation={[0, Math.PI, 0]} 
           />
         ))}
       </group>
 
       {/* SMALLER Wind turbine */}
-      <WindTurbine position={[0, 3, 0]} />
+      <WindTurbine position={[0, 4, 0]} />
 
       {/* Waste Collection Truck */}
-      <WasteTruck 
-        position={[-10, 0, 5]} 
-        isCollecting={isTruckCollecting}
-        onCollectionComplete={handleCollectionComplete}
-      />
+      {isTruckActive && currentBinTarget && (
+        <WasteTruck 
+          position={[position[0] - 15, 0, position[2]]}
+          targetBin={currentBinTarget}
+          onCollectionComplete={handleCollectionComplete}
+        />
+      )}
 
       {/* Emergency Alarm */}
-      <mesh position={[0, 8, 0]} castShadow>
+      <mesh position={[0, 9, 0]} castShadow>
         <cylinderGeometry args={[0.3, 0.3, 0.5, 8]} />
         <meshStandardMaterial color="#e74c3c" emissive="#e74c3c" emissiveIntensity={0.5} />
       </mesh>
 
       {/* Information display */}
-      <Html position={[0, 5, 0]} transform>
+      <Html position={[0, 6, 0]} transform>
         <div style={{
           background: 'rgba(255,255,255,0.95)',
           padding: '15px',
           borderRadius: '12px',
           boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '280px',
+          minWidth: '320px',
           textAlign: 'center'
         }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Waste Management</h3>
+          <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Advanced Waste Management</h3>
           
           <div style={{ marginBottom: '10px' }}>
-            <div>🗑️ Waste Collected: {wasteCollected} units</div>
+            <div>🗑️ Collected Waste: {collectedWaste} units</div>
             <div>⏱️ Process Time: {Math.min(4, wasteProcessing.processTime).toFixed(1)}/4 hrs</div>
-            <div>🚛 Truck Status: {isTruckCollecting ? 'COLLECTING' : 'READY'}</div>
+            <div>🚛 Truck Status: {isTruckActive ? 'COLLECTING' : 'READY'}</div>
             
             {wasteProcessing.processTime >= 4 && (
               <div style={{ marginTop: '8px', padding: '8px', background: '#ecf0f1', borderRadius: '6px' }}>
-                <div>♻️ Recycled: {wasteProcessing.recycledWaste} units</div>
-                <div>📉 Reduced: {wasteProcessing.reducedWaste} units</div>
-                <div>🔄 Reused: {wasteProcessing.reusedWaste} units</div>
+                <div style={{ color: '#27ae60' }}>♻️ Recycled: {wasteProcessing.recycledWaste} units</div>
+                <div style={{ color: '#e74c3c' }}>📉 Reduced: {wasteProcessing.reducedWaste} units</div>
+                <div style={{ color: '#f39c12' }}>🔄 Reused: {wasteProcessing.reusedWaste} units</div>
               </div>
             )}
             
             {alertWasteManagement && (
               <div style={{ color: '#e74c3c', fontWeight: 'bold', marginTop: '5px' }}>
-                ⚠️ ALERT: Bin Full! Collection started
+                ⚠️ ALERT: Bin Full! Truck dispatched
               </div>
             )}
           </div>
@@ -1840,14 +1980,14 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
           <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
             <button 
               onClick={startProcessing}
-              disabled={wasteProcessing.isProcessing || wasteCollected === 0}
+              disabled={wasteProcessing.isProcessing || collectedWaste === 0}
               style={{
-                background: wasteProcessing.isProcessing ? '#95a5a6' : wasteCollected === 0 ? '#95a5a6' : '#27ae60',
+                background: wasteProcessing.isProcessing ? '#95a5a6' : collectedWaste === 0 ? '#95a5a6' : '#27ae60',
                 color: 'white',
                 border: 'none',
                 padding: '8px 12px',
                 borderRadius: '6px',
-                cursor: wasteCollected > 0 && !wasteProcessing.isProcessing ? 'pointer' : 'not-allowed',
+                cursor: collectedWaste > 0 && !wasteProcessing.isProcessing ? 'pointer' : 'not-allowed',
                 flex: 1
               }}
             >
@@ -1868,17 +2008,30 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
               🚨 Emergency
             </button>
           </div>
+
+          {/* 3R System Info */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, #e74c3c, #f39c12, #27ae60)',
+            color: 'white',
+            padding: '8px',
+            borderRadius: '6px',
+            marginTop: '8px',
+            fontSize: '11px'
+          }}>
+            <div><strong>3R Waste Management System</strong></div>
+            <div>📉 Reduce • 🔄 Reuse • ♻️ Recycle</div>
+          </div>
         </div>
       </Html>
 
       <Text
-        position={[0, 7, 0]}
-        fontSize={0.4}
+        position={[0, 10, 0]}
+        fontSize={0.5}
         color="#2c3e50"
         anchorX="center"
         anchorY="middle"
       >
-        Waste Management
+        Advanced Waste Management
       </Text>
     </group>
   )
@@ -1925,16 +2078,16 @@ function CityLayout() {
         />
       ))}
       
-      {/* Waste Management System */}
+      {/* Enhanced Waste Management System */}
       <WasteManagementSystem position={[15, 0, 15]} />
       
-      {/* Additional GREEN waste bins around town */}
+      {/* GREEN waste bins around town */}
       <WasteBin position={[-10, 0, 8]} id="bin1" />
       <WasteBin position={[12, 0, -5]} id="bin2" />
       <WasteBin position={[-5, 0, -12]} id="bin3" />
       <WasteBin position={[18, 0, 10]} id="bin4" />
       <WasteBin position={[-15, 0, -18]} id="bin5" />
-      <WasteBin position={[5, 0, 20]} id="bin6" /> {/* Near cultural center */}
+      <WasteBin position={[5, 0, 20]} id="bin6" />
       
       {/* More walking people around the city */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
@@ -2317,6 +2470,9 @@ export default function App() {
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           ⚙️ Click settings icon (top-right) for city controls
+        </div>
+        <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2, fontWeight: 'bold' }}>
+          🗑️ NEW: Auto waste collection! Click bins to fill them, truck collects automatically!
         </div>
       </div>
     </div>
