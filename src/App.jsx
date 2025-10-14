@@ -16,7 +16,13 @@ const useStore = create((set) => ({
   trafficDensity: 'medium',
   setTrafficDensity: (d) => set({ trafficDensity: d }),
   streetLightsOn: false,
-  setStreetLightsOn: (s) => set({ streetLightsOn: s })
+  setStreetLightsOn: (s) => set({ streetLightsOn: s }),
+  wasteBins: {},
+  updateWasteBin: (id, level) => set((state) => ({ 
+    wasteBins: { ...state.wasteBins, [id]: level } 
+  })),
+  alertWasteManagement: false,
+  setAlertWasteManagement: (alert) => set({ alertWasteManagement: alert })
 }))
 
 /* ----- Enhanced Camera Controller ----- */
@@ -54,6 +60,166 @@ function CustomOrbitControls() {
       panSpeed={0.5}
       screenSpacePanning={true}
     />
+  )
+}
+
+/* ----- Walking People ----- */
+function Person({ position = [0, 0, 0], color = "#8b4513", speed = 1, path = [] }) {
+  const personRef = useRef()
+  const [t, setT] = useState(Math.random() * 10)
+
+  useFrame((_, dt) => {
+    setT(prev => prev + dt * speed)
+    
+    if (personRef.current && path.length > 0) {
+      const tt = t % path.length
+      const i = Math.floor(tt) % path.length
+      const a = new THREE.Vector3(...path[i])
+      const b = new THREE.Vector3(...path[(i + 1) % path.length])
+      const f = tt % 1
+      const pos = a.clone().lerp(b, f)
+      
+      personRef.current.position.lerp(pos, 0.1)
+      if (b) personRef.current.lookAt(b)
+    }
+  })
+
+  return (
+    <group ref={personRef} position={position}>
+      {/* Body */}
+      <mesh position={[0, 0.9, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+        <meshStandardMaterial color={color} />
+      </mesh>
+      
+      {/* Head */}
+      <mesh position={[0, 1.5, 0]} castShadow>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial color="#ffdbac" />
+      </mesh>
+      
+      {/* Walking animation */}
+      <group>
+        <mesh position={[-0.1, 0.4, 0]} rotation={[Math.sin(t * 10) * 0.3, 0, 0]} castShadow>
+          <boxGeometry args={[0.08, 0.4, 0.08]} />
+          <meshStandardMaterial color="#2c3e50" />
+        </mesh>
+        <mesh position={[0.1, 0.4, 0]} rotation={[Math.sin(t * 10 + Math.PI) * 0.3, 0, 0]} castShadow>
+          <boxGeometry args={[0.08, 0.4, 0.08]} />
+          <meshStandardMaterial color="#2c3e50" />
+        </mesh>
+      </group>
+    </group>
+  )
+}
+
+/* ----- Cultural Center with Banners ----- */
+function CulturalCenter({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+
+  const culturalStyles = [
+    { name: "Sindhi", color: "#ff6b6b", pattern: "🎵" },
+    { name: "Punjabi", color: "#4ecdc4", pattern: "💃" },
+    { name: "Pashto", color: "#45b7d1", pattern: "⚔️" },
+    { name: "Balochi", color: "#96ceb4", pattern: "🏔️" }
+  ]
+
+  return (
+    <group position={position}>
+      {/* Main Cultural Center Building */}
+      <mesh 
+        castShadow 
+        receiveShadow 
+        onClick={() => setFocus({
+          x: position[0],
+          y: 8,
+          z: position[2],
+          lookAt: { x: position[0], y: 0, z: position[2] }
+        })}
+      >
+        <boxGeometry args={[12, 6, 8]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.7} />
+      </mesh>
+
+      {/* Entrance */}
+      <mesh position={[0, 3, 4.1]} castShadow>
+        <boxGeometry args={[3, 4, 0.2]} />
+        <meshStandardMaterial color="#a67c52" />
+      </mesh>
+
+      {/* Cultural Banners */}
+      <group position={[0, 4, 0]}>
+        {culturalStyles.map((culture, index) => {
+          const angle = (index / culturalStyles.length) * Math.PI * 2
+          const radius = 8
+          const bannerX = Math.cos(angle) * radius
+          const bannerZ = Math.sin(angle) * radius
+          
+          return (
+            <group key={culture.name} position={[bannerX, 0, bannerZ]} rotation={[0, -angle, 0]}>
+              {/* Banner Pole */}
+              <mesh position={[0, 4, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 8, 8]} />
+                <meshStandardMaterial color="#d4af37" />
+              </mesh>
+              
+              {/* Banner */}
+              <mesh position={[0, 6, -0.5]} rotation={[0, 0, 0]} castShadow>
+                <planeGeometry args={[2, 3]} />
+                <meshStandardMaterial color={culture.color} />
+              </mesh>
+              
+              {/* Cultural Symbol */}
+              <Text
+                position={[0, 6, -0.51]}
+                fontSize={0.8}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {culture.pattern}
+              </Text>
+              
+              {/* Culture Name */}
+              <Text
+                position={[0, 4.5, -0.51]}
+                fontSize={0.3}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {culture.name}
+              </Text>
+            </group>
+          )
+        })}
+      </group>
+
+      {/* Central Flag */}
+      <mesh position={[0, 9, 0]} castShadow>
+        <cylinderGeometry args={[0.15, 0.15, 10, 8]} />
+        <meshStandardMaterial color="#c9b037" />
+      </mesh>
+
+      <Text
+        position={[0, 7, 0]}
+        fontSize={0.5}
+        color="#d4af37"
+        anchorX="center"
+        anchorY="middle"
+      >
+        Cultural Center
+      </Text>
+
+      {/* People gathering around cultural center */}
+      <Person position={[3, 0, 2]} color="#8b4513" speed={0.3} path={[
+        [3, 0.5, 2], [2, 0.5, 1], [1, 0.5, 2], [2, 0.5, 3], [3, 0.5, 2]
+      ]} />
+      
+      <Person position={[-2, 0, -1]} color="#2c3e50" speed={0.4} path={[
+        [-2, 0.5, -1], [-1, 0.5, -2], [0, 0.5, -1], [-1, 0.5, 0], [-2, 0.5, -1]
+      ]} />
+    </group>
   )
 }
 
@@ -124,6 +290,48 @@ function RoadSystem() {
   )
 }
 
+/* ----- Bus Station ----- */
+function BusStation({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Platform */}
+      <mesh position={[0, 0.1, 0]} receiveShadow>
+        <boxGeometry args={[6, 0.2, 2]} />
+        <meshStandardMaterial color="#7f8c8d" />
+      </mesh>
+      
+      {/* Shelter */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <boxGeometry args={[5, 0.1, 1.5]} />
+        <meshStandardMaterial color="#34495e" transparent opacity={0.7} />
+      </mesh>
+      
+      {/* Support pillars */}
+      {[-2, 2].map((x) => (
+        <mesh key={x} position={[x, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+          <meshStandardMaterial color="#2c3e50" />
+        </mesh>
+      ))}
+      
+      {/* Bus stop sign */}
+      <Text
+        position={[0, 1.5, 1.1]}
+        fontSize={0.3}
+        color="#e74c3c"
+        anchorX="center"
+        anchorY="middle"
+      >
+        BUS STOP
+      </Text>
+      
+      {/* Waiting people */}
+      <Person position={[-1, 0.5, 0]} color="#8b4513" speed={0} />
+      <Person position={[1, 0.5, 0]} color="#2c3e50" speed={0} />
+    </group>
+  )
+}
+
 /* ----- Street Lights ----- */
 function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
   const timeOfDay = useStore((s) => s.timeOfDay)
@@ -179,7 +387,10 @@ function StreetLightSystem() {
     ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
     
     // Around important buildings
-    [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6]
+    [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
+    
+    // Cultural center area
+    [10, 0, 25], [-10, 0, 25], [0, 0, 20]
   ]
 
   return (
@@ -226,6 +437,12 @@ function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) 
         <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
       </mesh>
       
+      {/* Solar panel on car roof */}
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <boxGeometry args={[1, 0.02, 0.5]} />
+        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
+      </mesh>
+      
       {/* Wheels */}
       {[-0.4, 0.4].map((x, i) => (
         <group key={i} position={[x, -0.2, 0.3]}>
@@ -239,11 +456,24 @@ function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) 
   )
 }
 
-function Bus({ position = [0, 0, 0], path = [] }) {
+function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
   const busRef = useRef()
   const [t, setT] = useState(Math.random() * 10)
+  const [isStopped, setIsStopped] = useState(false)
+  const [stopTimer, setStopTimer] = useState(0)
 
   useFrame((_, dt) => {
+    if (isStopped) {
+      setStopTimer(prev => {
+        if (prev >= 3) { // Stop for 3 seconds
+          setIsStopped(false)
+          return 0
+        }
+        return prev + dt
+      })
+      return
+    }
+
     setT(prev => prev + dt * 0.5)
     
     if (busRef.current && path.length > 0) {
@@ -254,8 +484,15 @@ function Bus({ position = [0, 0, 0], path = [] }) {
       const f = tt % 1
       const pos = a.clone().lerp(b, f)
       
-      busRef.current.position.lerp(pos, 0.1)
-      busRef.current.lookAt(b)
+      // Check if near bus station and should stop
+      if (stopAtStation && !isStopped && pos.distanceTo(new THREE.Vector3(15, 0.4, 25)) < 2) {
+        setIsStopped(true)
+      }
+      
+      if (!isStopped) {
+        busRef.current.position.lerp(pos, 0.1)
+        busRef.current.lookAt(b)
+      }
     }
   })
 
@@ -271,6 +508,12 @@ function Bus({ position = [0, 0, 0], path = [] }) {
       <mesh position={[0, 0.4, 0]} castShadow>
         <boxGeometry args={[2.4, 0.5, 1.1]} />
         <meshStandardMaterial color={"#2c3e50"} transparent opacity={0.7} />
+      </mesh>
+
+      {/* Solar panel on bus roof */}
+      <mesh position={[0, 1.1, 0]} castShadow>
+        <boxGeometry args={[2.2, 0.02, 1]} />
+        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
       </mesh>
 
       {/* Wheels */}
@@ -291,8 +534,24 @@ function Bus({ position = [0, 0, 0], path = [] }) {
         anchorX="center"
         anchorY="middle"
       >
-        CITY BUS
+        {isStopped ? "🛑 BUS" : "CITY BUS"}
       </Text>
+
+      {/* Stop indicator */}
+      {isStopped && (
+        <Html position={[0, 2, 0]}>
+          <div style={{
+            background: '#e74c3c',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            fontWeight: 'bold'
+          }}>
+            STOPPED
+          </div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -313,7 +572,9 @@ function TrafficSystem() {
 
   const busPaths = [
     [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
-    [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]]
+    [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]],
+    // Bus route that stops at cultural center
+    [[-30, 0.4, 25], [-15, 0.4, 25], [0, 0.4, 25], [15, 0.4, 25], [30, 0.4, 25]]
   ]
 
   const carColors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"]
@@ -337,6 +598,7 @@ function TrafficSystem() {
         <Bus
           key={`bus-${i}`}
           path={busPaths[i % busPaths.length]}
+          stopAtStation={i === 0} // First bus stops at station
         />
       ))}
     </group>
@@ -508,14 +770,21 @@ function SmartBuilding({
 }
 
 /* ----- Waste Bin Component ----- */
-function WasteBin({ position = [0, 0, 0], onWasteThrow }) {
+function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
   const [fillLevel, setFillLevel] = useState(0)
+  const updateWasteBin = useStore((s) => s.updateWasteBin)
+  const setAlertWasteManagement = useStore((s) => s.setAlertWasteManagement)
 
   const handleClick = () => {
     if (fillLevel < 1) {
-      setFillLevel(prev => Math.min(1, prev + 0.25))
-      if (onWasteThrow) {
-        onWasteThrow()
+      const newLevel = Math.min(1, fillLevel + 0.25)
+      setFillLevel(newLevel)
+      updateWasteBin(id, newLevel)
+      
+      // Alert waste management when bin is full
+      if (newLevel >= 1) {
+        setAlertWasteManagement(true)
+        setTimeout(() => setAlertWasteManagement(false), 5000)
       }
     }
   }
@@ -542,16 +811,87 @@ function WasteBin({ position = [0, 0, 0], onWasteThrow }) {
 
       <Html position={[0, 1.2, 0]}>
         <div style={{
-          background: '#27ae60',
+          background: fillLevel >= 1 ? '#e74c3c' : '#27ae60',
           color: 'white',
           padding: '4px 8px',
           borderRadius: '6px',
           fontSize: '10px',
           fontWeight: 'bold'
         }}>
-          🗑️ {Math.round(fillLevel * 100)}%
+          🗑️ {Math.round(fillLevel * 100)}% {fillLevel >= 1 ? 'FULL!' : ''}
         </div>
       </Html>
+    </group>
+  )
+}
+
+/* ----- Waste Collection Truck ----- */
+function WasteTruck({ position = [0, 0, 0], isCollecting = false }) {
+  const truckRef = useRef()
+  const [positionState, setPositionState] = useState(position)
+
+  useFrame((_, dt) => {
+    if (truckRef.current && isCollecting) {
+      // Move truck to simulate collection
+      truckRef.current.position.x += dt * 2
+      setPositionState([truckRef.current.position.x, position[1], position[2]])
+    }
+  })
+
+  return (
+    <group ref={truckRef} position={positionState}>
+      {/* Truck body - GREEN */}
+      <mesh castShadow>
+        <boxGeometry args={[2, 1, 1.5]} />
+        <meshStandardMaterial color="#27ae60" />
+      </mesh>
+      
+      {/* Truck cabin */}
+      <mesh position={[0.8, 0.8, 0]} castShadow>
+        <boxGeometry args={[1, 0.8, 1.2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+      
+      {/* Waste container */}
+      <mesh position={[-0.5, 1, 0]} castShadow>
+        <boxGeometry args={[1.5, 1, 1.2]} />
+        <meshStandardMaterial color="#34495e" />
+      </mesh>
+      
+      {/* Wheels */}
+      {[-0.6, 0.6].map((x, i) => (
+        <group key={i} position={[x, -0.3, 0]}>
+          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
+            <cylinderGeometry args={[0.25, 0.25, 0.2, 8]} />
+            <meshStandardMaterial color="#333333" />
+          </mesh>
+        </group>
+      ))}
+
+      <Text
+        position={[0, 1.8, 0]}
+        fontSize={0.2}
+        color="white"
+        anchorX="center"
+        anchorY="middle"
+      >
+        WASTE TRUCK
+      </Text>
+
+      {isCollecting && (
+        <Html position={[0, 2.5, 0]}>
+          <div style={{
+            background: '#e74c3c',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            fontWeight: 'bold'
+          }}>
+            🚛 COLLECTING
+          </div>
+        </Html>
+      )}
     </group>
   )
 }
@@ -561,6 +901,9 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
   const [processTime, setProcessTime] = useState(0)
   const [isProcessing, setIsProcessing] = useState(false)
   const [wasteCollected, setWasteCollected] = useState(0)
+  const [isTruckCollecting, setIsTruckCollecting] = useState(false)
+  const alertWasteManagement = useStore((s) => s.alertWasteManagement)
+  const wasteBins = useStore((s) => s.wasteBins)
   
   const startProcessing = () => {
     if (wasteCollected > 0 && !isProcessing) {
@@ -580,11 +923,20 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
         return newTime
       })
     }
-  })
 
-  const handleWasteThrow = () => {
-    setWasteCollected(prev => prev + 1)
-  }
+    // Check if any bin is full and send truck
+    const anyBinFull = Object.values(wasteBins).some(level => level >= 1)
+    if (anyBinFull && alertWasteManagement && !isTruckCollecting) {
+      setIsTruckCollecting(true)
+      setTimeout(() => {
+        setIsTruckCollecting(false)
+        // Reset all bins after collection
+        Object.keys(wasteBins).forEach(id => {
+          useStore.getState().updateWasteBin(id, 0)
+        })
+      }, 5000)
+    }
+  })
 
   return (
     <group position={position}>
@@ -616,6 +968,9 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
       {/* SMALLER Wind turbine */}
       <WindTurbine position={[0, 3, 0]} />
 
+      {/* Waste Collection Truck */}
+      <WasteTruck position={[-10, 0, 5]} isCollecting={isTruckCollecting} />
+
       {/* Information display */}
       <Html position={[0, 5, 0]} transform>
         <div style={{
@@ -631,6 +986,10 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
           <div style={{ marginBottom: '10px' }}>
             <div>🗑️ Waste Collected: {wasteCollected}</div>
             <div>⏱️ Process Time: {Math.min(4, processTime).toFixed(1)}/4 hrs</div>
+            <div>🚛 Truck Status: {isTruckCollecting ? 'COLLECTING' : 'READY'}</div>
+            {alertWasteManagement && (
+              <div style={{ color: '#e74c3c', fontWeight: 'bold' }}>⚠️ ALERT: Bin Full!</div>
+            )}
           </div>
 
           <button 
@@ -651,12 +1010,6 @@ function WasteManagementSystem({ position = [15, 0, 15] }) {
           </button>
         </div>
       </Html>
-
-      {/* GREEN Waste bins around the facility */}
-      <WasteBin position={[4, 0, 2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[4, 0, -2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[-4, 0, 2]} onWasteThrow={handleWasteThrow} />
-      <WasteBin position={[-4, 0, -2]} onWasteThrow={handleWasteThrow} />
 
       <Text
         position={[0, 7, 0]}
@@ -692,6 +1045,12 @@ function CityLayout() {
 
   return (
     <group>
+      {/* Cultural Center */}
+      <CulturalCenter position={[0, 0, 25]} />
+      
+      {/* Bus Station near Cultural Center */}
+      <BusStation position={[15, 0, 25]} />
+      
       {/* Regular buildings */}
       {buildings.map((building, index) => (
         <SmartBuilding
@@ -709,11 +1068,25 @@ function CityLayout() {
       <WasteManagementSystem position={[15, 0, 15]} />
       
       {/* Additional GREEN waste bins around town */}
-      <WasteBin position={[-10, 0, 8]} />
-      <WasteBin position={[12, 0, -5]} />
-      <WasteBin position={[-5, 0, -12]} />
-      <WasteBin position={[18, 0, 10]} />
-      <WasteBin position={[-15, 0, -18]} />
+      <WasteBin position={[-10, 0, 8]} id="bin1" />
+      <WasteBin position={[12, 0, -5]} id="bin2" />
+      <WasteBin position={[-5, 0, -12]} id="bin3" />
+      <WasteBin position={[18, 0, 10]} id="bin4" />
+      <WasteBin position={[-15, 0, -18]} id="bin5" />
+      <WasteBin position={[5, 0, 20]} id="bin6" /> {/* Near cultural center */}
+      
+      {/* Walking people around cultural center */}
+      <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
+        [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
+      ]} />
+      
+      <Person position={[-3, 0, 27]} color="#2c3e50" speed={0.4} path={[
+        [-3, 0.5, 27], [-5, 0.5, 25], [-7, 0.5, 27], [-5, 0.5, 29], [-3, 0.5, 27]
+      ]} />
+      
+      <Person position={[8, 0, 28]} color="#8b4513" speed={0.2} path={[
+        [8, 0.5, 28], [10, 0.5, 26], [12, 0.5, 28], [10, 0.5, 30], [8, 0.5, 28]
+      ]} />
     </group>
   )
 }
@@ -722,6 +1095,7 @@ function CityLayout() {
 function HUD() {
   const alert = useStore((s) => s.alert)
   const timeOfDay = useStore((s) => s.timeOfDay)
+  const alertWasteManagement = useStore((s) => s.alertWasteManagement)
   
   const alertStyles = {
     info: { background: 'linear-gradient(135deg, #d2691e, #8b4513)', color: 'white' },
@@ -731,7 +1105,20 @@ function HUD() {
 
   return (
     <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 50 }}>
-      {alert ? (
+      {alertWasteManagement ? (
+        <div style={{ 
+          background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
+          color: 'white',
+          padding: '12px 16px', 
+          borderRadius: '12px', 
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
+          minWidth: '280px',
+          fontSize: '14px',
+          fontWeight: 'bold'
+        }}>
+          🚨 ALERT: Waste bin full! Sending collection truck...
+        </div>
+      ) : alert ? (
         <div style={{ 
           ...alertStyles[alert.type] || alertStyles.info, 
           padding: '12px 16px', 
@@ -766,9 +1153,18 @@ function ControlPanel() {
   const setTrafficDensity = useStore((s) => s.setTrafficDensity)
   const setStreetLightsOn = useStore((s) => s.setStreetLightsOn)
   const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
+
+  // Auto street lights at night
+  useEffect(() => {
+    if (timeOfDay === 'night') {
+      setStreetLightsOn(true)
+    }
+  }, [timeOfDay, setStreetLightsOn])
 
   const locations = {
-    '🏙️ City Center': { x: 0, y: 15, z: 0, lookAt: { x: 0, y: 0, z: 0 } },
+    '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
+    '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
@@ -792,6 +1188,7 @@ function ControlPanel() {
           Time of Day:
         </label>
         <select 
+          value={timeOfDay}
           onChange={(e) => {
             setTimeOfDay(e.target.value)
             setStreetLightsOn(e.target.value === 'night')
@@ -946,7 +1343,10 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          Smart City with Roads, Traffic, Solar Panels, Wind Turbines & Waste Management
+          🌟 Features: Cultural Center • Walking People • Smart Traffic • Solar Panels • Waste Management
+        </div>
+        <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
+          🗑️ Click waste bins to fill them • Full bins trigger collection alerts!
         </div>
       </div>
     </div>
