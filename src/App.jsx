@@ -15,8 +15,8 @@ const useStore = create((set) => ({
   setTimeOfDay: (t) => set({ timeOfDay: t }),
   trafficDensity: 'medium',
   setTrafficDensity: (d) => set({ trafficDensity: d }),
-  wasteLevel: 0,
-  setWasteLevel: (w) => set({ wasteLevel: w })
+  wasteLevels: { organic: 40, plastic: 30, paper: 25, metal: 20 },
+  setWasteLevels: (w) => set({ wasteLevels: w })
 }))
 
 /* ----- Enhanced Camera Controller ----- */
@@ -35,8 +35,51 @@ function CameraController() {
   return null
 }
 
+/* ----- Simple ModelLoader with better error handling ----- */
+function ModelLoader({ src, fallback: Fallback, ...props }) {
+  const [error, setError] = useState(false)
+  
+  if (!src || error) {
+    return Fallback ? <Fallback {...props} /> : null
+  }
+  
+  try {
+    const gltf = useGLTF(src)
+    return <primitive object={gltf.scene} {...props} />
+  } catch (e) {
+    console.warn(`Failed to load ${src}, using fallback`)
+    setError(true)
+    return Fallback ? <Fallback {...props} /> : null
+  }
+}
+
+/* ----- Desert-themed Ground with sand texture ----- */
+function Ground() {
+  return (
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
+      </mesh>
+      {/* Sand dunes */}
+      {Array.from({ length: 20 }).map((_, i) => (
+        <mesh key={i} position={[
+          Math.random() * 180 - 90,
+          Math.random() * 0.5,
+          Math.random() * 180 - 90
+        ]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+          <sphereGeometry args={[Math.random() * 3 + 1, 8, 8, 0, Math.PI * 2, 0, Math.PI * 0.3]} />
+          <meshStandardMaterial color={"#c19a6b"} roughness={0.9} />
+        </mesh>
+      ))}
+      <gridHelper args={[200, 200, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
+      <ContactShadows position={[0, -0.03, 0]} opacity={0.3} width={50} blur={2} far={20} />
+    </>
+  )
+}
+
 /* ----- Wind Turbine Component ----- */
-function WindTurbine({ position = [0, 0, 0], buildingHeight = 8 }) {
+function WindTurbine({ position = [0, 0, 0], height = 6 }) {
   const turbineRef = useRef()
   const bladesRef = useRef()
   
@@ -46,423 +89,71 @@ function WindTurbine({ position = [0, 0, 0], buildingHeight = 8 }) {
     }
   })
 
-  const baseHeight = buildingHeight + 2;
-
   return (
     <group ref={turbineRef} position={position}>
       {/* Tower */}
-      <mesh position={[0, baseHeight + 2, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.4, 4, 8]} />
-        <meshStandardMaterial color="#708090" metalness={0.7} />
+      <mesh position={[0, height/2, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.4, height, 8]} />
+        <meshStandardMaterial color="#708090" metalness={0.7} roughness={0.3} />
       </mesh>
       
       {/* Nacelle */}
-      <mesh position={[0, baseHeight + 4, 0]} castShadow>
+      <mesh position={[0, height, 0]} castShadow>
         <boxGeometry args={[0.8, 0.6, 0.8]} />
         <meshStandardMaterial color="#2c3e50" metalness={0.8} />
       </mesh>
       
-      {/* Rotating Blades */}
-      <group ref={bladesRef} position={[0, baseHeight + 4, 0]}>
-        {/* Main blade */}
-        <mesh position={[2, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <boxGeometry args={[4, 0.1, 0.3]} />
-          <meshStandardMaterial color="#ecf0f1" />
-        </mesh>
-        {/* Second blade */}
-        <mesh position={[-2, 0, 0]} rotation={[0, 0, Math.PI / 2]} castShadow>
-          <boxGeometry args={[4, 0.1, 0.3]} />
-          <meshStandardMaterial color="#ecf0f1" />
-        </mesh>
-        {/* Third blade */}
-        <mesh position={[0, 0, 2]} rotation={[Math.PI / 2, 0, 0]} castShadow>
-          <boxGeometry args={[4, 0.1, 0.3]} />
-          <meshStandardMaterial color="#ecf0f1" />
-        </mesh>
+      {/* Blades */}
+      <group ref={bladesRef} position={[0, height, 0]}>
+        {[0, 1, 2].map((i) => (
+          <mesh 
+            key={i} 
+            rotation={[0, (i * Math.PI * 2) / 3, 0]}
+            castShadow
+          >
+            <boxGeometry args={[4, 0.1, 0.3]} />
+            <meshStandardMaterial color="#ecf0f1" metalness={0.5} />
+          </mesh>
+        ))}
       </group>
     </group>
   )
 }
 
 /* ----- Solar Panel Component ----- */
-function SolarPanel({ position = [0, 0, 0], rotation = 0 }) {
+function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
   return (
-    <group position={position} rotation={[0, rotation, 0]}>
-      {/* Panel base */}
-      <mesh castShadow>
-        <boxGeometry args={[1.5, 0.02, 1]} />
-        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
-      </mesh>
+    <group position={position} rotation={rotation}>
       {/* Panel frame */}
-      <mesh position={[0, 0.02, 0]} castShadow>
-        <boxGeometry args={[1.6, 0.04, 1.1]} />
-        <meshStandardMaterial color="#374151" metalness={0.5} />
-      </mesh>
-      {/* Support structure */}
-      <mesh position={[0, -0.3, 0.4]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 0.6, 8]} />
-        <meshStandardMaterial color="#6b7280" />
-      </mesh>
-      <mesh position={[0, -0.3, -0.4]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 0.6, 8]} />
-        <meshStandardMaterial color="#6b7280" />
-      </mesh>
-    </group>
-  )
-}
-
-/* ----- Enhanced Waste Management System ----- */
-function WasteManagementSystem({ position = [15, 0, 25] }) {
-  const [wasteLevel, setWasteLevel] = useState(0)
-  const [processing, setProcessing] = useState(false)
-  const [showProcess, setShowProcess] = useState(false)
-  const setAlert = useStore((s) => s.setAlert)
-
-  useEffect(() => {
-    // Simulate waste accumulation
-    const interval = setInterval(() => {
-      setWasteLevel(prev => Math.min(100, prev + Math.random() * 5))
-    }, 3000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleProcessWaste = () => {
-    if (wasteLevel < 20) {
-      setAlert({ type: 'warning', message: '⚠️ Not enough waste to process' })
-      return
-    }
-
-    setProcessing(true)
-    setShowProcess(true)
-    setAlert({ type: 'info', message: '🔄 Processing waste...' })
-
-    // Simulate 4-hour processing
-    setTimeout(() => {
-      setProcessing(false)
-      setWasteLevel(0)
-      setAlert({ type: 'success', message: '✅ Waste processed successfully! Converted to energy' })
-      
-      setTimeout(() => {
-        setShowProcess(false)
-        setAlert(null)
-      }, 3000)
-    }, 4000) // 4 seconds for demo (represents 4 hours)
-  }
-
-  return (
-    <group position={position}>
-      {/* Main facility building */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[6, 4, 6]} />
-        <meshStandardMaterial color="#4b5563" roughness={0.7} />
-      </mesh>
-
-      {/* Waste storage area */}
-      <mesh position={[0, 2.5, 0]} castShadow>
-        <cylinderGeometry args={[2, 2, 3, 16]} />
-        <meshStandardMaterial color="#1f2937" />
-      </mesh>
-
-      {/* Waste level indicator */}
-      <mesh position={[0, 1 + (wasteLevel / 100) * 1.5, 0]} castShadow>
-        <cylinderGeometry args={[1.8, 1.8, (wasteLevel / 100) * 3, 16]} />
-        <meshStandardMaterial color="#dc2626" transparent opacity={0.8} />
-      </mesh>
-
-      {/* Control room */}
-      <mesh position={[0, 2, 3.5]} castShadow>
-        <boxGeometry args={[2, 1, 0.5]} />
-        <meshStandardMaterial color="#6b7280" />
-      </mesh>
-
-      {/* Processing animation */}
-      {showProcess && (
-        <group>
-          <Sparkles count={50} scale={[5, 3, 5]} size={3} speed={0.5} color="#10b981" />
-          <pointLight position={[0, 3, 0]} intensity={2} color="#10b981" distance={8} />
-        </group>
-      )}
-
-      {/* Interactive control panel */}
-      <Html position={[0, 5, 0]} transform>
-        <div style={{ 
-          background: 'linear-gradient(135deg, #1f2937 0%, #374151 100%)', 
-          padding: '16px', 
-          borderRadius: '12px', 
-          color: 'white', 
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '250px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ margin: '0 0 12px 0' }}>🗑️ Waste Management</h3>
-          <div style={{ marginBottom: '12px' }}>
-            <div>Waste Level: {Math.round(wasteLevel)}%</div>
-            <div style={{ 
-              width: '100%', 
-              height: '8px', 
-              background: '#4b5563', 
-              borderRadius: '4px',
-              margin: '8px 0'
-            }}>
-              <div style={{ 
-                width: `${wasteLevel}%`, 
-                height: '100%', 
-                background: wasteLevel > 80 ? '#dc2626' : '#f59e0b', 
-                borderRadius: '4px',
-                transition: 'width 0.3s'
-              }}></div>
-            </div>
-          </div>
-          <button 
-            onClick={handleProcessWaste}
-            disabled={processing || wasteLevel < 20}
-            style={{ 
-              background: processing ? '#6b7280' : wasteLevel >= 20 ? '#10b981' : '#9ca3af',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '8px',
-              cursor: wasteLevel >= 20 && !processing ? 'pointer' : 'not-allowed',
-              width: '100%',
-              fontWeight: 'bold'
-            }}
-          >
-            {processing ? '🔄 Processing...' : '♻️ Process Waste (4hrs)'}
-          </button>
-          {processing && (
-            <div style={{ marginTop: '12px', fontSize: '12px', color: '#d1d5db' }}>
-              ⏳ Processing via WiFi connection...
-            </div>
-          )}
-        </div>
-      </Html>
-
-      {/* Waste collection points around town */}
-      {Array.from({ length: 5 }).map((_, i) => (
-        <WasteBin key={i} position={[
-          Math.random() * 60 - 30,
-          0,
-          Math.random() * 60 - 30
-        ]} />
-      ))}
-    </group>
-  )
-}
-
-/* ----- Waste Bin Component ----- */
-function WasteBin({ position = [0, 0, 0] }) {
-  const [fullness, setFullness] = useState(0)
-  const setAlert = useStore((s) => s.setAlert)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setFullness(prev => Math.min(1, prev + Math.random() * 0.1))
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const handleEmpty = () => {
-    setFullness(0)
-    setAlert({ type: 'info', message: '🗑️ Waste collected and sent to management system' })
-    setTimeout(() => setAlert(null), 3000)
-  }
-
-  return (
-    <group position={position}>
-      {/* Bin body */}
       <mesh castShadow>
-        <cylinderGeometry args={[0.4, 0.5, 1, 8]} />
-        <meshStandardMaterial color="#4b5563" />
+        <boxGeometry args={[1.5, 0.05, 1]} />
+        <meshStandardMaterial color="#2d2d2d" metalness={0.8} roughness={0.1} />
       </mesh>
       
-      {/* Waste inside */}
-      {fullness > 0 && (
-        <mesh position={[0, fullness * 0.4 - 0.3, 0]} castShadow>
-          <cylinderGeometry args={[0.35, 0.35, fullness * 0.8, 8]} />
-          <meshStandardMaterial color="#78350f" />
-        </mesh>
-      )}
-
-      {/* Lid */}
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.52, 0.52, 0.05, 8]} />
-        <meshStandardMaterial color="#6b7280" />
+      {/* Solar cells */}
+      <mesh position={[0, 0.03, 0]} castShadow>
+        <boxGeometry args={[1.4, 0.02, 0.9]} />
+        <meshStandardMaterial color="#1e40af" metalness={0.9} roughness={0.05} />
       </mesh>
-
-      <Html position={[0, 1.2, 0]} transform>
-        <div style={{ 
-          background: 'rgba(255,255,255,0.95)', 
-          padding: '8px', 
-          borderRadius: '6px', 
-          fontSize: '10px',
-          textAlign: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
-        }}>
-          <div>🗑️ {Math.round(fullness * 100)}% full</div>
-          {fullness > 0.7 && (
-            <button 
-              onClick={handleEmpty}
-              style={{ 
-                background: '#dc2626', 
-                color: 'white', 
-                border: 'none', 
-                padding: '2px 6px', 
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontSize: '8px',
-                marginTop: '4px'
-              }}
-            >
-              Empty
-            </button>
-          )}
-        </div>
-      </Html>
+      
+      {/* Support structure */}
+      <mesh position={[0, -0.3, 0]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 0.6, 8]} />
+        <meshStandardMaterial color="#666666" metalness={0.6} />
+      </mesh>
     </group>
   )
 }
 
-/* ----- Cultural Center Component ----- */
-function CulturalCenter({ position = [-15, 0, -10] }) {
-  const [activeCulture, setActiveCulture] = useState('Sindhi')
-  const setAlert = useStore((s) => s.setAlert)
-
-  const cultures = {
-    Sindhi: { color: '#dc2626', pattern: '🎵', description: 'Sindhi Music & Dance' },
-    Balochi: { color: '#059669', pattern: '🏔️', description: 'Balochi Traditions' },
-    Pashto: { color: '#7c3aed', pattern: '💃', description: 'Pashto Attan Dance' },
-    Punjabi: { color: '#d97706', pattern: '🥁', description: 'Punjabi Bhangra' }
-  }
-
-  const showCulture = (culture) => {
-    setActiveCulture(culture)
-    setAlert({ 
-      type: 'info', 
-      message: `${cultures[culture].pattern} Now showing: ${culture} Culture - ${cultures[culture].description}` 
-    })
-    setTimeout(() => setAlert(null), 4000)
-  }
-
-  return (
-    <group position={position}>
-      {/* Main cultural center building - light brown */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[8, 6, 8]} />
-        <meshStandardMaterial color="#d2b48c" roughness={0.8} />
-      </mesh>
-
-      {/* Decorative elements */}
-      <mesh position={[0, 3.5, 4]} castShadow>
-        <boxGeometry args={[6, 2, 0.3]} />
-        <meshStandardMaterial color="#b45309" />
-      </mesh>
-
-      {/* Cultural displays */}
-      <group position={[0, 3, 0]}>
-        {Object.entries(cultures).map(([culture, info], index) => {
-          const angle = (index / Object.keys(cultures).length) * Math.PI * 2
-          const x = Math.cos(angle) * 3
-          const z = Math.sin(angle) * 3
-          
-          return (
-            <group key={culture} position={[x, 0, z]}>
-              <mesh 
-                castShadow 
-                onClick={() => showCulture(culture)}
-                rotation={[0, -angle, 0]}
-              >
-                <cylinderGeometry args={[0.8, 0.8, 0.1, 6]} />
-                <meshStandardMaterial color={info.color} />
-              </mesh>
-              
-              <Text
-                position={[0, 0.8, 0]}
-                fontSize={0.3}
-                color={info.color}
-                anchorX="center"
-                anchorY="middle"
-                rotation={[0, -angle, 0]}
-              >
-                {info.pattern}
-              </Text>
-
-              <Html position={[0, 1.5, 0]} transform>
-                <div style={{ 
-                  background: 'rgba(255,255,255,0.95)', 
-                  padding: '8px', 
-                  borderRadius: '6px', 
-                  fontSize: '10px',
-                  textAlign: 'center',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                  cursor: 'pointer'
-                }}>
-                  {culture}
-                </div>
-              </Html>
-            </group>
-          )
-        })}
-      </group>
-
-      {/* Main display area */}
-      <Html position={[0, 4, 0]} transform>
-        <div style={{ 
-          background: 'linear-gradient(135deg, #fef3c7 0%, #f59e0b 100%)', 
-          padding: '20px', 
-          borderRadius: '12px', 
-          color: '#78350f',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ margin: '0 0 12px 0' }}>🏛️ Cultural Center</h3>
-          <div style={{ 
-            fontSize: '24px', 
-            marginBottom: '8px',
-            background: cultures[activeCulture].color,
-            color: 'white',
-            padding: '8px',
-            borderRadius: '8px'
-          }}>
-            {cultures[activeCulture].pattern}
-          </div>
-          <div style={{ fontWeight: 'bold', fontSize: '16px' }}>
-            {activeCulture} Culture
-          </div>
-          <div style={{ fontSize: '12px', marginTop: '8px' }}>
-            {cultures[activeCulture].description}
-          </div>
-          <div style={{ fontSize: '10px', marginTop: '12px', opacity: 0.7 }}>
-            Click around displays to explore different cultures!
-          </div>
-        </div>
-      </Html>
-
-      {/* People enjoying culture */}
-      {Array.from({ length: 8 }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const x = Math.cos(angle) * 5
-        const z = Math.sin(angle) * 5
-        return (
-          <mesh key={i} position={[x, 0.5, z]} castShadow>
-            <cylinderGeometry args={[0.2, 0.2, 1, 8]} />
-            <meshStandardMaterial color="#f59e0b" />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-/* ----- Enhanced Smart Building with Solar Panels and Turbines ----- */
+/* ----- Enhanced Smart Buildings with Turbines and Solar Panels ----- */
 function SmartBuilding({ 
   position = [0, 0, 0], 
   height = 8, 
   color = "#a67c52", 
   windows = true,
   name = "Building",
-  hasSolar = true,
-  hasTurbine = false
+  hasTurbine = false,
+  hasSolar = false
 }) {
   const buildingRef = useRef()
   const [lightsOn, setLightsOn] = useState(false)
@@ -486,13 +177,13 @@ function SmartBuilding({
 
   return (
     <group ref={buildingRef} position={position}>
-      {/* Main structure */}
+      {/* Main structure with desert architecture */}
       <mesh castShadow receiveShadow onClick={handleClick}>
         <boxGeometry args={[3, height, 3]} />
         <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
       </mesh>
       
-      {/* Windows */}
+      {/* Enhanced windows with shutters */}
       {windows && (
         <group>
           {Array.from({ length: Math.floor(height / 2) }).map((_, floor) => 
@@ -509,6 +200,7 @@ function SmartBuilding({
                     emissiveIntensity={lightsOn ? 0.8 : 0} 
                   />
                 </mesh>
+                {/* Window frames */}
                 <mesh position={[1.5, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
                   <boxGeometry args={[0.04, 1.3, 0.85]} />
                   <meshStandardMaterial color="#8b4513" />
@@ -519,25 +211,31 @@ function SmartBuilding({
         </group>
       )}
       
-      {/* Rooftop solar panels */}
-      {hasSolar && (
-        <group position={[0, height/2 + 0.1, 0]}>
-          <SolarPanel position={[0, 0.2, -0.8]} rotation={Math.PI / 4} />
-          <SolarPanel position={[0, 0.2, 0.8]} rotation={-Math.PI / 4} />
-          <SolarPanel position={[-0.8, 0.2, 0]} rotation={Math.PI} />
-          <SolarPanel position={[0.8, 0.2, 0]} rotation={0} />
-        </group>
-      )}
-
-      {/* Wind turbine */}
-      {hasTurbine && (
-        <WindTurbine position={[0, 0, 0]} buildingHeight={height} />
-      )}
-
-      {/* Rooftop */}
+      {/* Enhanced rooftop with desert style */}
       <mesh position={[0, height/2 + 0.2, 0]} castShadow>
         <boxGeometry args={[3.2, 0.4, 3.2]} />
         <meshStandardMaterial color="#8b4513" />
+      </mesh>
+
+      {/* Wind Turbine on top if specified */}
+      {hasTurbine && (
+        <WindTurbine position={[0, height/2 + 3, 0]} height={4} />
+      )}
+
+      {/* Solar panels on roof if specified */}
+      {hasSolar && (
+        <group position={[0, height/2 + 0.3, 0]}>
+          <SolarPanel position={[0.8, 0, 0.8]} rotation={[Math.PI/6, Math.PI/4, 0]} />
+          <SolarPanel position={[-0.8, 0, 0.8]} rotation={[Math.PI/6, -Math.PI/4, 0]} />
+          <SolarPanel position={[0.8, 0, -0.8]} rotation={[Math.PI/6, 3*Math.PI/4, 0]} />
+          <SolarPanel position={[-0.8, 0, -0.8]} rotation={[Math.PI/6, -3*Math.PI/4, 0]} />
+        </group>
+      )}
+
+      {/* Decorative elements - desert architecture */}
+      <mesh position={[0, height/2 - 0.5, 1.51]} castShadow>
+        <boxGeometry args={[2, 0.5, 0.1]} />
+        <meshStandardMaterial color="#cd853f" />
       </mesh>
 
       {/* Building label */}
@@ -554,34 +252,386 @@ function SmartBuilding({
   )
 }
 
-/* ----- Updated City Layout ----- */
+/* ----- Cultural Center (Light Brown Dome) ----- */
+function CulturalCenter({ position = [0, 0, 0] }) {
+  const [currentCulture, setCurrentCulture] = useState('Sindhi')
+  const cultures = [
+    { name: 'Sindhi', color: '#FF6B35', description: 'Rich heritage of Sindh with Ajrak and traditional music' },
+    { name: 'Balochi', color: '#2E86AB', description: 'Beautiful embroidery and folk dances' },
+    { name: 'Pashto', color: '#A23B72', description: 'Traditional Attan dance and hospitality' },
+    { name: 'Punjabi', color: '#F18F01', description: 'Bhangra dance and vibrant festivals' }
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentCulture(prev => {
+        const currentIndex = cultures.findIndex(c => c.name === prev)
+        return cultures[(currentIndex + 1) % cultures.length].name
+      })
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const currentCultureData = cultures.find(c => c.name === currentCulture)
+
+  return (
+    <group position={position}>
+      {/* Main Dome Structure - Light Brown */}
+      <mesh castShadow receiveShadow>
+        <sphereGeometry args={[5, 32, 32, 0, Math.PI * 2, 0, Math.PI * 0.5]} />
+        <meshStandardMaterial color="#d2b48c" roughness={0.7} metalness={0.1} />
+      </mesh>
+      
+      {/* Base structure */}
+      <mesh position={[0, -2.5, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[6, 6, 5, 32]} />
+        <meshStandardMaterial color="#a67c52" roughness={0.8} />
+      </mesh>
+      
+      {/* Entrance */}
+      <mesh position={[0, -1.5, 5.5]} castShadow receiveShadow>
+        <boxGeometry args={[3, 3, 1]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+
+      {/* Cultural display area */}
+      <group position={[0, 2, 0]}>
+        {/* Rotating cultural symbol */}
+        <mesh castShadow>
+          <torusGeometry args={[2, 0.3, 16, 32]} />
+          <meshStandardMaterial color={currentCultureData.color} emissive={currentCultureData.color} emissiveIntensity={0.3} />
+        </mesh>
+        
+        {/* Floating cultural elements */}
+        <Float speed={2} rotationIntensity={0.5} floatIntensity={0.5}>
+          <group>
+            {[-1, 1].map((x, i) => (
+              <mesh key={i} position={[x * 1.5, 0, 0]} castShadow>
+                <sphereGeometry args={[0.5, 16, 16]} />
+                <meshStandardMaterial color={currentCultureData.color} transparent opacity={0.8} />
+              </mesh>
+            ))}
+          </group>
+        </Float>
+      </group>
+
+      {/* Information display */}
+      <Html position={[0, 6, 0]} transform>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(210, 180, 140, 0.95), rgba(139, 69, 19, 0.95))',
+          padding: '20px',
+          borderRadius: '15px',
+          color: 'white',
+          textAlign: 'center',
+          minWidth: '300px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          border: '2px solid #8b4513'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', fontSize: '18px' }}>🎪 Cultural Center</h3>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: currentCultureData.color, marginBottom: '8px' }}>
+            {currentCulture} Culture
+          </div>
+          <div style={{ fontSize: '12px', marginBottom: '10px' }}>
+            {currentCultureData.description}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '5px' }}>
+            {cultures.map(culture => (
+              <div 
+                key={culture.name}
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: culture.color,
+                  opacity: currentCulture === culture.name ? 1 : 0.3
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </Html>
+
+      {/* Decorative flags around the dome */}
+      {cultures.map((culture, index) => (
+        <mesh key={index} position={[
+          Math.cos((index * Math.PI) / 2) * 6,
+          1,
+          Math.sin((index * Math.PI) / 2) * 6
+        ]} castShadow>
+          <planeGeometry args={[1, 1.5]} />
+          <meshStandardMaterial color={culture.color} />
+        </mesh>
+      ))}
+
+      {/* Ambient cultural music particles */}
+      <Sparkles 
+        count={30} 
+        scale={[12, 8, 12]} 
+        size={2} 
+        speed={0.3} 
+        color={currentCultureData.color}
+      />
+    </group>
+  )
+}
+
+/* ----- Waste Management System ----- */
+function WasteManagementSystem({ position = [0, 0, 0] }) {
+  const [wasteLevels, setWasteLevels] = useState({
+    organic: 40,
+    plastic: 30,
+    paper: 25,
+    metal: 20
+  })
+  const [processing, setProcessing] = useState(false)
+  const [wasteInSystem, setWasteInSystem] = useState(0)
+  const setAlert = useStore((s) => s.setAlert)
+
+  // Simulate waste processing
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (processing && wasteInSystem > 0) {
+        setWasteInSystem(prev => Math.max(0, prev - 5))
+        setWasteLevels(prev => ({
+          organic: Math.max(0, prev.organic - 1),
+          plastic: Math.max(0, prev.plastic - 1),
+          paper: Math.max(0, prev.paper - 1),
+          metal: Math.max(0, prev.metal - 1)
+        }))
+        
+        if (wasteInSystem <= 5) {
+          setProcessing(false)
+          setAlert({ type: 'success', message: '✅ Waste processing completed!' })
+          setTimeout(() => setAlert(null), 3000)
+        }
+      }
+    }, 1000)
+    
+    return () => clearInterval(interval)
+  }, [processing, wasteInSystem])
+
+  const startProcessing = () => {
+    if (wasteInSystem === 0) {
+      setWasteInSystem(100)
+      setProcessing(true)
+      setAlert({ type: 'info', message: '🔄 Waste processing started via WiFi...' })
+    }
+  }
+
+  const addWaste = (type) => {
+    setWasteLevels(prev => ({
+      ...prev,
+      [type]: Math.min(100, prev[type] + 10)
+    }))
+    setAlert({ type: 'warning', message: `🗑️ ${type.charAt(0).toUpperCase() + type.slice(1)} waste added` })
+    setTimeout(() => setAlert(null), 2000)
+  }
+
+  return (
+    <group position={position}>
+      {/* Main waste management building */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[8, 4, 6]} />
+        <meshStandardMaterial color="#34495e" metalness={0.3} roughness={0.6} />
+      </mesh>
+      
+      {/* Roof */}
+      <mesh position={[0, 2.5, 0]} castShadow>
+        <boxGeometry args={[8.2, 0.3, 6.2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {/* Waste processing tanks */}
+      {[
+        { type: 'organic', color: '#8b4513', position: [-2.5, 1, 1.5] },
+        { type: 'plastic', color: '#e74c3c', position: [-0.8, 1, 1.5] },
+        { type: 'paper', color: '#f39c12', position: [0.8, 1, 1.5] },
+        { type: 'metal', color: '#95a5a6', position: [2.5, 1, 1.5] }
+      ].map((tank, index) => (
+        <group key={tank.type} position={tank.position}>
+          {/* Tank */}
+          <mesh castShadow>
+            <cylinderGeometry args={[0.6, 0.6, 2, 16]} />
+            <meshStandardMaterial color={tank.color} transparent opacity={0.8} />
+          </mesh>
+          
+          {/* Waste level */}
+          <mesh position={[0, (wasteLevels[tank.type] / 100) - 1, 0]} castShadow>
+            <cylinderGeometry args={[0.55, 0.55, (wasteLevels[tank.type] / 100) * 2, 16]} />
+            <meshStandardMaterial color={tank.color} />
+          </mesh>
+          
+          {/* Level indicator */}
+          <Html position={[0, 1.5, 0]}>
+            <div style={{
+              background: 'rgba(255,255,255,0.9)',
+              padding: '4px 8px',
+              borderRadius: '4px',
+              fontSize: '10px',
+              fontWeight: 'bold',
+              textAlign: 'center'
+            }}>
+              {wasteLevels[tank.type]}%
+            </div>
+          </Html>
+        </group>
+      ))}
+
+      {/* Control panel */}
+      <Html position={[0, 3, -2]} transform>
+        <div style={{
+          background: 'linear-gradient(135deg, #2c3e50, #34495e)',
+          padding: '15px',
+          borderRadius: '10px',
+          color: 'white',
+          minWidth: '250px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.3)'
+        }}>
+          <h4 style={{ margin: '0 0 10px 0', textAlign: 'center' }}>🗑️ Waste Management</h4>
+          
+          {/* Processing status */}
+          <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+            <div style={{ fontSize: '12px', marginBottom: '5px' }}>System Status:</div>
+            <div style={{ 
+              padding: '5px 10px', 
+              borderRadius: '5px', 
+              background: processing ? '#27ae60' : '#e74c3c',
+              fontWeight: 'bold'
+            }}>
+              {processing ? `🔄 Processing... ${wasteInSystem}%` : '⏸️ Ready'}
+            </div>
+          </div>
+
+          {/* WiFi connection indicator */}
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginBottom: '10px',
+            fontSize: '12px'
+          }}>
+            <div style={{ marginRight: '5px' }}>📶 WiFi:</div>
+            <div style={{ color: '#27ae60', fontWeight: 'bold' }}>Connected</div>
+          </div>
+
+          {/* Control buttons */}
+          <div style={{ display: 'flex', gap: '5px', marginBottom: '10px' }}>
+            <button 
+              onClick={startProcessing}
+              disabled={processing}
+              style={{
+                flex: 1,
+                background: processing ? '#7f8c8d' : '#27ae60',
+                color: 'white',
+                border: 'none',
+                padding: '8px',
+                borderRadius: '5px',
+                cursor: processing ? 'not-allowed' : 'pointer'
+              }}
+            >
+              Start Process
+            </button>
+          </div>
+
+          {/* Add waste buttons */}
+          <div style={{ fontSize: '11px', marginBottom: '5px' }}>Add Waste:</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px' }}>
+            {['organic', 'plastic', 'paper', 'metal'].map(type => (
+              <button
+                key={type}
+                onClick={() => addWaste(type)}
+                style={{
+                  background: '#3498db',
+                  color: 'white',
+                  border: 'none',
+                  padding: '4px',
+                  borderRadius: '3px',
+                  cursor: 'pointer',
+                  fontSize: '10px'
+                }}
+              >
+                + {type}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Html>
+
+      {/* Conveyor belt system */}
+      <mesh position={[0, 0.2, -2.5]} castShadow>
+        <boxGeometry args={[6, 0.1, 1]} />
+        <meshStandardMaterial color="#7f8c8d" />
+      </mesh>
+
+      {/* Processing animation */}
+      {processing && (
+        <Sparkles 
+          count={20} 
+          scale={[8, 4, 6]} 
+          size={3} 
+          speed={0.5} 
+          color="#27ae60"
+        />
+      )}
+    </group>
+  )
+}
+
+/* ----- Palm Tree for desert environment ----- */
+function PalmTree({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Trunk */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <cylinderGeometry args={[0.3, 0.4, 4, 8]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      {/* Leaves */}
+      {[0, 1, 2, 3].map((i) => (
+        <mesh key={i} position={[0, 4, 0]} rotation={[0, (i * Math.PI) / 2, 0.7]} castShadow>
+          <coneGeometry args={[1.5, 3, 4]} />
+          <meshStandardMaterial color="#228B22" />
+        </mesh>
+      ))}
+    </group>
+  )
+}
+
+/* ----- Enhanced City Layout with Turbines, Solar Panels, and Cultural Center ----- */
 function CityLayout() {
   const buildings = [
-    // Residential area with turbines and solar
-    { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Oasis A", hasSolar: true, hasTurbine: true },
-    { position: [-20, 0, 18], height: 8, color: "#b5651d", name: "Desert View", hasSolar: true, hasTurbine: false },
-    { position: [-30, 0, 20], height: 7, color: "#c19a6b", name: "Mirage Res", hasSolar: true, hasTurbine: true },
+    // Residential area - with turbines and solar
+    { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Oasis A", hasTurbine: true, hasSolar: true },
+    { position: [-20, 0, 18], height: 8, color: "#b5651d", name: "Desert View", hasTurbine: false, hasSolar: true },
+    { position: [-30, 0, 20], height: 7, color: "#c19a6b", name: "Mirage Res", hasTurbine: true, hasSolar: false },
     
-    // Commercial area with solar
-    { position: [20, 0, -15], height: 12, color: "#8b4513", name: "Dunes Tower", hasSolar: true, hasTurbine: false },
-    { position: [25, 0, -18], height: 10, color: "#a0522d", name: "Sahara Plaza", hasSolar: true, hasTurbine: true },
-    { position: [15, 0, -20], height: 14, color: "#cd853f", name: "Oasis Tower", hasSolar: true, hasTurbine: false },
+    // Commercial area - with energy features
+    { position: [20, 0, -15], height: 12, color: "#8b4513", name: "Dunes Tower", hasTurbine: true, hasSolar: true },
+    { position: [25, 0, -18], height: 10, color: "#a0522d", name: "Sahara Plaza", hasTurbine: false, hasSolar: true },
+    { position: [15, 0, -20], height: 14, color: "#cd853f", name: "Oasis Tower", hasTurbine: true, hasSolar: true },
     
-    // Mixed use
-    { position: [-15, 0, -10], height: 9, color: "#deb887", name: "Sunset A", hasSolar: true, hasTurbine: true },
-    { position: [10, 0, 12], height: 11, color: "#d2b48c", name: "Palm Court", hasSolar: true, hasTurbine: false },
-    { position: [-5, 0, -15], height: 8, color: "#f4a460", name: "Desert Bloom", hasSolar: true, hasTurbine: true },
+    // Mixed use - with renewable energy
+    { position: [-15, 0, -10], height: 9, color: "#deb887", name: "Sunset A", hasTurbine: true, hasSolar: false },
+    { position: [10, 0, 12], height: 11, color: "#d2b48c", name: "Palm Court", hasTurbine: false, hasSolar: true },
+    { position: [-5, 0, -15], height: 8, color: "#f4a460", name: "Desert Bloom", hasTurbine: true, hasSolar: true },
     
     // More buildings
-    { position: [30, 0, 5], height: 13, color: "#8b4513", name: "Plaza Tower", hasSolar: true, hasTurbine: false },
-    { position: [-28, 0, -5], height: 7, color: "#a67c52", name: "Garden View", hasSolar: true, hasTurbine: true },
-    { position: [8, 0, -25], height: 10, color: "#b8860b", name: "Golden Sands", hasSolar: true, hasTurbine: false },
-    { position: [-12, 0, 25], height: 9, color: "#daa520", name: "Sun Valley", hasSolar: true, hasTurbine: true },
-    { position: [22, 0, 22], height: 15, color: "#8b4513", name: "Central Oasis", hasSolar: true, hasTurbine: false }
+    { position: [30, 0, 5], height: 13, color: "#8b4513", name: "Plaza Tower", hasTurbine: true, hasSolar: true },
+    { position: [-28, 0, -5], height: 7, color: "#a67c52", name: "Garden View", hasTurbine: false, hasSolar: true },
+    { position: [8, 0, -25], height: 10, color: "#b8860b", name: "Golden Sands", hasTurbine: true, hasSolar: false },
+    { position: [-12, 0, 25], height: 9, color: "#daa520", name: "Sun Valley", hasTurbine: false, hasSolar: true },
+    { position: [22, 0, 22], height: 15, color: "#8b4513", name: "Central Oasis", hasTurbine: true, hasSolar: true }
   ]
 
   return (
     <group>
+      {/* Cultural Center - Light Brown Dome */}
+      <CulturalCenter position={[0, 0, 0]} />
+      
+      {/* Waste Management System */}
+      <WasteManagementSystem position={[20, 0, 10]} />
+      
+      {/* Regular buildings */}
       {buildings.map((building, index) => (
         <SmartBuilding
           key={index}
@@ -589,12 +639,12 @@ function CityLayout() {
           height={building.height}
           color={building.color}
           name={building.name}
-          hasSolar={building.hasSolar}
           hasTurbine={building.hasTurbine}
+          hasSolar={building.hasSolar}
         />
       ))}
       
-      {/* Add palm trees */}
+      {/* Add some palm trees for desert feel */}
       {Array.from({ length: 15 }).map((_, i) => (
         <PalmTree 
           key={i}
@@ -609,13 +659,79 @@ function CityLayout() {
   )
 }
 
-// ... (keep the existing Ground, PalmTree, PeopleSystem, EcoBench, HubFallback, SolarBus, GardenFallback components as they are)
+/* ----- Animated People ----- */
+function Person({ position = [0, 0, 0], speed = 1, path = [] }) {
+  const personRef = useRef()
+  const [t, setT] = useState(Math.random() * 10)
 
-/* ----- Enhanced HUD ----- */
+  useFrame((_, dt) => {
+    setT(prev => prev + dt * speed)
+    
+    if (personRef.current && path.length > 0) {
+      const tt = t % path.length
+      const i = Math.floor(tt) % path.length
+      const a = new THREE.Vector3(...path[i])
+      const b = new THREE.Vector3(...path[(i + 1) % path.length])
+      const f = tt % 1
+      const pos = a.clone().lerp(b, f)
+      
+      personRef.current.position.lerp(pos, 0.1)
+      personRef.current.lookAt(b)
+    }
+  })
+
+  return (
+    <group ref={personRef} position={position}>
+      {/* Body with desert clothing colors */}
+      <mesh position={[0, 0.9, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+        <meshStandardMaterial color="#d2691e" />
+      </mesh>
+      {/* Head */}
+      <mesh position={[0, 1.5, 0]} castShadow>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial color="#f1c40f" />
+      </mesh>
+    </group>
+  )
+}
+
+/* ----- People System ----- */
+function PeopleSystem() {
+  const peoplePaths = [
+    // Paths around the city including cultural center
+    [[-8, 0, -2], [-5, 0, 0], [-2, 0, -2], [-5, 0, -4]],
+    [[8, 0, -6], [10, 0, -4], [12, 0, -6], [10, 0, -8]],
+    [[0, 0, 8], [3, 0, 10], [6, 0, 8], [3, 0, 6]],
+    [[-20, 0, 10], [-18, 0, 12], [-16, 0, 10], [-18, 0, 8]],
+    [[20, 0, -15], [22, 0, -13], [24, 0, -15], [22, 0, -17]],
+    // Paths around cultural center
+    [[-3, 0, 3], [0, 0, 5], [3, 0, 3], [0, 0, 1]],
+    [[-4, 0, -2], [-2, 0, 0], [0, 0, -2], [-2, 0, -4]]
+  ]
+
+  return (
+    <group>
+      {Array.from({ length: 15 }).map((_, i) => (
+        <Person
+          key={i}
+          position={[
+            Math.random() * 40 - 20,
+            0,
+            Math.random() * 40 - 20
+          ]}
+          speed={0.5 + Math.random() * 0.5}
+          path={peoplePaths[i % peoplePaths.length]}
+        />
+      ))}
+    </group>
+  )
+}
+
+/* ----- Enhanced HUD with desert theme ----- */
 function HUD() {
   const alert = useStore((s) => s.alert)
   const timeOfDay = useStore((s) => s.timeOfDay)
-  const wasteLevel = useStore((s) => s.wasteLevel)
   
   const alertStyles = {
     info: { background: 'linear-gradient(135deg, #d2691e, #8b4513)', color: 'white' },
@@ -648,24 +764,22 @@ function HUD() {
           fontWeight: 'bold',
           color: '#8b4513'
         }}>
-          🏜️ Desert Smart City • Time: {timeOfDay} • Waste: {Math.round(wasteLevel)}% • Systems: ✅ Nominal
+          🏜️ Desert Smart City • Time: {timeOfDay} • Systems: ✅ Nominal
         </div>
       )}
     </div>
   )
 }
 
-/* ----- Enhanced Control Panel ----- */
+/* ----- Control Panel ----- */
 function ControlPanel() {
   const setTimeOfDay = useStore((s) => s.setTimeOfDay)
   const setTrafficDensity = useStore((s) => s.setTrafficDensity)
   const setFocus = useStore((s) => s.setFocus)
 
   const locations = {
-    '🚌 Transportation Hub': { x: -8, y: 5, z: -2, lookAt: { x: -8, y: 0, z: -2 } },
-    '🌿 Community Garden': { x: 8, y: 5, z: -6, lookAt: { x: 8, y: 0, z: -6 } },
-    '🏛️ Cultural Center': { x: -15, y: 5, z: -10, lookAt: { x: -15, y: 0, z: -10 } },
-    '🗑️ Waste Management': { x: 15, y: 5, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
+    '🎪 Cultural Center': { x: 0, y: 8, z: 0, lookAt: { x: 0, y: 0, z: 0 } },
+    '🗑️ Waste Management': { x: 20, y: 6, z: 10, lookAt: { x: 20, y: 0, z: 10 } },
     '🔭 Overview': { x: 24, y: 18, z: 24, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
@@ -742,21 +856,12 @@ function ControlPanel() {
 /* ===== Enhanced Main App ===== */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
-  const setWasteLevel = useStore((s) => s.setWasteLevel)
   
   const skyConfig = {
     day: { sunPosition: [100, 20, 100], inclination: 0, azimuth: 0.25 },
     evening: { sunPosition: [10, 5, 100], inclination: 0, azimuth: 0.25 },
     night: { sunPosition: [-100, -20, 100], inclination: 0, azimuth: 0.25 }
   }
-
-  // Global waste level simulation
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWasteLevel(prev => Math.min(100, prev + Math.random() * 0.5))
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [setWasteLevel])
 
   return (
     <div style={{ width: '100vw', height: '100vh', background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)' }}>
@@ -785,20 +890,11 @@ export default function App() {
           
           <Ground />
           
-          {/* Complete City Layout with solar panels and turbines */}
+          {/* Complete City Layout */}
           <CityLayout />
           
           {/* Animated People */}
           <PeopleSystem />
-          
-          {/* Main Features */}
-          <HubFallback position={[-8, 0, -2]} />
-          <SolarBus />
-          <GardenFallback position={[8, 0, -6]} />
-          
-          {/* NEW: Cultural Center and Waste Management */}
-          <CulturalCenter position={[-15, 0, -10]} />
-          <WasteManagementSystem position={[15, 0, 25]} />
           
           <ContactShadows position={[0, -0.1, 0]} opacity={0.4} width={40} blur={2} far={10} />
         </Suspense>
