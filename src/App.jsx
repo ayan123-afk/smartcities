@@ -4,7 +4,6 @@ import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Floa
 import * as THREE from 'three'
 import { create } from 'zustand'
 
-
 const useStore = create((set) => ({
   alert: null,
   setAlert: (a) => set({ alert: a }),
@@ -12,8 +11,6 @@ const useStore = create((set) => ({
   setFocus: (f) => set({ focus: f }),
   timeOfDay: 'day',
   setTimeOfDay: (t) => set({ timeOfDay: t }),
-  trafficDensity: 'medium',
-  setTrafficDensity: (d) => set({ trafficDensity: d }),
   streetLightsOn: false,
   setStreetLightsOn: (s) => set({ streetLightsOn: s }),
   wasteBins: {},
@@ -33,14 +30,7 @@ const useStore = create((set) => ({
   },
   setWasteProcessing: (processing) => set({ wasteProcessing: processing }),
   showCityControl: false,
-  setShowCityControl: (show) => set({ showCityControl: show }),
-  // New states for enhanced waste management
-  truckStatus: 'idle',
-  setTruckStatus: (status) => set({ truckStatus: status }),
-  currentBinTarget: null,
-  setCurrentBinTarget: (target) => set({ currentBinTarget: target }),
-  collectedWaste: 0,
-  setCollectedWaste: (waste) => set({ collectedWaste: waste })
+  setShowCityControl: (show) => set({ showCityControl: show })
 }))
 
 /* ----- Vertical Farming Components ----- */
@@ -261,17 +251,16 @@ function VerticalFarm({ position = [0, 0, 0] }) {
     
     // Randomly adjust moisture levels
     if (Math.random() < 0.02) {
-      setMoistureLevelssetMoistureLevels(prev =>
-  prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
-);
+      setMoistureLevels(prev =>
+        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
     }
     
     // Auto irrigation when moisture is low
     if (moistureLevels.some(level => level < 0.3)) {
       setIrrigationActive(true)
       setMoistureLevels(prev =>
-  prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
-);
+        prev.map(level => Math.min(1, level + 0.1))
+      )
     }
   })
 
@@ -509,79 +498,6 @@ function Person({ position = [0, 0, 0], color = "#8b4513", speed = 1, path = [] 
   )
 }
 
-/* ----- Wheelchair User ----- */
-function WheelchairUser({ position = [0, 0, 0], moving = false, onRamp = false, speed = 0.3 }) {
-  const wheelchairRef = useRef()
-  const [t, setT] = useState(0)
-
-  useFrame((_, dt) => {
-    if (moving && wheelchairRef.current) {
-      setT(prev => prev + dt)
-      
-      if (onRamp) {
-        // Moving down ramp
-        const rampProgress = t * speed
-        if (rampProgress < 3) {
-          wheelchairRef.current.position.x = position[0] + rampProgress
-          wheelchairRef.current.position.y = position[1] - (rampProgress / 3) * 2
-          wheelchairRef.current.rotation.y = Math.PI / 2
-        }
-      } else {
-        // Regular movement
-        wheelchairRef.current.position.x = position[0] + Math.sin(t) * 2
-      }
-    }
-  })
-
-  return (
-    <group ref={wheelchairRef} position={position}>
-      {/* Wheelchair frame */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <boxGeometry args={[0.6, 0.1, 0.8]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      {/* Seat */}
-      <mesh position={[0, 0.7, -0.1]} castShadow>
-        <boxGeometry args={[0.5, 0.4, 0.5]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-      
-      {/* Backrest */}
-      <mesh position={[0, 1.1, -0.4]} castShadow>
-        <boxGeometry args={[0.5, 0.6, 0.1]} />
-        <meshStandardMaterial color="#2980b9" />
-      </mesh>
-      
-      {/* Large wheels */}
-      <mesh position={[-0.3, 0.3, 0.2]} castShadow rotation={[0, 0, Math.PI/2]}>
-        <cylinderGeometry args={[0.25, 0.25, 0.05, 16]} />
-        <meshStandardMaterial color="#333333" />
-      </mesh>
-      <mesh position={[0.3, 0.3, 0.2]} castShadow rotation={[0, 0, Math.PI/2]}>
-        <cylinderGeometry args={[0.25, 0.25, 0.05, 16]} />
-        <meshStandardMaterial color="#333333" />
-      </mesh>
-      
-      {/* Small front wheels */}
-      <mesh position={[-0.2, 0.15, -0.3]} castShadow rotation={[0, 0, Math.PI/2]}>
-        <cylinderGeometry args={[0.1, 0.1, 0.05, 16]} />
-        <meshStandardMaterial color="#333333" />
-      </mesh>
-      <mesh position={[0.2, 0.15, -0.3]} castShadow rotation={[0, 0, Math.PI/2]}>
-        <cylinderGeometry args={[0.1, 0.1, 0.05, 16]} />
-        <meshStandardMaterial color="#333333" />
-      </mesh>
-      
-      {/* Person in wheelchair */}
-      <mesh position={[0, 1.3, -0.1]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial color="#ffdbac" />
-      </mesh>
-    </group>
-  )
-}
-
 /* ----- Cultural Center with Banners ----- */
 function CulturalCenter({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
@@ -692,410 +608,14 @@ function CulturalCenter({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- Road System ----- */
-function RoadSystem() {
-  const roadTexture = useTexture({
-    map: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzMzMzMzIi8+CjxwYXRoIGQ9Ik0yNSA1TDI1IDQ1IiBzdHJva2U9IiNmZmZmMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNCA0Ii8+Cjwvc3ZnPg=='
-  })
-
-  const mainRoads = [
-    { start: [-40, 0, 0], end: [40, 0, 0], width: 4 },
-    { start: [0, 0, -40], end: [0, 0, 40], width: 4 },
-    { start: [-30, 0, -20], end: [30, 0, -20], width: 3 },
-    { start: [-20, 0, 30], end: [20, 0, 30], width: 3 }
-  ]
-
-  return (
-    <group>
-      {mainRoads.map((road, index) => {
-        const length = Math.sqrt(
-          Math.pow(road.end[0] - road.start[0], 2) +
-          Math.pow(road.end[2] - road.start[2], 2)
-        )
-        const center = [
-          (road.start[0] + road.end[0]) / 2,
-          0.01,
-          (road.start[2] + road.end[2]) / 2
-        ]
-        const angle = Math.atan2(road.end[2] - road.start[2], road.end[0] - road.start[0])
-
-        return (
-          <mesh key={index} position={center} rotation={[-Math.PI / 2, 0, angle]}>
-            <planeGeometry args={[length, road.width]} />
-            <meshStandardMaterial 
-              map={roadTexture.map}
-              color="#333333"
-              roughness={0.8}
-              metalness={0.1}
-            />
-          </mesh>
-        )
-      })}
-
-      {/* Road markings */}
-      {mainRoads.map((road, index) => {
-        const segments = Math.floor(Math.sqrt(
-          Math.pow(road.end[0] - road.start[0], 2) +
-          Math.pow(road.end[2] - road.start[2], 2)
-        ) / 4)
-        
-        return Array.from({ length: segments }).map((_, segIndex) => {
-          const t = (segIndex + 0.5) / segments
-          const pos = [
-            road.start[0] + (road.end[0] - road.start[0]) * t,
-            0.02,
-            road.start[2] + (road.end[2] - road.start[2]) * t
-          ]
-          
-          return (
-            <mesh key={`${index}-${segIndex}`} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[2, 0.3]} />
-              <meshStandardMaterial color="#ffff00" />
-            </mesh>
-          )
-        })
-      })}
-    </group>
-  )
-}
-
-/* ----- Bus Station ----- */
-function BusStation({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Platform */}
-      <mesh position={[0, 0.1, 0]} receiveShadow>
-        <boxGeometry args={[6, 0.2, 2]} />
-        <meshStandardMaterial color="#7f8c8d" />
-      </mesh>
-      
-      {/* Shelter */}
-      <mesh position={[0, 2, 0]} castShadow>
-        <boxGeometry args={[5, 0.1, 1.5]} />
-        <meshStandardMaterial color="#34495e" transparent opacity={0.7} />
-      </mesh>
-      
-      {/* Support pillars */}
-      {[-2, 2].map((x) => (
-        <mesh key={x} position={[x, 1, 0]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
-          <meshStandardMaterial color="#2c3e50" />
-        </mesh>
-      ))}
-      
-      {/* Bus stop sign */}
-      <Text
-        position={[0, 1.5, 1.1]}
-        fontSize={0.3}
-        color="#e74c3c"
-        anchorX="center"
-        anchorY="middle"
-      >
-        BUS STOP
-      </Text>
-      
-      {/* Waiting people */}
-      <Person position={[-1, 0.5, 0]} color="#8b4513" speed={0} />
-      <Person position={[1, 0.5, 0]} color="#2c3e50" speed={0} />
-    </group>
-  )
-}
-
-/* ----- Street Lights ----- */
-function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
-  const timeOfDay = useStore((s) => s.timeOfDay)
-  const streetLightsOn = useStore((s) => s.streetLightsOn)
-  
-  const isOn = streetLightsOn || timeOfDay === 'night'
-
-  return (
-    <group position={position} rotation={rotation}>
-      {/* Pole */}
-      <mesh position={[0, 3, 0]} castShadow>
-        <cylinderGeometry args={[0.08, 0.1, 6, 8]} />
-        <meshStandardMaterial color="#666666" />
-      </mesh>
-      
-      {/* Light fixture */}
-      <mesh position={[0, 6, 0.5]} castShadow>
-        <boxGeometry args={[0.4, 0.2, 0.6]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
-      
-      {/* Light bulb */}
-      <mesh position={[0, 6, 0.8]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial 
-          color={isOn ? "#ffffcc" : "#666666"}
-          emissive={isOn ? "#ffff99" : "#000000"}
-          emissiveIntensity={isOn ? 1 : 0}
-        />
-      </mesh>
-      
-      {/* Light glow */}
-      {isOn && (
-        <pointLight
-          position={[0, 6, 0.8]}
-          intensity={0.8}
-          distance={15}
-          color="#ffffcc"
-          castShadow
-        />
-      )}
-    </group>
-  )
-}
-
-/* ----- Street Light System ----- */
-function StreetLightSystem() {
-  const lightPositions = [
-    // Main roads
-    ...Array.from({ length: 16 }).map((_, i) => [-35 + i * 5, 0, 0]),
-    ...Array.from({ length: 16 }).map((_, i) => [0, 0, -35 + i * 5]),
-    ...Array.from({ length: 12 }).map((_, i) => [-25 + i * 5, 0, -20]),
-    ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
-    
-    // Around important buildings
-    [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
-    
-    // Cultural center area
-    [10, 0, 25], [-10, 0, 25], [0, 0, 20]
-  ]
-
-  return (
-    <group>
-      {lightPositions.map((pos, index) => (
-        <StreetLight key={index} position={pos} />
-      ))}
-    </group>
-  )
-}
-
-/* ----- Enhanced Vehicle System with Proper Road Movement ----- */
-function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) {
-  const carRef = useRef()
-  const [t, setT] = useState(Math.random() * 10)
-
-  useFrame((_, dt) => {
-    setT(prev => prev + dt * speed)
-    
-    if (carRef.current && path.length > 0) {
-      const tt = t % path.length
-      const i = Math.floor(tt) % path.length
-      const a = new THREE.Vector3(...path[i])
-      const b = new THREE.Vector3(...path[(i + 1) % path.length])
-      const f = tt % 1
-      const pos = a.clone().lerp(b, f)
-      
-      carRef.current.position.lerp(pos, 0.1)
-      
-      // Proper rotation based on road direction
-      const direction = new THREE.Vector3().subVectors(b, a).normalize()
-      carRef.current.lookAt(carRef.current.position.clone().add(direction))
-    }
-  })
-
-  return (
-    <group ref={carRef} position={position}>
-      {/* Car body */}
-      <mesh castShadow>
-        <boxGeometry args={[1.2, 0.4, 0.6]} />
-        <meshStandardMaterial color={color} metalness={0.3} roughness={0.4} />
-      </mesh>
-      
-      {/* Windows */}
-      <mesh position={[0, 0.3, 0]} castShadow>
-        <boxGeometry args={[1.1, 0.2, 0.5]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
-      </mesh>
-      
-      {/* Solar panel on car roof */}
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <boxGeometry args={[1, 0.02, 0.5]} />
-        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
-      </mesh>
-      
-      {/* Wheels */}
-      {[-0.4, 0.4].map((x, i) => (
-        <group key={i} position={[x, -0.2, 0.3]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.15, 0.15, 0.1, 8]} />
-            <meshStandardMaterial color="#333333" />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  )
-}
-
-function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
-  const busRef = useRef()
-  const [t, setT] = useState(Math.random() * 10)
-  const [isStopped, setIsStopped] = useState(false)
-  const [stopTimer, setStopTimer] = useState(0)
-
-  useFrame((_, dt) => {
-    if (isStopped) {
-      setStopTimer(prev => {
-        if (prev >= 3) { // Stop for 3 seconds
-          setIsStopped(false)
-          return 0
-        }
-        return prev + dt
-      })
-      return
-    }
-
-    setT(prev => prev + dt * 0.3) // Slower speed for buses
-    
-    if (busRef.current && path.length > 0) {
-      const tt = t % path.length
-      const i = Math.floor(tt) % path.length
-      const a = new THREE.Vector3(...path[i])
-      const b = new THREE.Vector3(...path[(i + 1) % path.length])
-      const f = tt % 1
-      const pos = a.clone().lerp(b, f)
-      
-      // Check if near bus station and should stop
-      if (stopAtStation && !isStopped && pos.distanceTo(new THREE.Vector3(15, 0.4, 25)) < 2) {
-        setIsStopped(true)
-      }
-      
-      if (!isStopped) {
-        busRef.current.position.lerp(pos, 0.1)
-        
-        // Proper rotation based on road direction
-        const direction = new THREE.Vector3().subVectors(b, a).normalize()
-        busRef.current.lookAt(busRef.current.position.clone().add(direction))
-      }
-    }
-  })
-
-  return (
-    <group ref={busRef} position={position}>
-      {/* Bus body - YELLOW */}
-      <mesh castShadow>
-        <boxGeometry args={[2.5, 1.2, 1.2]} />
-        <meshStandardMaterial color={"#FFD700"} metalness={0.3} roughness={0.4} />
-      </mesh>
-
-      {/* Windows */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <boxGeometry args={[2.4, 0.5, 1.1]} />
-        <meshStandardMaterial color={"#2c3e50"} transparent opacity={0.7} />
-      </mesh>
-
-      {/* Solar panel on bus roof */}
-      <mesh position={[0, 1.1, 0]} castShadow>
-        <boxGeometry args={[2.2, 0.02, 1]} />
-        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
-      </mesh>
-
-      {/* Wheels */}
-      {[-0.8, 0.8].map((x, i) => (
-        <group key={i} position={[x, -0.3, 0]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.2, 0.2, 0.15, 8]} />
-            <meshStandardMaterial color={"#333333"} />
-          </mesh>
-        </group>
-      ))}
-
-      {/* Bus sign */}
-      <Text
-        position={[0, 0.8, 0.61]}
-        fontSize={0.2}
-        color="#ff4444"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {isStopped ? "🛑 BUS" : "CITY BUS"}
-      </Text>
-
-      {/* Stop indicator */}
-      {isStopped && (
-        <Html position={[0, 2, 0]}>
-          <div style={{
-            background: '#e74c3c',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '10px',
-            fontWeight: 'bold'
-          }}>
-            STOPPED
-          </div>
-        </Html>
-      )}
-    </group>
-  )
-}
-
-/* ----- Traffic System ----- */
-function TrafficSystem() {
-  const trafficDensity = useStore((s) => s.trafficDensity)
-  
-  const carPaths = [
-    // Horizontal routes - PROPER VERTICAL MOVEMENT
-    [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
-    [[-35, 0.3, -20], [-25, 0.3, -20], [-15, 0.3, -20], [-5, 0.3, -20], [5, 0.3, -20], [15, 0.3, -20], [25, 0.3, -20], [35, 0.3, -20]],
-    
-    // Vertical routes - PROPER HORIZONTAL MOVEMENT
-    [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35]],
-    [[20, 0.3, -35], [20, 0.3, -25], [20, 0.3, -15], [20, 0.3, -5], [20, 0.3, 5], [20, 0.3, 15], [20, 0.3, 25], [20, 0.3, 35]]
-  ]
-
-  const busPaths = [
-    // Horizontal bus routes
-    [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
-    // Vertical bus routes
-    [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]],
-    // Bus route that stops at cultural center
-    [[-30, 0.4, 25], [-15, 0.4, 25], [0, 0.4, 25], [15, 0.4, 25], [30, 0.4, 25]]
-  ]
-
-  const carColors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"]
-  const carCount = trafficDensity === 'low' ? 8 : trafficDensity === 'medium' ? 15 : 25
-  const busCount = trafficDensity === 'low' ? 1 : trafficDensity === 'medium' ? 2 : 4
-
-  return (
-    <group>
-      {/* Cars */}
-      {Array.from({ length: carCount }).map((_, i) => (
-        <Car
-          key={`car-${i}`}
-          color={carColors[i % carColors.length]}
-          speed={0.3 + Math.random() * 0.3} // Slower speed
-          path={carPaths[i % carPaths.length]}
-        />
-      ))}
-      
-      {/* Buses */}
-      {Array.from({ length: busCount }).map((_, i) => (
-        <Bus
-          key={`bus-${i}`}
-          path={busPaths[i % busPaths.length]}
-          stopAtStation={i === 0} // First bus stops at station
-        />
-      ))}
-    </group>
-  )
-}
-
-/* ----- Enhanced Ground with Roads ----- */
+/* ----- Enhanced Ground WITHOUT Roads ----- */
 function Ground() {
   return (
     <>
       <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
+        <meshStandardMaterial color="#d2b48c" roughness={0.9} metalness={0.1} />
       </mesh>
-      
-      {/* Road System */}
-      <RoadSystem />
-      
-      {/* Street Light System */}
-      <StreetLightSystem />
       
       <gridHelper args={[200, 200, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
       <ContactShadows position={[0, -0.03, 0]} opacity={0.3} width={50} blur={2} far={20} />
@@ -1152,7 +672,7 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
     <group position={position} rotation={rotation}>
       <mesh castShadow>
         <boxGeometry args={[1.5, 0.02, 1]} />
-        <meshStandardMaterial color={"#1e3a8a"} metalness={0.9} roughness={0.05} />
+        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
       </mesh>
       <mesh position={[0, -0.1, 0]} castShadow>
         <boxGeometry args={[1.6, 0.08, 1.1]} />
@@ -1162,7 +682,7 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
   )
 }
 
-/* ----- Energy Efficient House with Accessibility Features ----- */
+/* ----- Energy Efficient House ----- */
 function EnergyEfficientHouse({ 
   position = [0, 0, 0], 
   height = 6, 
@@ -1249,70 +769,6 @@ function EnergyEfficientHouse({
         <WindTurbine position={[0, height/2, 0]} />
       )}
 
-      {/* Accessibility ramp for special house */}
-      {isSpecial && (
-        <group position={[1.5, 0, 2]}>
-          {/* Ramp */}
-          <mesh position={[0, 0.1, -1]} rotation={[0, 0, -Math.PI/12]} castShadow receiveShadow>
-            <boxGeometry args={[2, 0.1, 1.5]} />
-            <meshStandardMaterial color="#7f8c8d" />
-          </mesh>
-          
-          {/* Ramp railings */}
-          <mesh position={[0.8, 0.3, -1]} rotation={[0, 0, -Math.PI/12]} castShadow>
-            <boxGeometry args={[0.05, 0.4, 1.5]} />
-            <meshStandardMaterial color="#2c3e50" />
-          </mesh>
-          <mesh position={[-0.8, 0.3, -1]} rotation={[0, 0, -Math.PI/12]} castShadow>
-            <boxGeometry args={[0.05, 0.4, 1.5]} />
-            <meshStandardMaterial color="#2c3e50" />
-          </mesh>
-        </group>
-      )}
-
-      {/* Stairs with ramp beside for special house */}
-      {isSpecial && (
-        <group position={[-1.5, 0, 2]}>
-          {/* Stairs */}
-          {[0, 0.2, 0.4, 0.6].map((y, i) => (
-            <mesh key={i} position={[0, y + 0.05, -i * 0.3]} castShadow receiveShadow>
-              <boxGeometry args={[1, 0.1, 0.3]} />
-              <meshStandardMaterial color="#95a5a6" />
-            </mesh>
-          ))}
-          
-          {/* Ramp beside stairs */}
-          <mesh position={[0.8, 0.35, -0.45]} rotation={[0, 0, -Math.PI/8]} castShadow receiveShadow>
-            <boxGeometry args={[0.8, 0.1, 1.2]} />
-            <meshStandardMaterial color="#bdc3c7" />
-          </mesh>
-        </group>
-      )}
-
-      {/* Interior view for special house */}
-      {isSpecial && showInterior && (
-        <group position={[0, 0, -1]}>
-          {/* Ground floor interior */}
-          <mesh position={[0, 1.5, 0]} castShadow>
-            <boxGeometry args={[3.8, 3, 0.1]} />
-            <meshStandardMaterial color="#ecf0f1" />
-          </mesh>
-          
-          {/* First floor interior */}
-          <mesh position={[0, 4.5, 0]} castShadow>
-            <boxGeometry args={[3.8, 2, 0.1]} />
-            <meshStandardMaterial color="#dfe6e9" />
-          </mesh>
-
-          {/* Wheelchair users inside */}
-          <WheelchairUser position={[-1, 0.4, 0.1]} moving={true} />
-          <WheelchairUser position={[1, 0.4, 0.1]} moving={false} />
-          
-          {/* Person coming down from second floor using ramp */}
-          <WheelchairUser position={[-1.2, 2.8, 0.1]} moving={true} onRamp={true} />
-        </group>
-      )}
-
       {/* Building label */}
       <Text
         position={[0, height/2 + 1, 0]}
@@ -1340,7 +796,6 @@ function EnergyEfficientHouse({
             <div>🔵 Blue Energy Efficient Design</div>
             <div>🪟 Double-Sided Glass Windows</div>
             <div>♿ Wheelchair Accessible</div>
-            <div>🛗 Stairs with Ramp System</div>
             <div>☀️ Solar Powered</div>
             <div>🌬️ Wind Turbine</div>
           </div>
@@ -1387,17 +842,6 @@ function EnergyEfficientSociety({ position = [0, 0, 0] }) {
       <mesh position={[0, 0.01, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[40, 20]} />
         <meshStandardMaterial color="#27ae60" transparent opacity={0.1} />
-      </mesh>
-      
-      {/* Internal roads */}
-      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[2, 20]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-      
-      <mesh position={[0, 0.02, -28]} rotation={[-Math.PI / 2, 0, Math.PI/2]} receiveShadow>
-        <planeGeometry args={[2, 40]} />
-        <meshStandardMaterial color="#34495e" />
       </mesh>
 
       {/* Society label */}
@@ -1457,583 +901,6 @@ function EnergyEfficientSociety({ position = [0, 0, 0] }) {
       <Person position={[-5, 0, -32]} color="#2c3e50" speed={0.3} path={[
         [-5, 0.5, -32], [-7, 0.5, -30], [-9, 0.5, -32], [-7, 0.5, -34], [-5, 0.5, -32]
       ]} />
-
-      {/* Wheelchair user in society */}
-      <WheelchairUser position={[10, 0, -25]} moving={true} />
-    </group>
-  )
-}
-
-/* ----- Smart Buildings with Solar and Turbines ----- */
-function SmartBuilding({ 
-  position = [0, 0, 0], 
-  height = 8, 
-  color = "#a67c52", 
-  name = "Building",
-  hasTurbine = false,
-  hasSolar = true
-}) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  const handleClick = () => {
-    setFocus({
-      x: position[0],
-      y: position[1] + height/2,
-      z: position[2],
-      lookAt: { x: position[0], y: position[1], z: position[2] }
-    })
-  }
-
-  return (
-    <group position={position}>
-      {/* Main structure */}
-      <mesh castShadow receiveShadow onClick={handleClick}>
-        <boxGeometry args={[3, height, 3]} />
-        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
-      </mesh>
-      
-      {/* Windows */}
-      <group>
-        {Array.from({ length: Math.floor(height / 2) }).map((_, floor) =>
-          [-1, 1].map((side, i) => (
-            <group key={`${floor}-${side}`}>
-              <mesh
-                position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]}
-                castShadow
-              >
-                <boxGeometry args={[0.02, 1.2, 0.8]} />
-                <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
-              </mesh>
-              {/* Window frames */}
-              <mesh position={[1.5, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
-                <boxGeometry args={[0.04, 1.3, 0.85]} />
-                <meshStandardMaterial color="#8b4513" />
-              </mesh>
-            </group>
-          ))
-        )}
-      </group>
-      
-      {/* Rooftop */}
-      <mesh position={[0, height/2 + 0.2, 0]} castShadow>
-        <boxGeometry args={[3.2, 0.4, 3.2]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-
-      {/* Solar Panels on roof */}
-      {hasSolar && (
-        <group position={[0, height/2 + 0.3, 0]}>
-          <SolarPanel position={[0, 0, 0]} rotation={[0, 0, 0]} />
-          <SolarPanel position={[1.8, 0, 0]} rotation={[0, Math.PI/4, 0]} />
-          <SolarPanel position={[-1.8, 0, 0]} rotation={[0, -Math.PI/4, 0]} />
-        </group>
-      )}
-
-      {/* SMALLER Wind Turbine on roof */}
-      {hasTurbine && (
-        <WindTurbine position={[0, height/2, 0]} />
-      )}
-
-      {/* Building label */}
-      <Text
-        position={[0, height/2 + 1, 0]}
-        fontSize={0.3}
-        color="#8b4513"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {name}
-      </Text>
-    </group>
-  )
-}
-
-/* ----- Waste Bin Component ----- */
-function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
-  const [fillLevel, setFillLevel] = useState(0)
-  const updateWasteBin = useStore((s) => s.updateWasteBin)
-  const setAlertWasteManagement = useStore((s) => s.setAlertWasteManagement)
-
-  const handleClick = () => {
-    if (fillLevel < 1) {
-      const newLevel = Math.min(1, fillLevel + 0.25)
-      setFillLevel(newLevel)
-      updateWasteBin(id, newLevel)
-      
-      // Alert waste management when bin is full
-      if (newLevel >= 1) {
-        setAlertWasteManagement(true)
-      }
-    }
-  }
-
-  return (
-    <group position={position}>
-      {/* Bin body - GREEN */}
-      <mesh castShadow onClick={handleClick}>
-        <cylinderGeometry args={[0.4, 0.5, 1, 16]} />
-        <meshStandardMaterial color="#27ae60" />
-      </mesh>
-      
-      {/* Waste level indicator */}
-      <mesh position={[0, (fillLevel - 0.5) * 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.35, 0.45, fillLevel * 0.8, 16]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
-      {/* Lid */}
-      <mesh position={[0, 0.6, 0]} castShadow>
-        <cylinderGeometry args={[0.52, 0.52, 0.05, 16]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      <Html position={[0, 1.2, 0]}>
-        <div style={{
-          background: fillLevel >= 1 ? '#e74c3c' : '#27ae60',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontWeight: 'bold'
-        }}>
-          🗑️ {Math.round(fillLevel * 100)}% {fillLevel >= 1 ? 'FULL!' : ''}
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-/* ----- Enhanced Waste Collection Truck with Animation ----- */
-function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComplete }) {
-  const truckRef = useRef()
-  const [currentPosition, setCurrentPosition] = useState(position)
-  const [isCollecting, setIsCollecting] = useState(false)
-  const [collectionProgress, setCollectionProgress] = useState(0)
-  const [binLifted, setBinLifted] = useState(false)
-
-  useFrame((_, dt) => {
-    if (!truckRef.current || !targetBin) return
-
-    const truckPos = truckRef.current.position
-    const targetPos = new THREE.Vector3(targetBin[0], targetBin[1], targetBin[2])
-
-    // Move truck towards bin
-    if (!isCollecting && truckPos.distanceTo(targetPos) > 2) {
-      const direction = new THREE.Vector3().subVectors(targetPos, truckPos).normalize()
-      truckPos.add(direction.multiplyScalar(dt * 4))
-      truckRef.current.lookAt(truckPos.clone().add(direction))
-      setCurrentPosition([truckPos.x, truckPos.y, truckPos.z])
-    } 
-    // Start collection when close to bin
-    else if (!isCollecting) {
-      setIsCollecting(true)
-    }
-    
-    // Collection animation
-    if (isCollecting) {
-      const progress = collectionProgress + dt * 2
-      setCollectionProgress(progress)
-
-      if (progress < 0.3) {
-        // Lift bin animation
-        truckRef.current.position.y = position[1] + Math.sin(progress * 10) * 0.1
-        if (progress > 0.2 && !binLifted) {
-          setBinLifted(true)
-        }
-      } else if (progress >= 1) {
-        // Collection complete
-        setIsCollecting(false)
-        setCollectionProgress(0)
-        setBinLifted(false)
-        if (onCollectionComplete) onCollectionComplete()
-      }
-    }
-  })
-
-  return (
-    <group ref={truckRef} position={currentPosition}>
-      {/* Truck body - GREEN */}
-      <mesh castShadow>
-        <boxGeometry args={[2, 1, 1.5]} />
-        <meshStandardMaterial color="#27ae60" />
-      </mesh>
-      
-      {/* Truck cabin */}
-      <mesh position={[0.8, 0.8, 0]} castShadow>
-        <boxGeometry args={[1, 0.8, 1.2]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      {/* Waste container with animated fill */}
-      <mesh position={[-0.5, 1, 0]} castShadow>
-        <boxGeometry args={[1.5, 1, 1.2]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-      
-      {/* Animated waste level in container */}
-      <mesh position={[-0.5, 0.5 + collectionProgress * 0.4, 0]} castShadow>
-        <boxGeometry args={[1.4, collectionProgress * 0.8, 1.1]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
-      {/* Lifting mechanism animation */}
-      {isCollecting && collectionProgress < 0.3 && (
-        <mesh position={[-1.2, 1.5 + Math.sin(collectionProgress * 20) * 0.5, 0]} castShadow>
-          <boxGeometry args={[0.3, 0.8, 0.8]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-      )}
-      
-      {/* Wheels */}
-      {[-0.6, 0.6].map((x, i) => (
-        <group key={i} position={[x, -0.3, 0]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.25, 0.25, 0.2, 8]} />
-            <meshStandardMaterial color="#333333" />
-          </mesh>
-        </group>
-      ))}
-
-      <Text
-        position={[0, 1.8, 0]}
-        fontSize={0.2}
-        color="white"
-        anchorX="center"
-        anchorY="middle"
-      >
-        WASTE TRUCK
-      </Text>
-
-      {isCollecting && (
-        <Html position={[0, 2.5, 0]}>
-          <div style={{
-            background: '#e74c3c',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '10px',
-            fontWeight: 'bold'
-          }}>
-            🚛 COLLECTING: {Math.round(collectionProgress * 100)}%
-          </div>
-        </Html>
-      )}
-    </group>
-  )
-}
-
-/* ----- Enhanced Waste Management System with 3R Bins and Pipes ----- */
-function WasteManagementSystem({ position = [15, 0, 15] }) {
-  const [isTruckActive, setIsTruckActive] = useState(false)
-  const [currentBinTarget, setCurrentBinTarget] = useState(null)
-  const [collectedWaste, setCollectedWaste] = useState(0)
-  const alertWasteManagement = useStore((s) => s.alertWasteManagement)
-  const wasteBins = useStore((s) => s.wasteBins)
-  const wasteProcessing = useStore((s) => s.wasteProcessing)
-  const setWasteProcessing = useStore((s) => s.setWasteProcessing)
-  const setEmergencyAlarm = useStore((s) => s.setEmergencyAlarm)
-  const setAlertWasteManagement = useStore((s) => s.setAlertWasteManagement)
-  
-  const binPositions = [
-    [-10, 0, 8], [12, 0, -5], [-5, 0, -12], 
-    [18, 0, 10], [-15, 0, -18], [5, 0, 20]
-  ]
-
-  const startProcessing = () => {
-    if (collectedWaste > 0 && !wasteProcessing.isProcessing) {
-      setWasteProcessing({
-        isProcessing: true,
-        processTime: 0,
-        recycledWaste: 0,
-        reducedWaste: 0,
-        reusedWaste: 0
-      })
-    }
-  }
-
-  useFrame((_, dt) => {
-    // Check if any bin is full and send truck
-    const fullBins = Object.entries(wasteBins)
-      .filter(([_, level]) => level >= 1)
-      .map(([id]) => binPositions[parseInt(id.replace('bin', '')) - 1])
-
-    if (fullBins.length > 0 && !isTruckActive && !currentBinTarget) {
-      setCurrentBinTarget(fullBins[0])
-      setIsTruckActive(true)
-      setAlertWasteManagement(true)
-    }
-
-    // Waste processing simulation
-    if (wasteProcessing.isProcessing) {
-      const newTime = wasteProcessing.processTime + dt
-      
-      // Simulate 4-hour processing (4 seconds in simulation)
-      if (newTime >= 4) {
-        setWasteProcessing({
-          isProcessing: false,
-          processTime: 4,
-          recycledWaste: Math.floor(collectedWaste * 0.6), // 60% recycled
-          reducedWaste: Math.floor(collectedWaste * 0.2),  // 20% reduced
-          reusedWaste: Math.floor(collectedWaste * 0.15)  // 15% reused
-        })
-        setCollectedWaste(0)
-      } else {
-        setWasteProcessing({
-          ...wasteProcessing,
-          processTime: newTime
-        })
-      }
-    }
-  })
-
-  const handleCollectionComplete = () => {
-    // Reset the current bin
-    const binId = `bin${binPositions.findIndex(pos => 
-      pos[0] === currentBinTarget[0] && 
-      pos[1] === currentBinTarget[1] && 
-      pos[2] === currentBinTarget[2]
-    ) + 1}`
-    
-    useStore.getState().updateWasteBin(binId, 0)
-    
-    // Add collected waste
-    setCollectedWaste(prev => prev + 5)
-    
-    // Reset truck state
-    setCurrentBinTarget(null)
-    setIsTruckActive(false)
-    setAlertWasteManagement(false)
-  }
-
-  const triggerEmergency = () => {
-    setEmergencyAlarm(true)
-    setTimeout(() => setEmergencyAlarm(false), 3000)
-  }
-
-  return (
-    <group position={position}>
-      {/* Main waste management building */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[12, 8, 10]} />
-        <meshStandardMaterial color="#2c3e50" roughness={0.7} />
-      </mesh>
-
-      {/* Processing area with 3R bins */}
-      <group position={[0, 4, -3]}>
-        {/* Reduce Bin (RED) */}
-        <group position={[-4, 0, 0]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-            <meshStandardMaterial color="#e74c3c" />
-          </mesh>
-          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
-            📉 REDUCE
-          </Text>
-          {/* Waste level in bin */}
-          {wasteProcessing.reducedWaste > 0 && (
-            <mesh position={[0, wasteProcessing.reducedWaste * 0.1 - 0.9, 0]} castShadow>
-              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.reducedWaste * 0.2, 16]} />
-              <meshStandardMaterial color="#c0392b" />
-            </mesh>
-          )}
-        </group>
-
-        {/* Reuse Bin (ORANGE) */}
-        <group position={[0, 0, 0]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-            <meshStandardMaterial color="#f39c12" />
-          </mesh>
-          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
-            🔄 REUSE
-          </Text>
-          {/* Waste level in bin */}
-          {wasteProcessing.reusedWaste > 0 && (
-            <mesh position={[0, wasteProcessing.reusedWaste * 0.1 - 0.9, 0]} castShadow>
-              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.reusedWaste * 0.2, 16]} />
-              <meshStandardMaterial color="#e67e22" />
-            </mesh>
-          )}
-        </group>
-
-        {/* Recycle Bin (GREEN) */}
-        <group position={[4, 0, 0]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-            <meshStandardMaterial color="#27ae60" />
-          </mesh>
-          <Text position={[0, 1.5, 0]} fontSize={0.3} color="white" anchorX="center">
-            ♻️ RECYCLE
-          </Text>
-          {/* Waste level in bin */}
-          {wasteProcessing.recycledWaste > 0 && (
-            <mesh position={[0, wasteProcessing.recycledWaste * 0.1 - 0.9, 0]} castShadow>
-              <cylinderGeometry args={[0.75, 0.75, wasteProcessing.recycledWaste * 0.2, 16]} />
-              <meshStandardMaterial color="#229954" />
-            </mesh>
-          )}
-        </group>
-      </group>
-
-      {/* Processing pipes connecting bins */}
-      <group>
-        {/* Main input pipe */}
-        <mesh position={[0, 1, 2]} rotation={[0, 0, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.3, 0.3, 8, 8]} />
-          <meshStandardMaterial color="#95a5a6" />
-        </mesh>
-        
-        {/* Pipe to Reduce bin */}
-        <mesh position={[-2, 1, -1]} rotation={[0, Math.PI/2, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 4, 8]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-        
-        {/* Pipe to Reuse bin */}
-        <mesh position={[0, 1, -1]} rotation={[0, 0, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 2, 8]} />
-          <meshStandardMaterial color="#f39c12" />
-        </mesh>
-        
-        {/* Pipe to Recycle bin */}
-        <mesh position={[2, 1, -1]} rotation={[0, -Math.PI/2, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 4, 8]} />
-          <meshStandardMaterial color="#27ae60" />
-        </mesh>
-      </group>
-
-      {/* Processing tanks */}
-      <group position={[0, 3.5, 2]}>
-        <mesh castShadow>
-          <cylinderGeometry args={[1.2, 1.2, 3, 16]} />
-          <meshStandardMaterial color="#34495e" />
-        </mesh>
-        {/* Animated processing liquid */}
-        {wasteProcessing.isProcessing && (
-          <mesh position={[0, wasteProcessing.processTime * 0.3 - 1.5, 0]} castShadow>
-            <cylinderGeometry args={[1.1, 1.1, wasteProcessing.processTime * 0.6, 16]} />
-            <meshStandardMaterial color="#3498db" transparent opacity={0.7} />
-          </mesh>
-        )}
-      </group>
-
-      {/* Solar panels */}
-      <group position={[0, 4.5, 5]}>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <SolarPanel 
-            key={i}
-            position={[-4.5 + i * 1.3, 0.5, 0]} 
-            rotation={[0, Math.PI, 0]} 
-          />
-        ))}
-      </group>
-
-      {/* SMALLER Wind turbine */}
-      <WindTurbine position={[0, 4, 0]} />
-
-      {/* Waste Collection Truck */}
-      {isTruckActive && currentBinTarget && (
-        <WasteTruck 
-          position={[position[0] - 15, 0, position[2]]}
-          targetBin={currentBinTarget}
-          onCollectionComplete={handleCollectionComplete}
-        />
-      )}
-
-      {/* Emergency Alarm */}
-      <mesh position={[0, 9, 0]} castShadow>
-        <cylinderGeometry args={[0.3, 0.3, 0.5, 8]} />
-        <meshStandardMaterial color="#e74c3c" emissive="#e74c3c" emissiveIntensity={0.5} />
-      </mesh>
-
-      {/* Information display */}
-      <Html position={[0, 6, 0]} transform>
-        <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '15px',
-          borderRadius: '12px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '320px',
-          textAlign: 'center'
-        }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#2c3e50' }}>🔄 Advanced Waste Management</h3>
-          
-          <div style={{ marginBottom: '10px' }}>
-            <div>🗑️ Collected Waste: {collectedWaste} units</div>
-            <div>⏱️ Process Time: {Math.min(4, wasteProcessing.processTime).toFixed(1)}/4 hrs</div>
-            <div>🚛 Truck Status: {isTruckActive ? 'COLLECTING' : 'READY'}</div>
-            
-            {wasteProcessing.processTime >= 4 && (
-              <div style={{ marginTop: '8px', padding: '8px', background: '#ecf0f1', borderRadius: '6px' }}>
-                <div style={{ color: '#27ae60' }}>♻️ Recycled: {wasteProcessing.recycledWaste} units</div>
-                <div style={{ color: '#e74c3c' }}>📉 Reduced: {wasteProcessing.reducedWaste} units</div>
-                <div style={{ color: '#f39c12' }}>🔄 Reused: {wasteProcessing.reusedWaste} units</div>
-              </div>
-            )}
-            
-            {alertWasteManagement && (
-              <div style={{ color: '#e74c3c', fontWeight: 'bold', marginTop: '5px' }}>
-                ⚠️ ALERT: Bin Full! Truck dispatched
-              </div>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-            <button 
-              onClick={startProcessing}
-              disabled={wasteProcessing.isProcessing || collectedWaste === 0}
-              style={{
-                background: wasteProcessing.isProcessing ? '#95a5a6' : collectedWaste === 0 ? '#95a5a6' : '#27ae60',
-                color: 'white',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                cursor: collectedWaste > 0 && !wasteProcessing.isProcessing ? 'pointer' : 'not-allowed',
-                flex: 1
-              }}
-            >
-              {wasteProcessing.isProcessing ? '🔄 Processing...' : 'Start 4H Process'}
-            </button>
-            
-            <button 
-              onClick={triggerEmergency}
-              style={{
-                background: '#e74c3c',
-                color: 'white',
-                border: 'none',
-                padding: '8px 12px',
-                borderRadius: '6px',
-                cursor: 'pointer'
-              }}
-            >
-              🚨 Emergency
-            </button>
-          </div>
-
-          {/* 3R System Info */}
-          <div style={{ 
-            background: 'linear-gradient(135deg, #e74c3c, #f39c12, #27ae60)',
-            color: 'white',
-            padding: '8px',
-            borderRadius: '6px',
-            marginTop: '8px',
-            fontSize: '11px'
-          }}>
-            <div><strong>3R Waste Management System</strong></div>
-            <div>📉 Reduce • 🔄 Reuse • ♻️ Recycle</div>
-          </div>
-        </div>
-      </Html>
-
-      <Text
-        position={[0, 10, 0]}
-        fontSize={0.5}
-        color="#2c3e50"
-        anchorX="center"
-        anchorY="middle"
-      >
-        Advanced Waste Management
-      </Text>
     </group>
   )
 }
@@ -2057,18 +924,15 @@ function CityLayout() {
       {/* Cultural Center */}
       <CulturalCenter position={[0, 0, 25]} />
       
-      {/* Bus Station near Cultural Center */}
-      <BusStation position={[15, 0, 25]} />
-      
-      {/* Vertical Farm - MOVED outside society */}
+      {/* Vertical Farm - SEPARATED from society */}
       <VerticalFarm position={[30, 0, -10]} />
       
-      {/* Energy Efficient Society behind Vertical Farm */}
+      {/* Energy Efficient Society - SEPARATED from vertical farm */}
       <EnergyEfficientSociety position={[0, 0, 0]} />
       
       {/* Regular buildings */}
       {buildings.map((building, index) => (
-        <SmartBuilding
+        <EnergyEfficientHouse
           key={index}
           position={building.position}
           height={building.height}
@@ -2078,17 +942,6 @@ function CityLayout() {
           hasSolar={true}
         />
       ))}
-      
-      {/* Enhanced Waste Management System */}
-      <WasteManagementSystem position={[15, 0, 15]} />
-      
-      {/* GREEN waste bins around town */}
-      <WasteBin position={[-10, 0, 8]} id="bin1" />
-      <WasteBin position={[12, 0, -5]} id="bin2" />
-      <WasteBin position={[-5, 0, -12]} id="bin3" />
-      <WasteBin position={[18, 0, 10]} id="bin4" />
-      <WasteBin position={[-15, 0, -18]} id="bin5" />
-      <WasteBin position={[5, 0, 20]} id="bin6" />
       
       {/* More walking people around the city */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
@@ -2102,19 +955,6 @@ function CityLayout() {
       <Person position={[8, 0, 28]} color="#8b4513" speed={0.2} path={[
         [8, 0.5, 28], [10, 0.5, 26], [12, 0.5, 28], [10, 0.5, 30], [8, 0.5, 28]
       ]} />
-
-      {/* People walking on roads */}
-      <Person position={[-10, 0, 5]} color="#8b4513" speed={0.3} path={[
-        [-10, 0.5, 5], [-5, 0.5, 5], [0, 0.5, 5], [5, 0.5, 5], [10, 0.5, 5]
-      ]} />
-      
-      <Person position={[5, 0, -10]} color="#2c3e50" speed={0.4} path={[
-        [5, 0.5, -10], [5, 0.5, -5], [5, 0.5, 0], [5, 0.5, 5], [5, 0.5, 10]
-      ]} />
-
-      <Person position={[-20, 0, -15]} color="#8b4513" speed={0.2} path={[
-        [-20, 0.5, -15], [-15, 0.5, -15], [-10, 0.5, -15], [-15, 0.5, -20], [-20, 0.5, -15]
-      ]} />
     </group>
   )
 }
@@ -2123,8 +963,6 @@ function CityLayout() {
 function HUD() {
   const alert = useStore((s) => s.alert)
   const timeOfDay = useStore((s) => s.timeOfDay)
-  const alertWasteManagement = useStore((s) => s.alertWasteManagement)
-  const emergencyAlarm = useStore((s) => s.emergencyAlarm)
   
   const alertStyles = {
     info: { background: 'linear-gradient(135deg, #d2691e, #8b4513)', color: 'white' },
@@ -2134,34 +972,7 @@ function HUD() {
 
   return (
     <div style={{ position: 'absolute', left: 12, top: 12, zIndex: 50 }}>
-      {emergencyAlarm ? (
-        <div style={{ 
-          background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
-          color: 'white',
-          padding: '12px 16px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-          minWidth: '280px',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          animation: 'pulse 0.5s infinite'
-        }}>
-          🚨 EMERGENCY ALARM ACTIVATED! 🚨
-        </div>
-      ) : alertWasteManagement ? (
-        <div style={{ 
-          background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
-          color: 'white',
-          padding: '12px 16px', 
-          borderRadius: '12px', 
-          boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-          minWidth: '280px',
-          fontSize: '14px',
-          fontWeight: 'bold'
-        }}>
-          🚨 ALERT: Waste bin full! Sending collection truck...
-        </div>
-      ) : alert ? (
+      {alert ? (
         <div style={{ 
           ...alertStyles[alert.type] || alertStyles.info, 
           padding: '12px 16px', 
@@ -2183,7 +994,7 @@ function HUD() {
           fontWeight: 'bold',
           color: '#8b4513'
         }}>
-          🏙️ Smart City • Time: {timeOfDay} • Traffic: 🟢 Flowing
+          🏙️ Smart City • Time: {timeOfDay} • No Roads, No Traffic
         </div>
       )}
     </div>
@@ -2225,28 +1036,16 @@ function SettingsIcon() {
 /* ----- SMALLER Control Panel ----- */
 function ControlPanel() {
   const setTimeOfDay = useStore((s) => s.setTimeOfDay)
-  const setTrafficDensity = useStore((s) => s.setTrafficDensity)
-  const setStreetLightsOn = useStore((s) => s.setStreetLightsOn)
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
   const showCityControl = useStore((s) => s.showCityControl)
   const setShowCityControl = useStore((s) => s.setShowCityControl)
 
-  // Auto street lights at night
-  useEffect(() => {
-    if (timeOfDay === 'night') {
-      setStreetLightsOn(true)
-    }
-  }, [timeOfDay, setStreetLightsOn])
-
   const locations = {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
-    '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
-    '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
     '🏢 Vertical Farm': { x: 30, y: 10, z: -10, lookAt: { x: 30, y: 0, z: -10 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
-    '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } },
-    '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
+    '🔵 Accessible Home': { x: 0, y: 8, z: -28, lookAt: { x: 0, y: 0, z: -28 } }
   }
 
   if (!showCityControl) return null
@@ -2287,68 +1086,13 @@ function ControlPanel() {
         </label>
         <select 
           value={timeOfDay}
-          onChange={(e) => {
-            setTimeOfDay(e.target.value)
-            setStreetLightsOn(e.target.value === 'night')
-          }}
+          onChange={(e) => setTimeOfDay(e.target.value)}
           style={{ width: '100%', padding: '4px', borderRadius: '6px', border: '1px solid #d2b48c', fontSize: '11px' }}
         >
           <option value="day">☀️ Day</option>
           <option value="evening">🌆 Evening</option>
           <option value="night">🌙 Night</option>
         </select>
-      </div>
-
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
-          Traffic Density:
-        </label>
-        <select 
-          onChange={(e) => setTrafficDensity(e.target.value)}
-          style={{ width: '100%', padding: '4px', borderRadius: '6px', border: '1px solid #d2b48c', fontSize: '11px' }}
-        >
-          <option value="low">🟢 Low</option>
-          <option value="medium">🟡 Medium</option>
-          <option value="high">🔴 High</option>
-        </select>
-      </div>
-
-      <div style={{ marginBottom: 10 }}>
-        <label style={{ display: 'block', marginBottom: 4, fontSize: '11px', fontWeight: 'bold' }}>
-          Street Lights:
-        </label>
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button 
-            onClick={() => setStreetLightsOn(true)}
-            style={{ 
-              flex: 1, 
-              background: '#27ae60', 
-              color: 'white', 
-              border: 'none', 
-              padding: '4px', 
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '10px'
-            }}
-          >
-            ON
-          </button>
-          <button 
-            onClick={() => setStreetLightsOn(false)}
-            style={{ 
-              flex: 1, 
-              background: '#e74c3c', 
-              color: 'white', 
-              border: 'none', 
-              padding: '4px', 
-              borderRadius: '6px',
-              cursor: 'pointer',
-              fontSize: '10px'
-            }}
-          >
-            OFF
-          </button>
-        </div>
       </div>
 
       <div>
@@ -2384,7 +1128,6 @@ function ControlPanel() {
 /* ----- Main App Component ----- */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
-  const emergencyAlarm = useStore((s) => s.emergencyAlarm)
   
   const skyConfig = {
     day: { sunPosition: [100, 20, 100], inclination: 0, azimuth: 0.25 },
@@ -2396,15 +1139,10 @@ export default function App() {
     <div style={{ 
       width: '100vw', 
       height: '100vh', 
-      background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
-      animation: emergencyAlarm ? 'emergencyFlash 0.5s infinite' : 'none'
+      background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)'
     }}>
       <style>
         {`
-          @keyframes emergencyFlash {
-            0%, 100% { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
-            50% { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
-          }
           @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
@@ -2441,9 +1179,6 @@ export default function App() {
           {/* Complete City Layout */}
           <CityLayout />
           
-          {/* Traffic System */}
-          <TrafficSystem />
-          
           <ContactShadows position={[0, -0.1, 0]} opacity={0.4} width={40} blur={2} far={10} />
         </Suspense>
         
@@ -2475,7 +1210,7 @@ export default function App() {
           ⚙️ Click settings icon (top-right) for city controls
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2, fontWeight: 'bold' }}>
-          🗑️ NEW: Auto waste collection! Click bins to fill them, truck collects automatically!
+          🚫 NO ROADS • NO TRAFFIC • PEDESTRIAN-FRIENDLY CITY
         </div>
       </div>
     </div>
