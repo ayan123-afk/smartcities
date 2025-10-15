@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Float, useTexture } from '@react-three/drei'
+import { OrbitControls, Html, useGLTF, ContactShadows, Text, Sparkles, Float, useTexture } from '@react-three/drei'
 import * as THREE from 'three'
 import { create } from 'zustand'
 
@@ -2801,12 +2801,6 @@ export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
   const emergencyAlarm = useStore((s) => s.emergencyAlarm)
   
-  const skyConfig = {
-    day: { sunPosition: [100, 20, 100], inclination: 0, azimuth: 0.25 },
-    evening: { sunPosition: [10, 5, 100], inclination: 0, azimuth: 0.25 },
-    night: { sunPosition: [-100, -20, 100], inclination: 0, azimuth: 0.25 }
-  }
-
   const fogConfig = {
     day: { color: '#87CEEB', near: 10, far: 80 },
     evening: { color: '#ff7f50', near: 5, far: 60 },
@@ -2886,7 +2880,7 @@ export default function App() {
             </div>
           </Html>
         }>
-          <Sky {...skyConfig[timeOfDay]} />
+          {/* Sky component removed here */}
           
           <Ground />
           
