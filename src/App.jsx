@@ -64,11 +64,166 @@ const useStore = create((set) => ({
   setWaterPlant: (plant) => set({ waterPlant: plant })
 }))
 
-/* ----- WATER FILTERING PLANT ----- */
+/* ----- ENHANCED STREET LIGHTS ----- */
+function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
+  const timeOfDay = useStore((s) => s.timeOfDay)
+  const streetLightsOn = useStore((s) => s.streetLightsOn)
+  
+  const isOn = streetLightsOn || timeOfDay === 'night'
+
+  return (
+    <group position={position} rotation={rotation}>
+      <mesh position={[0, 3, 0]} castShadow>
+        <cylinderGeometry args={[0.08, 0.1, 6, 8]} />
+        <meshStandardMaterial color="#666666" />
+      </mesh>
+      
+      <mesh position={[0, 6, 0.5]} castShadow>
+        <boxGeometry args={[0.4, 0.2, 0.6]} />
+        <meshStandardMaterial color="#444444" />
+      </mesh>
+      
+      <mesh position={[0, 6, 0.8]} castShadow>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial 
+          color={isOn ? "#ffffcc" : "#666666"}
+          emissive={isOn ? "#ffff99" : "#000000"}
+          emissiveIntensity={isOn ? 1 : 0}
+        />
+      </mesh>
+      
+      {isOn && (
+        <pointLight
+          position={[0, 6, 0.8]}
+          intensity={0.8}
+          distance={15}
+          color="#ffffcc"
+          castShadow
+        />
+      )}
+    </group>
+  )
+}
+
+/* ----- ENHANCED STREET LIGHT SYSTEM ----- */
+function StreetLightSystem() {
+  const lightPositions = [
+    ...Array.from({ length: 16 }).map((_, i) => [-35 + i * 5, 0, 0]),
+    ...Array.from({ length: 16 }).map((_, i) => [0, 0, -35 + i * 5]),
+    ...Array.from({ length: 12 }).map((_, i) => [-25 + i * 5, 0, -20]),
+    ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
+    
+    [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
+    
+    [10, 0, 25], [-10, 0, 25], [0, 0, 20],
+    
+    // Additional lights for better coverage
+    [-30, 0, 15], [30, 0, -15], [-25, 0, 25], [25, 0, -25],
+    [-20, 0, -30], [20, 0, 30], [-10, 0, -25], [10, 0, 25]
+  ]
+
+  return (
+    <group>
+      {lightPositions.map((pos, index) => (
+        <StreetLight key={index} position={pos} />
+      ))}
+    </group>
+  )
+}
+
+/* ----- ENHANCED BUILDING WITH NIGHT LIGHTS ----- */
+function EnhancedBuilding({ 
+  position = [0, 0, 0], 
+  height = 8, 
+  color = "#a67c52", 
+  name = "Building",
+  hasTurbine = false,
+  hasSolar = true,
+  windows = true
+}) {
+  const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
+
+  const handleClick = () => {
+    setFocus({
+      x: position[0],
+      y: position[1] + height/2,
+      z: position[2],
+      lookAt: { x: position[0], y: position[1], z: position[2] }
+    })
+  }
+
+  return (
+    <group position={position}>
+      <mesh castShadow receiveShadow onClick={handleClick}>
+        <boxGeometry args={[3, height, 3]} />
+        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
+      </mesh>
+      
+      {windows && (
+        <group>
+          {Array.from({ length: Math.floor(height / 2) }).map((_, floor) =>
+            [-1, 1].map((side, i) => (
+              <group key={`${floor}-${side}`}>
+                <mesh
+                  position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]}
+                  castShadow
+                >
+                  <boxGeometry args={[0.02, 1.2, 0.8]} />
+                  <meshStandardMaterial 
+                    color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                    transparent 
+                    opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+                    emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                    emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+                  />
+                </mesh>
+                <mesh position={[1.5, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
+                  <boxGeometry args={[0.04, 1.3, 0.85]} />
+                  <meshStandardMaterial color="#8b4513" />
+                </mesh>
+              </group>
+            ))
+          )}
+        </group>
+      )}
+      
+      <mesh position={[0, height/2 + 0.2, 0]} castShadow>
+        <boxGeometry args={[3.2, 0.4, 3.2]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+
+      {hasSolar && (
+        <group position={[0, height/2 + 0.3, 0]}>
+          <SolarPanel position={[0, 0, 0]} rotation={[0, 0, 0]} />
+          <SolarPanel position={[1.8, 0, 0]} rotation={[0, Math.PI/4, 0]} />
+          <SolarPanel position={[-1.8, 0, 0]} rotation={[0, -Math.PI/4, 0]} />
+        </group>
+      )}
+
+      {hasTurbine && (
+        <WindTurbine position={[0, height/2, 0]} />
+      )}
+
+      <Text
+        position={[0, height/2 + 1, 0]}
+        fontSize={0.3}
+        color="#8b4513"
+        anchorX="center"
+        anchorY="middle"
+      >
+        {name}
+      </Text>
+    </group>
+  )
+}
+
+/* ----- ENHANCED WATER FILTERING PLANT ----- */
 function WaterFilteringPlant({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const waterPlant = useStore((s) => s.waterPlant)
   const setWaterPlant = useStore((s) => s.setWaterPlant)
+  const timeOfDay = useStore((s) => s.timeOfDay)
   const [waterParticles, setWaterParticles] = useState([])
   const [filterActive, setFilterActive] = useState(false)
 
@@ -264,6 +419,26 @@ function WaterFilteringPlant({ position = [0, 0, 0] }) {
         <meshStandardMaterial color="#3498db" roughness={0.6} />
       </mesh>
 
+      {/* Enhanced Windows with Night Lighting */}
+      {Array.from({ length: 3 }).map((_, floor) =>
+        Array.from({ length: 4 }).map((_, window) => (
+          <mesh
+            key={`${floor}-${window}`}
+            position={[-5, -2 + floor * 2, -3.9 + window * 2]}
+            castShadow
+          >
+            <boxGeometry args={[0.1, 1.2, 1.5]} />
+            <meshStandardMaterial 
+              color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+              transparent 
+              opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+              emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+              emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+            />
+          </mesh>
+        ))
+      )}
+
       {/* Roof */}
       <mesh position={[0, 3.5, 0]} castShadow>
         <boxGeometry args={[12.2, 0.3, 8.2]} />
@@ -437,175 +612,12 @@ function WaterFilteringPlant({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- OPTIMIZED MONITORING DRONE ----- */
-function MonitoringDrone({ position = [0, 0, 0], isMonitoring = true, onWasteDetected }) {
-  const droneRef = useRef()
-  const [hover, setHover] = useState(0)
-  const [scanning, setScanning] = useState(false)
-  const [wasteDetected, setWasteDetected] = useState(false)
-  const lastDetectionTime = useRef(0)
-
-  useFrame((_, dt) => {
-    if (droneRef.current && isMonitoring) {
-      setHover(prev => prev + dt)
-      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
-      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
-      
-      // Optimized waste detection - less frequent checks
-      const now = Date.now()
-      if (now - lastDetectionTime.current > 2000 && Math.random() < 0.01 && !wasteDetected) {
-        lastDetectionTime.current = now
-        setWasteDetected(true)
-        setScanning(true)
-        if (onWasteDetected) onWasteDetected()
-        
-        // Reset after 2 seconds as requested
-        setTimeout(() => {
-          setWasteDetected(false)
-          setScanning(false)
-        }, 2000)
-      }
-      
-      // Less frequent scanning animation
-      if (Math.random() < 0.01 && !scanning && !wasteDetected) {
-        setScanning(true)
-        setTimeout(() => setScanning(false), 1000)
-      }
-    }
-  })
-
-  return (
-    <group ref={droneRef} position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[0.8, 0.1, 0.8]} />
-        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-      </mesh>
-      
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <sphereGeometry args={[0.2, 8, 8]} />
-        <meshStandardMaterial color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#3498db"} />
-      </mesh>
-      
-      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
-          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
-          <meshStandardMaterial color="#95a5a6" />
-        </mesh>
-      ))}
-      
-      {/* Scanning Laser - Only render when active */}
-      {scanning && (
-        <mesh position={[0, -1, 0]} rotation={[Math.PI/2, 0, 0]}>
-          <cylinderGeometry args={[0.02, 0.5, 10, 8]} />
-          <meshStandardMaterial 
-            color={wasteDetected ? "#e74c3c" : "#00ff00"} 
-            transparent 
-            opacity={0.6}
-            emissive={wasteDetected ? "#e74c3c" : "#00ff00"}
-            emissiveIntensity={0.5}
-          />
-        </mesh>
-      )}
-      
-      {/* Status Light */}
-      <pointLight 
-        position={[0, 0.2, 0]} 
-        color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#00ff00"}
-        intensity={1}
-        distance={2}
-      />
-
-      {/* Status Indicator - Only show when active */}
-      {(wasteDetected || scanning) && (
-        <Html position={[0, 1.5, 0]}>
-          <div style={{
-            background: wasteDetected ? '#e74c3c' : scanning ? '#f39c12' : '#27ae60',
-            color: 'white',
-            padding: '4px 8px',
-            borderRadius: '6px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            whiteSpace: 'nowrap'
-          }}>
-            {wasteDetected ? '🚨 WASTE DETECTED!' : scanning ? '🔍 SCANNING...' : '✅ MONITORING'}
-          </div>
-        </Html>
-      )}
-    </group>
-  )
-}
-
-/* ----- OPTIMIZED WASTE MONITORING SYSTEM ----- */
-function WasteMonitoringSystem({ position = [0, 0, 0] }) {
-  const [drones] = useState([
-    { id: 1, position: [10, 8, 10] },
-    { id: 2, position: [-5, 12, 15] },
-    { id: 3, position: [20, 10, -8] }
-  ])
-  
-  const setAlert = useStore((s) => s.setAlert)
-
-  const handleWasteDetection = (droneId) => {
-    setAlert({
-      type: 'emergency',
-      message: `🚨 Drone #${droneId} detected waste! Cleanup in progress...`
-    })
-  }
-
-  return (
-    <group position={position}>
-      {drones.map(drone => (
-        <MonitoringDrone
-          key={drone.id}
-          position={drone.position}
-          isMonitoring={true}
-          onWasteDetected={() => handleWasteDetection(drone.id)}
-        />
-      ))}
-      
-      {/* Control Center */}
-      <mesh position={[0, 2, 0]} castShadow>
-        <boxGeometry args={[3, 1, 2]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      <Text
-        position={[0, 2.8, 0]}
-        fontSize={0.3}
-        color="#3498db"
-        anchorX="center"
-        anchorY="middle"
-      >
-        DRONE CONTROL
-      </Text>
-      
-      <Html position={[0, 4, 0]} transform>
-        <div style={{
-          background: 'rgba(44, 62, 80, 0.95)',
-          padding: '12px',
-          borderRadius: '8px',
-          color: 'white',
-          minWidth: '200px',
-          textAlign: 'center',
-          border: '2px solid #3498db'
-        }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#3498db' }}>🚁 Waste Monitoring</h4>
-          <div style={{ fontSize: '11px' }}>
-            <div>Active Drones: {drones.length}</div>
-            <div>Status: 🟢 Operational</div>
-            <div>Response: 2s Cleanup</div>
-          </div>
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-/* ----- ENHANCED VERTICAL GARDEN BUILDING WITH SENSORS ----- */
+/* ----- ENHANCED VERTICAL GARDEN BUILDING ----- */
 function VerticalGardenBuilding({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const gardenSensors = useStore((s) => s.gardenSensors)
   const setGardenSensors = useStore((s) => s.setGardenSensors)
+  const timeOfDay = useStore((s) => s.timeOfDay)
   
   const [sensorData, setSensorData] = useState({
     soilMoisture: 65,
@@ -787,6 +799,26 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
         <boxGeometry args={[8, 20, 8]} />
         <meshStandardMaterial color="#8b4513" roughness={0.7} />
       </mesh>
+
+      {/* Enhanced Windows with Night Lighting */}
+      {Array.from({ length: 4 }).map((_, floor) =>
+        Array.from({ length: 3 }).map((_, window) => (
+          <mesh
+            key={`${floor}-${window}`}
+            position={[4.01, -8 + floor * 4, -3 + window * 2]}
+            castShadow
+          >
+            <boxGeometry args={[0.02, 2.5, 1.5]} />
+            <meshStandardMaterial 
+              color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+              transparent 
+              opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+              emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+              emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+            />
+          </mesh>
+        ))
+      )}
 
       {[0, 1, 2, 3].map((side) => {
         const angle = (side / 4) * Math.PI * 2
@@ -1181,9 +1213,10 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- MODERN HOSPITAL BUILDING ----- */
+/* ----- ENHANCED MODERN HOSPITAL ----- */
 function ModernHospital({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
   
   return (
     <group position={position}>
@@ -1202,7 +1235,7 @@ function ModernHospital({ position = [0, 0, 0] }) {
         <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
       </mesh>
 
-      {/* Hospital Windows */}
+      {/* Enhanced Hospital Windows with Night Lighting */}
       {Array.from({ length: 4 }).map((_, floor) =>
         Array.from({ length: 8 }).map((_, window) => (
           <group key={`${floor}-${window}`}>
@@ -1211,14 +1244,26 @@ function ModernHospital({ position = [0, 0, 0] }) {
               castShadow
             >
               <boxGeometry args={[0.1, 1.5, 1.2]} />
-              <meshStandardMaterial color="#87CEEB" transparent opacity={0.8} />
+              <meshStandardMaterial 
+                color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                transparent 
+                opacity={timeOfDay === 'night' ? 0.9 : 0.8}
+                emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                emissiveIntensity={timeOfDay === 'night' ? 0.7 : 0}
+              />
             </mesh>
             <mesh
               position={[8.5, -4 + floor * 3, -6 + window * 1.7]}
               castShadow
             >
               <boxGeometry args={[0.1, 1.5, 1.2]} />
-              <meshStandardMaterial color="#87CEEB" transparent opacity={0.8} />
+              <meshStandardMaterial 
+                color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                transparent 
+                opacity={timeOfDay === 'night' ? 0.9 : 0.8}
+                emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                emissiveIntensity={timeOfDay === 'night' ? 0.7 : 0}
+              />
             </mesh>
           </group>
         ))
@@ -1288,7 +1333,7 @@ function ModernHospital({ position = [0, 0, 0] }) {
       <group position={[-8, 0.5, 5]}>
         <mesh castShadow>
           <boxGeometry args={[3, 1.2, 1.5]} />
-          <meshStandardMaterial color="#e74c3c" />
+          <meshStandardMaterial color="#e74c3c" metalness={0.3} roughness={0.4} />
         </mesh>
         
         <mesh position={[0.5, 0.8, 0]} castShadow>
@@ -1413,9 +1458,10 @@ function ModernHospital({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- INCLUSIVE GLASS SCHOOL ----- */
+/* ----- ENHANCED INCLUSIVE GLASS SCHOOL ----- */
 function InclusiveGlassSchool({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
   
   return (
     <group position={position}>
@@ -1440,7 +1486,7 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
         />
       </mesh>
 
-      {/* Glass Frame Structure */}
+      {/* Enhanced Glass Frame Structure with Night Lighting */}
       <group>
         {/* Vertical Frames */}
         {[-7, 0, 7].map((x) => (
@@ -1457,6 +1503,23 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
             <meshStandardMaterial color="#34495e" />
           </mesh>
         ))}
+
+        {/* Enhanced Interior Lighting for Night */}
+        {timeOfDay === 'night' && (
+          <>
+            {Array.from({ length: 3 }).map((_, floor) =>
+              Array.from({ length: 6 }).map((_, window) => (
+                <pointLight
+                  key={`${floor}-${window}`}
+                  position={[-6 + window * 2.4, -2 + floor * 2.5, 5.9]}
+                  intensity={0.3}
+                  distance={3}
+                  color="#ffffcc"
+                />
+              ))
+            )}
+          </>
+        )}
       </group>
 
       {/* School Entrance with Ramp */}
@@ -1564,7 +1627,7 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
       <group position={[-10, 0.5, 0]}>
         <mesh castShadow>
           <boxGeometry args={[3, 1.5, 1.5]} />
-          <meshStandardMaterial color="#FFD700" />
+          <meshStandardMaterial color="#FFD700" metalness={0.3} roughness={0.4} />
         </mesh>
 
         <mesh position={[0.5, 1, 0]} castShadow>
@@ -1677,9 +1740,10 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- CULTURAL CENTER ----- */
+/* ----- ENHANCED CULTURAL CENTER ----- */
 function CulturalCenter({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   const culturalStyles = [
     { 
@@ -1731,6 +1795,26 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         <boxGeometry args={[12, 6, 8]} />
         <meshStandardMaterial color="#8b4513" roughness={0.7} />
       </mesh>
+
+      {/* Enhanced Windows with Night Lighting */}
+      {Array.from({ length: 2 }).map((_, floor) =>
+        Array.from({ length: 3 }).map((_, window) => (
+          <mesh
+            key={`${floor}-${window}`}
+            position={[-5.5, -2 + floor * 2.5, -3.9 + window * 2.5]}
+            castShadow
+          >
+            <boxGeometry args={[0.1, 1.5, 2]} />
+            <meshStandardMaterial 
+              color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+              transparent 
+              opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+              emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+              emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+            />
+          </mesh>
+        ))
+      )}
 
       <mesh position={[0, 3, 4.1]} castShadow>
         <boxGeometry args={[3, 4, 0.2]} />
@@ -1900,161 +1984,12 @@ function CulturalCenter({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- DATA CENTER COMPONENTS ----- */
-function ServerRack({ position = [0, 0, 0], activityLevel = 0.7 }) {
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[1.2, 2.5, 0.8]} />
-        <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.2} />
-      </mesh>
-      
-      {Array.from({ length: 8 }).map((_, i) => (
-        <mesh key={i} position={[0, -0.8 + i * 0.6, 0.41]} castShadow>
-          <boxGeometry args={[1, 0.3, 0.02]} />
-          <meshStandardMaterial 
-            color={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#34495e"}
-            emissive={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#000000"}
-            emissiveIntensity={0.3}
-          />
-        </mesh>
-      ))}
-      
-      <mesh position={[0, 1.2, 0.41]} castShadow>
-        <boxGeometry args={[0.8, 0.4, 0.02]} />
-        <meshStandardMaterial color="#3498db" emissive="#3498db" emissiveIntensity={0.2} />
-      </mesh>
-    </group>
-  )
-}
-
-function TechDrone({ position = [0, 0, 0], isFlying = false }) {
-  const droneRef = useRef()
-  const [hover, setHover] = useState(0)
-
-  useFrame((_, dt) => {
-    if (droneRef.current && isFlying) {
-      setHover(prev => prev + dt)
-      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
-      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
-    }
-  })
-
-  return (
-    <group ref={droneRef} position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[0.8, 0.1, 0.8]} />
-        <meshStandardMaterial color="#e74c3c" metalness={0.7} roughness={0.3} />
-      </mesh>
-      
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <sphereGeometry args={[0.2, 8, 8]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-      
-      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
-          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
-          <meshStandardMaterial color="#95a5a6" />
-        </mesh>
-      ))}
-      
-      {isFlying && (
-        <pointLight position={[0, -0.3, 0]} color="#00ff00" intensity={0.5} distance={2} />
-      )}
-    </group>
-  )
-}
-
-function HologramDisplay({ position = [0, 0, 0], dataFlow = 0.5 }) {
-  const hologramRef = useRef()
-  const [pulse, setPulse] = useState(0)
-
-  useFrame((_, dt) => {
-    setPulse(prev => prev + dt)
-    if (hologramRef.current) {
-      hologramRef.current.rotation.y += dt * 0.5
-    }
-  })
-
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
-        <meshStandardMaterial color="#34495e" metalness={0.9} />
-      </mesh>
-      
-      <group ref={hologramRef}>
-        <mesh position={[0, 1.5, 0]}>
-          <cylinderGeometry args={[0.8, 1, 0.02, 32]} />
-          <meshStandardMaterial 
-            color="#00ffff" 
-            transparent 
-            opacity={0.6 + Math.sin(pulse * 3) * 0.2}
-            emissive="#00ffff"
-            emissiveIntensity={0.3}
-          />
-        </mesh>
-        
-        <mesh position={[0, 1.5 + dataFlow * 0.8, 0]} rotation={[0, 0, Math.PI/4]}>
-          <boxGeometry args={[0.1, dataFlow * 1.5, 0.1]} />
-          <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.8} />
-        </mesh>
-      </group>
-      
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <cylinderGeometry args={[0.1, 0.1, 1.2, 8]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-    </group>
-  )
-}
-
-function RobotArm({ position = [0, 0, 0], isActive = true }) {
-  const armRef = useRef()
-  const [animation, setAnimation] = useState(0)
-
-  useFrame((_, dt) => {
-    if (armRef.current && isActive) {
-      setAnimation(prev => prev + dt)
-      armRef.current.rotation.y = Math.sin(animation) * 0.5
-      armRef.current.rotation.x = Math.sin(animation * 2) * 0.3
-    }
-  })
-
-  return (
-    <group ref={armRef} position={position}>
-      <mesh position={[0, 0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.3, 1, 8]} />
-        <meshStandardMaterial color="#7f8c8d" metalness={0.8} />
-      </mesh>
-      
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <boxGeometry args={[0.4, 0.4, 0.4]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      
-      <mesh position={[0.6, 1.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
-        <boxGeometry args={[0.8, 0.1, 0.1]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-      
-      <mesh position={[1, 1.2, 0]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial 
-          color={isActive ? "#00ff00" : "#ff4444"}
-          emissive={isActive ? "#00ff00" : "#ff4444"}
-          emissiveIntensity={0.5}
-        />
-      </mesh>
-    </group>
-  )
-}
-
+/* ----- ENHANCED DATA CENTER ----- */
 function DataCenter({ position = [0, 0, 0] }) {
   const [serverActivity, setServerActivity] = useState([0.6, 0.8, 0.4, 0.7])
   const [dronesFlying, setDronesFlying] = useState(false)
   const [dataFlow, setDataFlow] = useState(0.5)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   useFrame((_, dt) => {
     setServerActivity(prev =>
@@ -2068,6 +2003,156 @@ function DataCenter({ position = [0, 0, 0] }) {
     }
   })
 
+  function ServerRack({ position = [0, 0, 0], activityLevel = 0.7 }) {
+    return (
+      <group position={position}>
+        <mesh castShadow>
+          <boxGeometry args={[1.2, 2.5, 0.8]} />
+          <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.2} />
+        </mesh>
+        
+        {Array.from({ length: 8 }).map((_, i) => (
+          <mesh key={i} position={[0, -0.8 + i * 0.6, 0.41]} castShadow>
+            <boxGeometry args={[1, 0.3, 0.02]} />
+            <meshStandardMaterial 
+              color={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#34495e"}
+              emissive={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#000000"}
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+        ))}
+        
+        <mesh position={[0, 1.2, 0.41]} castShadow>
+          <boxGeometry args={[0.8, 0.4, 0.02]} />
+          <meshStandardMaterial color="#3498db" emissive="#3498db" emissiveIntensity={0.2} />
+        </mesh>
+      </group>
+    )
+  }
+
+  function TechDrone({ position = [0, 0, 0], isFlying = false }) {
+    const droneRef = useRef()
+    const [hover, setHover] = useState(0)
+
+    useFrame((_, dt) => {
+      if (droneRef.current && isFlying) {
+        setHover(prev => prev + dt)
+        droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
+        droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
+      }
+    })
+
+    return (
+      <group ref={droneRef} position={position}>
+        <mesh castShadow>
+          <boxGeometry args={[0.8, 0.1, 0.8]} />
+          <meshStandardMaterial color="#e74c3c" metalness={0.7} roughness={0.3} />
+        </mesh>
+        
+        <mesh position={[0, 0.1, 0]} castShadow>
+          <sphereGeometry args={[0.2, 8, 8]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+        
+        {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
+          <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
+            <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+            <meshStandardMaterial color="#95a5a6" />
+          </mesh>
+        ))}
+        
+        {isFlying && (
+          <pointLight position={[0, -0.3, 0]} color="#00ff00" intensity={0.5} distance={2} />
+        )}
+      </group>
+    )
+  }
+
+  function HologramDisplay({ position = [0, 0, 0], dataFlow = 0.5 }) {
+    const hologramRef = useRef()
+    const [pulse, setPulse] = useState(0)
+
+    useFrame((_, dt) => {
+      setPulse(prev => prev + dt)
+      if (hologramRef.current) {
+        hologramRef.current.rotation.y += dt * 0.5
+      }
+    })
+
+    return (
+      <group position={position}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+          <meshStandardMaterial color="#34495e" metalness={0.9} />
+        </mesh>
+        
+        <group ref={hologramRef}>
+          <mesh position={[0, 1.5, 0]}>
+            <cylinderGeometry args={[0.8, 1, 0.02, 32]} />
+            <meshStandardMaterial 
+              color="#00ffff" 
+              transparent 
+              opacity={0.6 + Math.sin(pulse * 3) * 0.2}
+              emissive="#00ffff"
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+          
+          <mesh position={[0, 1.5 + dataFlow * 0.8, 0]} rotation={[0, 0, Math.PI/4]}>
+            <boxGeometry args={[0.1, dataFlow * 1.5, 0.1]} />
+            <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.8} />
+          </mesh>
+        </group>
+        
+        <mesh position={[0, 0.8, 0]} castShadow>
+          <cylinderGeometry args={[0.1, 0.1, 1.2, 8]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+      </group>
+    )
+  }
+
+  function RobotArm({ position = [0, 0, 0], isActive = true }) {
+    const armRef = useRef()
+    const [animation, setAnimation] = useState(0)
+
+    useFrame((_, dt) => {
+      if (armRef.current && isActive) {
+        setAnimation(prev => prev + dt)
+        armRef.current.rotation.y = Math.sin(animation) * 0.5
+        armRef.current.rotation.x = Math.sin(animation * 2) * 0.3
+      }
+    })
+
+    return (
+      <group ref={armRef} position={position}>
+        <mesh position={[0, 0.5, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.3, 1, 8]} />
+          <meshStandardMaterial color="#7f8c8d" metalness={0.8} />
+        </mesh>
+        
+        <mesh position={[0, 1.2, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.4, 0.4]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        
+        <mesh position={[0.6, 1.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
+          <boxGeometry args={[0.8, 0.1, 0.1]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+        
+        <mesh position={[1, 1.2, 0]} castShadow>
+          <sphereGeometry args={[0.15, 8, 8]} />
+          <meshStandardMaterial 
+            color={isActive ? "#00ff00" : "#ff4444"}
+            emissive={isActive ? "#00ff00" : "#ff4444"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      </group>
+    )
+  }
+
   return (
     <group position={position}>
       <mesh castShadow receiveShadow>
@@ -2079,6 +2164,26 @@ function DataCenter({ position = [0, 0, 0] }) {
         <boxGeometry args={[14.8, 5.8, 0.1]} />
         <meshStandardMaterial color="#001122" transparent opacity={0.9} />
       </mesh>
+
+      {/* Enhanced Windows with Night Lighting */}
+      {Array.from({ length: 3 }).map((_, floor) =>
+        Array.from({ length: 4 }).map((_, window) => (
+          <mesh
+            key={`${floor}-${window}`}
+            position={[-7, -2 + floor * 2, -3.9 + window * 2]}
+            castShadow
+          >
+            <boxGeometry args={[0.1, 1.2, 1.5]} />
+            <meshStandardMaterial 
+              color={timeOfDay === 'night' ? "#00ffff" : "#87CEEB"} 
+              transparent 
+              opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+              emissive={timeOfDay === 'night' ? "#00ffff" : "#000000"}
+              emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+            />
+          </mesh>
+        ))
+      )}
 
       {[0, 1, 2].map(level => (
         <group key={level} position={[0, -1.5 + level * 2, 0]}>
@@ -2198,7 +2303,7 @@ function CameraController() {
   return null
 }
 
-/* ----- CUSTOM ORBIT CONTROLS ----- */
+/* ----- ENHANCED ORBIT CONTROLS ----- */
 function CustomOrbitControls() {
   const { camera, gl } = useThree()
   const controlsRef = useRef()
@@ -2211,7 +2316,7 @@ function CustomOrbitControls() {
       enableRotate={true}
       enableZoom={true}
       minDistance={3}
-      maxDistance={50}
+      maxDistance={100}
       rotateSpeed={0.5}
       zoomSpeed={0.8}
       panSpeed={0.5}
@@ -2332,7 +2437,7 @@ function WheelchairUser({ position = [0, 0, 0], moving = false, onRamp = false, 
   )
 }
 
-/* ----- ROAD SYSTEM ----- */
+/* ----- ENHANCED ROAD SYSTEM ----- */
 function RoadSystem() {
   const roadTexture = useTexture({
     map: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTAiIGhlaWdodD0iNTAiIHZpZXdCb3g9IjAgMCA1MCA1MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjUwIiBoZWlnaHQ9IjUwIiBmaWxsPSIjMzMzMzMzIi8+CjxwYXRoIGQ9Ik0yNSA1TDI1IDQ1IiBzdHJva2U9IiNmZmZmMDAiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWRhc2hhcnJheT0iNCA0Ii8+Cjwvc3ZnPg=='
@@ -2398,8 +2503,10 @@ function RoadSystem() {
   )
 }
 
-/* ----- BUS STATION ----- */
+/* ----- ENHANCED BUS STATION ----- */
 function BusStation({ position = [0, 0, 0] }) {
+  const timeOfDay = useStore((s) => s.timeOfDay)
+  
   return (
     <group position={position}>
       <mesh position={[0, 0.1, 0]} receiveShadow>
@@ -2419,6 +2526,16 @@ function BusStation({ position = [0, 0, 0] }) {
         </mesh>
       ))}
       
+      {/* Bus Station Lighting */}
+      {timeOfDay === 'night' && (
+        <pointLight
+          position={[0, 3, 0]}
+          intensity={0.5}
+          distance={8}
+          color="#ffffcc"
+        />
+      )}
+      
       <Text
         position={[0, 1.5, 1.1]}
         fontSize={0.3}
@@ -2435,73 +2552,11 @@ function BusStation({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- STREET LIGHTS ----- */
-function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
-  const timeOfDay = useStore((s) => s.timeOfDay)
-  const streetLightsOn = useStore((s) => s.streetLightsOn)
-  
-  const isOn = streetLightsOn || timeOfDay === 'night'
-
-  return (
-    <group position={position} rotation={rotation}>
-      <mesh position={[0, 3, 0]} castShadow>
-        <cylinderGeometry args={[0.08, 0.1, 6, 8]} />
-        <meshStandardMaterial color="#666666" />
-      </mesh>
-      
-      <mesh position={[0, 6, 0.5]} castShadow>
-        <boxGeometry args={[0.4, 0.2, 0.6]} />
-        <meshStandardMaterial color="#444444" />
-      </mesh>
-      
-      <mesh position={[0, 6, 0.8]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial 
-          color={isOn ? "#ffffcc" : "#666666"}
-          emissive={isOn ? "#ffff99" : "#000000"}
-          emissiveIntensity={isOn ? 1 : 0}
-        />
-      </mesh>
-      
-      {isOn && (
-        <pointLight
-          position={[0, 6, 0.8]}
-          intensity={0.8}
-          distance={15}
-          color="#ffffcc"
-          castShadow
-        />
-      )}
-    </group>
-  )
-}
-
-/* ----- STREET LIGHT SYSTEM ----- */
-function StreetLightSystem() {
-  const lightPositions = [
-    ...Array.from({ length: 16 }).map((_, i) => [-35 + i * 5, 0, 0]),
-    ...Array.from({ length: 16 }).map((_, i) => [0, 0, -35 + i * 5]),
-    ...Array.from({ length: 12 }).map((_, i) => [-25 + i * 5, 0, -20]),
-    ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
-    
-    [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
-    
-    [10, 0, 25], [-10, 0, 25], [0, 0, 20]
-  ]
-
-  return (
-    <group>
-      {lightPositions.map((pos, index) => (
-        <StreetLight key={index} position={pos} />
-      ))}
-    </group>
-  )
-}
-
 /* ----- ENHANCED VEHICLE SYSTEM ----- */
 function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) {
   const carRef = useRef()
   const [t, setT] = useState(Math.random() * 10)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   useFrame((_, dt) => {
     setT(prev => prev + dt * speed)
@@ -2538,6 +2593,22 @@ function Car({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [] }) 
         <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
       </mesh>
       
+      {/* Car Headlights for Night */}
+      {timeOfDay === 'night' && (
+        <>
+          <pointLight
+            position={[0, 0.2, 0.4]}
+            intensity={0.8}
+            distance={10}
+            color="#ffffcc"
+          />
+          <mesh position={[0, 0.2, 0.35]} castShadow>
+            <boxGeometry args={[0.8, 0.1, 0.1]} />
+            <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={0.5} />
+          </mesh>
+        </>
+      )}
+      
       {[-0.4, 0.4].map((x, i) => (
         <group key={i} position={[x, -0.2, 0.3]}>
           <mesh castShadow rotation={[0, 0, Math.PI/2]}>
@@ -2555,6 +2626,7 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
   const [t, setT] = useState(Math.random() * 10)
   const [isStopped, setIsStopped] = useState(false)
   const [stopTimer, setStopTimer] = useState(0)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   useFrame((_, dt) => {
     if (isStopped) {
@@ -2608,6 +2680,22 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
         <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
       </mesh>
 
+      {/* Bus Headlights for Night */}
+      {timeOfDay === 'night' && (
+        <>
+          <pointLight
+            position={[0, 0.5, 0.7]}
+            intensity={1}
+            distance={15}
+            color="#ffffcc"
+          />
+          <mesh position={[0, 0.5, 0.65]} castShadow>
+            <boxGeometry args={[1.5, 0.2, 0.1]} />
+            <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={0.5} />
+          </mesh>
+        </>
+      )}
+
       {[-0.8, 0.8].map((x, i) => (
         <group key={i} position={[x, -0.3, 0]}>
           <mesh castShadow rotation={[0, 0, Math.PI/2]}>
@@ -2645,7 +2733,7 @@ function Bus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
   )
 }
 
-/* ----- TRAFFIC SYSTEM ----- */
+/* ----- ENHANCED TRAFFIC SYSTEM ----- */
 function TrafficSystem() {
   const trafficDensity = useStore((s) => s.trafficDensity)
   
@@ -2763,7 +2851,7 @@ function Ground() {
   )
 }
 
-/* ----- ENERGY EFFICIENT HOUSE ----- */
+/* ----- ENHANCED ENERGY EFFICIENT HOUSE ----- */
 function EnergyEfficientHouse({ 
   position = [0, 0, 0], 
   height = 6, 
@@ -2775,6 +2863,7 @@ function EnergyEfficientHouse({
   showInterior = false
 }) {
   const setFocus = useStore((s) => s.setFocus)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   const handleClick = () => {
     setFocus({
@@ -2801,7 +2890,13 @@ function EnergyEfficientHouse({
                 castShadow
               >
                 <boxGeometry args={[0.02, 1.2, 1.2]} />
-                <meshStandardMaterial color="#87CEEB" transparent opacity={0.8} />
+                <meshStandardMaterial 
+                  color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                  transparent 
+                  opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+                  emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                  emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+                />
               </mesh>
               <mesh
                 position={[2.02, (floor * 2) - height/2 + 2, side * 0.8]}
@@ -2930,7 +3025,7 @@ function EnergyEfficientHouse({
   )
 }
 
-/* ----- ENERGY EFFICIENT SOCIETY ----- */
+/* ----- ENHANCED ENERGY EFFICIENT SOCIETY ----- */
 function EnergyEfficientSociety({ position = [0, 0, 0] }) {
   const houses = [
     { position: [-18, 0, -35], name: "Eco Home 1" },
@@ -3031,84 +3126,7 @@ function EnergyEfficientSociety({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- SMART BUILDINGS ----- */
-function SmartBuilding({ 
-  position = [0, 0, 0], 
-  height = 8, 
-  color = "#a67c52", 
-  name = "Building",
-  hasTurbine = false,
-  hasSolar = true
-}) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  const handleClick = () => {
-    setFocus({
-      x: position[0],
-      y: position[1] + height/2,
-      z: position[2],
-      lookAt: { x: position[0], y: position[1], z: position[2] }
-    })
-  }
-
-  return (
-    <group position={position}>
-      <mesh castShadow receiveShadow onClick={handleClick}>
-        <boxGeometry args={[3, height, 3]} />
-        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
-      </mesh>
-      
-      <group>
-        {Array.from({ length: Math.floor(height / 2) }).map((_, floor) =>
-          [-1, 1].map((side, i) => (
-            <group key={`${floor}-${side}`}>
-              <mesh
-                position={[1.51, (floor * 2) - height/2 + 2, side * 0.8]}
-                castShadow
-              >
-                <boxGeometry args={[0.02, 1.2, 0.8]} />
-                <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
-              </mesh>
-              <mesh position={[1.5, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
-                <boxGeometry args={[0.04, 1.3, 0.85]} />
-                <meshStandardMaterial color="#8b4513" />
-              </mesh>
-            </group>
-          ))
-        )}
-      </group>
-      
-      <mesh position={[0, height/2 + 0.2, 0]} castShadow>
-        <boxGeometry args={[3.2, 0.4, 3.2]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-
-      {hasSolar && (
-        <group position={[0, height/2 + 0.3, 0]}>
-          <SolarPanel position={[0, 0, 0]} rotation={[0, 0, 0]} />
-          <SolarPanel position={[1.8, 0, 0]} rotation={[0, Math.PI/4, 0]} />
-          <SolarPanel position={[-1.8, 0, 0]} rotation={[0, -Math.PI/4, 0]} />
-        </group>
-      )}
-
-      {hasTurbine && (
-        <WindTurbine position={[0, height/2, 0]} />
-      )}
-
-      <Text
-        position={[0, height/2 + 1, 0]}
-        fontSize={0.3}
-        color="#8b4513"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {name}
-      </Text>
-    </group>
-  )
-}
-
-/* ----- WASTE BIN COMPONENT ----- */
+/* ----- ENHANCED WASTE BIN COMPONENT ----- */
 function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
   const [fillLevel, setFillLevel] = useState(0)
   const updateWasteBin = useStore((s) => s.updateWasteBin)
@@ -3159,13 +3177,14 @@ function WasteBin({ position = [0, 0, 0], id = "bin1" }) {
   )
 }
 
-/* ----- WASTE COLLECTION TRUCK ----- */
+/* ----- ENHANCED WASTE COLLECTION TRUCK ----- */
 function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComplete }) {
   const truckRef = useRef()
   const [currentPosition, setCurrentPosition] = useState(position)
   const [isCollecting, setIsCollecting] = useState(false)
   const [collectionProgress, setCollectionProgress] = useState(0)
   const [binLifted, setBinLifted] = useState(false)
+  const timeOfDay = useStore((s) => s.timeOfDay)
 
   useFrame((_, dt) => {
     if (!truckRef.current || !targetBin) return
@@ -3205,7 +3224,7 @@ function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComple
     <group ref={truckRef} position={currentPosition}>
       <mesh castShadow>
         <boxGeometry args={[2, 1, 1.5]} />
-        <meshStandardMaterial color="#27ae60" />
+        <meshStandardMaterial color="#27ae60" metalness={0.3} roughness={0.4} />
       </mesh>
       
       <mesh position={[0.8, 0.8, 0]} castShadow>
@@ -3222,6 +3241,22 @@ function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComple
         <boxGeometry args={[1.4, collectionProgress * 0.8, 1.1]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
+
+      {/* Truck Headlights for Night */}
+      {timeOfDay === 'night' && (
+        <>
+          <pointLight
+            position={[0, 0.5, 0.8]}
+            intensity={0.8}
+            distance={12}
+            color="#ffffcc"
+          />
+          <mesh position={[0, 0.5, 0.75]} castShadow>
+            <boxGeometry args={[1.2, 0.15, 0.1]} />
+            <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={0.5} />
+          </mesh>
+        </>
+      )}
 
       {isCollecting && collectionProgress < 0.3 && (
         <mesh position={[-1.2, 1.5 + Math.sin(collectionProgress * 20) * 0.5, 0]} castShadow>
@@ -3267,7 +3302,7 @@ function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComple
   )
 }
 
-/* ----- WASTE MANAGEMENT SYSTEM ----- */
+/* ----- ENHANCED WASTE MANAGEMENT SYSTEM ----- */
 function WasteManagementSystem({ position = [25, 0, 25] }) {
   const [isTruckActive, setIsTruckActive] = useState(false)
   const [currentBinTarget, setCurrentBinTarget] = useState(null)
@@ -3278,6 +3313,7 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
   const setWasteProcessing = useStore((s) => s.setWasteProcessing)
   const setEmergencyAlarm = useStore((s) => s.setEmergencyAlarm)
   const setAlertWasteManagement = useStore((s) => s.setAlertWasteManagement)
+  const timeOfDay = useStore((s) => s.timeOfDay)
   
   const binPositions = [
     [-10, 0, 8], [12, 0, -5], [-5, 0, -12], 
@@ -3355,6 +3391,26 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
         <boxGeometry args={[12, 8, 10]} />
         <meshStandardMaterial color="#2c3e50" roughness={0.7} />
       </mesh>
+
+      {/* Enhanced Windows with Night Lighting */}
+      {Array.from({ length: 2 }).map((_, floor) =>
+        Array.from({ length: 3 }).map((_, window) => (
+          <mesh
+            key={`${floor}-${window}`}
+            position={[-5, -3 + floor * 3, -4.9 + window * 3]}
+            castShadow
+          >
+            <boxGeometry args={[0.1, 2, 2.5]} />
+            <meshStandardMaterial 
+              color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+              transparent 
+              opacity={timeOfDay === 'night' ? 0.9 : 0.7}
+              emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+              emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+            />
+          </mesh>
+        ))
+      )}
 
       <group position={[0, 4, -3]}>
         <group position={[-4, 0, 0]}>
@@ -3556,7 +3612,188 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
   )
 }
 
-/* ----- OPTIMIZED CITY LAYOUT ----- */
+/* ----- OPTIMIZED MONITORING DRONE ----- */
+function MonitoringDrone({ position = [0, 0, 0], isMonitoring = true, onWasteDetected }) {
+  const droneRef = useRef()
+  const [hover, setHover] = useState(0)
+  const [scanning, setScanning] = useState(false)
+  const [wasteDetected, setWasteDetected] = useState(false)
+  const lastDetectionTime = useRef(0)
+  const timeOfDay = useStore((s) => s.timeOfDay)
+
+  useFrame((_, dt) => {
+    if (droneRef.current && isMonitoring) {
+      setHover(prev => prev + dt)
+      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
+      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
+      
+      // Optimized waste detection - less frequent checks
+      const now = Date.now()
+      if (now - lastDetectionTime.current > 2000 && Math.random() < 0.01 && !wasteDetected) {
+        lastDetectionTime.current = now
+        setWasteDetected(true)
+        setScanning(true)
+        if (onWasteDetected) onWasteDetected()
+        
+        // Reset after 2 seconds as requested
+        setTimeout(() => {
+          setWasteDetected(false)
+          setScanning(false)
+        }, 2000)
+      }
+      
+      // Less frequent scanning animation
+      if (Math.random() < 0.01 && !scanning && !wasteDetected) {
+        setScanning(true)
+        setTimeout(() => setScanning(false), 1000)
+      }
+    }
+  })
+
+  return (
+    <group ref={droneRef} position={position}>
+      <mesh castShadow>
+        <boxGeometry args={[0.8, 0.1, 0.8]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
+      </mesh>
+      
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <sphereGeometry args={[0.2, 8, 8]} />
+        <meshStandardMaterial color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#3498db"} />
+      </mesh>
+      
+      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+          <meshStandardMaterial color="#95a5a6" />
+        </mesh>
+      ))}
+      
+      {/* Drone Lights for Night */}
+      {timeOfDay === 'night' && (
+        <>
+          <pointLight
+            position={[0, -0.2, 0]}
+            intensity={0.5}
+            distance={8}
+            color="#00ff00"
+          />
+          <mesh position={[0, -0.25, 0]} castShadow>
+            <sphereGeometry args={[0.05, 4, 4]} />
+            <meshStandardMaterial color="#00ff00" emissive="#00ff00" emissiveIntensity={0.5} />
+          </mesh>
+        </>
+      )}
+      
+      {/* Scanning Laser - Only render when active */}
+      {scanning && (
+        <mesh position={[0, -1, 0]} rotation={[Math.PI/2, 0, 0]}>
+          <cylinderGeometry args={[0.02, 0.5, 10, 8]} />
+          <meshStandardMaterial 
+            color={wasteDetected ? "#e74c3c" : "#00ff00"} 
+            transparent 
+            opacity={0.6}
+            emissive={wasteDetected ? "#e74c3c" : "#00ff00"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      )}
+      
+      {/* Status Light */}
+      <pointLight 
+        position={[0, 0.2, 0]} 
+        color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#00ff00"}
+        intensity={1}
+        distance={2}
+      />
+
+      {/* Status Indicator - Only show when active */}
+      {(wasteDetected || scanning) && (
+        <Html position={[0, 1.5, 0]}>
+          <div style={{
+            background: wasteDetected ? '#e74c3c' : scanning ? '#f39c12' : '#27ae60',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}>
+            {wasteDetected ? '🚨 WASTE DETECTED!' : scanning ? '🔍 SCANNING...' : '✅ MONITORING'}
+          </div>
+        </Html>
+      )}
+    </group>
+  )
+}
+
+/* ----- OPTIMIZED WASTE MONITORING SYSTEM ----- */
+function WasteMonitoringSystem({ position = [0, 0, 0] }) {
+  const [drones] = useState([
+    { id: 1, position: [10, 8, 10] },
+    { id: 2, position: [-5, 12, 15] },
+    { id: 3, position: [20, 10, -8] }
+  ])
+  
+  const setAlert = useStore((s) => s.setAlert)
+
+  const handleWasteDetection = (droneId) => {
+    setAlert({
+      type: 'emergency',
+      message: `🚨 Drone #${droneId} detected waste! Cleanup in progress...`
+    })
+  }
+
+  return (
+    <group position={position}>
+      {drones.map(drone => (
+        <MonitoringDrone
+          key={drone.id}
+          position={drone.position}
+          isMonitoring={true}
+          onWasteDetected={() => handleWasteDetection(drone.id)}
+        />
+      ))}
+      
+      {/* Control Center */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <boxGeometry args={[3, 1, 2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+      
+      <Text
+        position={[0, 2.8, 0]}
+        fontSize={0.3}
+        color="#3498db"
+        anchorX="center"
+        anchorY="middle"
+      >
+        DRONE CONTROL
+      </Text>
+      
+      <Html position={[0, 4, 0]} transform>
+        <div style={{
+          background: 'rgba(44, 62, 80, 0.95)',
+          padding: '12px',
+          borderRadius: '8px',
+          color: 'white',
+          minWidth: '200px',
+          textAlign: 'center',
+          border: '2px solid #3498db'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3498db' }}>🚁 Waste Monitoring</h4>
+          <div style={{ fontSize: '11px' }}>
+            <div>Active Drones: {drones.length}</div>
+            <div>Status: 🟢 Operational</div>
+            <div>Response: 2s Cleanup</div>
+          </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+/* ----- ENHANCED CITY LAYOUT ----- */
 function CityLayout() {
   const buildings = [
     { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Residence A", hasTurbine: true },
@@ -3579,7 +3816,7 @@ function CityLayout() {
       {/* Smart Vertical Garden with Sensors */}
       <VerticalGardenBuilding position={[-35, 0, -15]} />
       
-      {/* NEW: Water Filtering Plant */}
+      {/* Enhanced Water Filtering Plant */}
       <WaterFilteringPlant position={[30, 0, -25]} />
       
       {/* Waste Monitoring Drones */}
@@ -3599,7 +3836,7 @@ function CityLayout() {
       
       {/* Regular buildings */}
       {buildings.map((building, index) => (
-        <SmartBuilding
+        <EnhancedBuilding
           key={index}
           position={[building.position[0] + 5, building.position[1], building.position[2] + 5]}
           height={building.height}
@@ -3607,6 +3844,7 @@ function CityLayout() {
           name={building.name}
           hasTurbine={building.hasTurbine}
           hasSolar={true}
+          windows={true}
         />
       ))}
       
@@ -3757,6 +3995,7 @@ function ControlPanel() {
   const gardenSensors = useStore((s) => s.gardenSensors)
   const waterPlant = useStore((s) => s.waterPlant)
 
+  // Automatically turn on street lights when night mode is activated
   useEffect(() => {
     if (timeOfDay === 'night') {
       setStreetLightsOn(true)
@@ -3852,6 +4091,7 @@ function ControlPanel() {
           value={timeOfDay}
           onChange={(e) => {
             setTimeOfDay(e.target.value)
+            // Automatically turn on street lights when night mode is selected
             setStreetLightsOn(e.target.value === 'night')
           }}
           style={{ width: '100%', padding: '4px', borderRadius: '6px', border: '1px solid #d2b48c', fontSize: '11px' }}
@@ -3948,7 +4188,7 @@ function ControlPanel() {
   )
 }
 
-/* ----- OPTIMIZED MAIN APP COMPONENT ----- */
+/* ----- ENHANCED MAIN APP COMPONENT ----- */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
   const emergencyAlarm = useStore((s) => s.emergencyAlarm)
@@ -3990,7 +4230,7 @@ export default function App() {
           position={timeOfDay === 'night' ? [-10, 10, 10] : [10, 20, 10]} 
           intensity={timeOfDay === 'night' ? 0.5 : 1.0}
           castShadow
-          shadow-mapSize-width={1024} // Reduced for performance
+          shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
         
@@ -4036,13 +4276,16 @@ export default function App() {
           🌟 Features: Smart Garden • Water Plant • Monitoring Drones • Hospital
         </div>
         <div style={{ fontSize: 11, color: '#3498db', marginTop: 2, fontWeight: 'bold' }}>
-          💧 NEW: Water Filtering Plant with real-time processing!
+          💧 NEW: Enhanced Water Filtering Plant with real-time processing!
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           🚁 Drones now clean waste in 2 seconds!
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2 }}>
-          ⚡ Performance optimized - reduced lag
+          🌙 Night Mode: Automatic street lights and building illumination!
+        </div>
+        <div style={{ fontSize: 11, color: '#9b59b6', marginTop: 2 }}>
+          🏙️ Enhanced Graphics: Better buildings, windows, and lighting effects!
         </div>
       </div>
     </div>
