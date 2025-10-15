@@ -41,308 +41,248 @@ const useStore = create((set) => ({
   setCollectedWaste: (waste) => set({ collectedWaste: waste })
 }))
 
-/* ----- Vertical Farming Components ----- */
-function LemonTree({ position = [0, 0, 0], growthStage = 1 }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 1.5, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.3, 3, 8]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-      
-      <mesh position={[0, 3, 0]} castShadow>
-        <sphereGeometry args={[1.2, 8, 8]} />
-        <meshStandardMaterial color="#27ae60" />
-      </mesh>
-      
-      {growthStage > 0.5 && Array.from({ length: Math.floor(growthStage * 8) }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const radius = 0.8
-        return (
-          <mesh 
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              2.5 + Math.sin(i * 2) * 0.3,
-              Math.sin(angle) * radius
-            ]} 
-            castShadow
-          >
-            <sphereGeometry args={[0.15, 8, 8]} />
-            <meshStandardMaterial color="#ffff00" />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-function TomatoPlant({ position = [0, 0, 0], growthStage = 1 }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <cylinderGeometry args={[0.05, 0.08, 1.6, 8]} />
-        <meshStandardMaterial color="#2ecc71" />
-      </mesh>
-      
-      {[0.4, 0.8, 1.2].map((y, i) => (
-        <mesh key={i} position={[0.3, y, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
-          <sphereGeometry args={[0.2, 6, 6]} />
-          <meshStandardMaterial color="#27ae60" />
-        </mesh>
-      ))}
-      
-      {growthStage > 0.6 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => (
-        <mesh 
-          key={i}
-          position={[
-            Math.cos(i * 1.5) * 0.2,
-            0.5 + i * 0.15,
-            Math.sin(i * 1.5) * 0.2
-          ]} 
-          castShadow
-        >
-          <sphereGeometry args={[0.1, 6, 6]} />
-          <meshStandardMaterial color="#ff4444" />
-        </mesh>
-      ))}
-    </group>
-  )
-}
-
-function AppleTree({ position = [0, 0, 0], growthStage = 1 }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <cylinderGeometry args={[0.15, 0.2, 2.4, 8]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-      
-      <mesh position={[0, 2.5, 0]} castShadow>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshStandardMaterial color="#2ecc71" />
-      </mesh>
-      
-      {growthStage > 0.7 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2
-        const radius = 0.7
-        return (
-          <mesh 
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              2.2 + Math.sin(i * 3) * 0.2,
-              Math.sin(angle) * radius
-            ]} 
-            castShadow
-          >
-            <sphereGeometry args={[0.12, 6, 6]} />
-            <meshStandardMaterial color="#ff4444" />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-function SoilSensor({ position = [0, 0, 0], moistureLevel = 0.7 }) {
+/* ----- Modern Tech Hub Components ----- */
+function ServerRack({ position = [0, 0, 0], activityLevel = 0.7 }) {
   return (
     <group position={position}>
       <mesh castShadow>
-        <cylinderGeometry args={[0.1, 0.12, 0.3, 8]} />
+        <boxGeometry args={[1.2, 2.5, 0.8]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.2} />
+      </mesh>
+      
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i} position={[0, -0.8 + i * 0.6, 0.41]} castShadow>
+          <boxGeometry args={[1, 0.3, 0.02]} />
+          <meshStandardMaterial 
+            color={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#34495e"}
+            emissive={i < Math.floor(activityLevel * 8) ? "#00ff00" : "#000000"}
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+      ))}
+      
+      <mesh position={[0, 1.2, 0.41]} castShadow>
+        <boxGeometry args={[0.8, 0.4, 0.02]} />
+        <meshStandardMaterial color="#3498db" emissive="#3498db" emissiveIntensity={0.2} />
+      </mesh>
+    </group>
+  )
+}
+
+function Drone({ position = [0, 0, 0], isFlying = false }) {
+  const droneRef = useRef()
+  const [hover, setHover] = useState(0)
+
+  useFrame((_, dt) => {
+    if (droneRef.current && isFlying) {
+      setHover(prev => prev + dt)
+      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
+      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
+    }
+  })
+
+  return (
+    <group ref={droneRef} position={position}>
+      <mesh castShadow>
+        <boxGeometry args={[0.8, 0.1, 0.8]} />
+        <meshStandardMaterial color="#e74c3c" metalness={0.7} roughness={0.3} />
+      </mesh>
+      
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <sphereGeometry args={[0.2, 8, 8]} />
         <meshStandardMaterial color="#3498db" />
       </mesh>
       
-      <mesh position={[0, -0.4, 0]} castShadow>
-        <cylinderGeometry args={[0.03, 0.03, 0.8, 8]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
+      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+          <meshStandardMaterial color="#95a5a6" />
+        </mesh>
+      ))}
       
-      <mesh position={[0, 0.25, 0]} castShadow>
-        <sphereGeometry args={[0.05, 6, 6]} />
-        <meshStandardMaterial 
-          color={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
-          emissive={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
-          emissiveIntensity={0.5}
-        />
-      </mesh>
-      
-      <Html position={[0, 0.6, 0]}>
-        <div style={{
-          background: 'rgba(255,255,255,0.9)',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          color: moistureLevel > 0.3 ? '#27ae60' : '#e74c3c'
-        }}>
-          💧 {Math.round(moistureLevel * 100)}%
-        </div>
-      </Html>
+      {isFlying && (
+        <pointLight position={[0, -0.3, 0]} color="#00ff00" intensity={0.5} distance={2} />
+      )}
     </group>
   )
 }
 
-function AutomatedIrrigation({ position = [0, 0, 0], isActive = true }) {
+function HologramDisplay({ position = [0, 0, 0], dataFlow = 0.5 }) {
+  const hologramRef = useRef()
+  const [pulse, setPulse] = useState(0)
+
+  useFrame((_, dt) => {
+    setPulse(prev => prev + dt)
+    if (hologramRef.current) {
+      hologramRef.current.rotation.y += dt * 0.5
+    }
+  })
+
   return (
     <group position={position}>
       <mesh castShadow>
-        <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-        <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
+        <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+        <meshStandardMaterial color="#34495e" metalness={0.9} />
       </mesh>
       
-      <mesh position={[0, -0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.75, 0.75, 1, 16]} />
-        <meshStandardMaterial color="#2980b9" />
-      </mesh>
+      <group ref={hologramRef}>
+        <mesh position={[0, 1.5, 0]}>
+          <cylinderGeometry args={[0.8, 1, 0.02, 32]} />
+          <meshStandardMaterial 
+            color="#00ffff" 
+            transparent 
+            opacity={0.6 + Math.sin(pulse * 3) * 0.2}
+            emissive="#00ffff"
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+        
+        <mesh position={[0, 1.5 + dataFlow * 0.8, 0]} rotation={[0, 0, Math.PI/4]}>
+          <boxGeometry args={[0.1, dataFlow * 1.5, 0.1]} />
+          <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={0.8} />
+        </mesh>
+      </group>
       
-      <mesh position={[0.9, 0.5, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
-        <meshStandardMaterial color="#95a5a6" />
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <cylinderGeometry args={[0.1, 0.1, 1.2, 8]} />
+        <meshStandardMaterial color="#3498db" />
       </mesh>
-      
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <boxGeometry args={[0.6, 0.3, 0.6]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      <mesh position={[0, 1.35, 0.31]} castShadow>
-        <sphereGeometry args={[0.08, 6, 6]} />
-        <meshStandardMaterial 
-          color={isActive ? "#00ff00" : "#ff4444"}
-          emissive={isActive ? "#00ff00" : "#ff4444"}
-          emissiveIntensity={0.8}
-        />
-      </mesh>
-      
-      <Html position={[0, 2, 0]}>
-        <div style={{
-          background: 'rgba(255,255,255,0.9)',
-          padding: '6px 10px',
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          color: isActive ? '#27ae60' : '#e74c3c'
-        }}>
-          {isActive ? '🚰 IRRIGATION ACTIVE' : '🚰 IRRIGATION OFF'}
-        </div>
-      </Html>
     </group>
   )
 }
 
-function VerticalFarm({ position = [0, 0, 0] }) {
-  const [growthProgress, setGrowthProgress] = useState(0)
-  const [moistureLevels, setMoistureLevels] = useState([0.8, 0.6, 0.7, 0.5])
-  const [irrigationActive, setIrrigationActive] = useState(true)
+function RobotArm({ position = [0, 0, 0], isActive = true }) {
+  const armRef = useRef()
+  const [animation, setAnimation] = useState(0)
 
   useFrame((_, dt) => {
-    setGrowthProgress(prev => Math.min(1, prev + dt * 0.1))
-    
-    if (Math.random() < 0.02) {
-      setMoistureLevels(prev =>
-        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
-      );
+    if (armRef.current && isActive) {
+      setAnimation(prev => prev + dt)
+      armRef.current.rotation.y = Math.sin(animation) * 0.5
+      armRef.current.rotation.x = Math.sin(animation * 2) * 0.3
     }
+  })
+
+  return (
+    <group ref={armRef} position={position}>
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.3, 1, 8]} />
+        <meshStandardMaterial color="#7f8c8d" metalness={0.8} />
+      </mesh>
+      
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <boxGeometry args={[0.4, 0.4, 0.4]} />
+        <meshStandardMaterial color="#e74c3c" />
+      </mesh>
+      
+      <mesh position={[0.6, 1.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
+        <boxGeometry args={[0.8, 0.1, 0.1]} />
+        <meshStandardMaterial color="#3498db" />
+      </mesh>
+      
+      <mesh position={[1, 1.2, 0]} castShadow>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial 
+          color={isActive ? "#00ff00" : "#ff4444"}
+          emissive={isActive ? "#00ff00" : "#ff4444"}
+          emissiveIntensity={0.5}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+function DataCenter({ position = [0, 0, 0] }) {
+  const [serverActivity, setServerActivity] = useState([0.6, 0.8, 0.4, 0.7])
+  const [dronesFlying, setDronesFlying] = useState(false)
+  const [dataFlow, setDataFlow] = useState(0.5)
+
+  useFrame((_, dt) => {
+    setServerActivity(prev =>
+      prev.map(activity => Math.max(0.3, Math.min(1, activity + (Math.random() - 0.5) * 0.1)))
+    )
     
-    if (moistureLevels.some(level => level < 0.3)) {
-      setIrrigationActive(true)
-      setMoistureLevels(prev =>
-        prev.map(level => Math.min(1, level + 0.1))
-      );
+    setDataFlow(prev => Math.max(0.2, Math.min(0.9, prev + (Math.random() - 0.5) * 0.05)))
+    
+    if (Math.random() < 0.01) {
+      setDronesFlying(!dronesFlying)
     }
   })
 
   return (
     <group position={position}>
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[12, 8, 6]} />
-        <meshStandardMaterial color="#34495e" roughness={0.8} />
+        <boxGeometry args={[15, 6, 8]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.1} />
       </mesh>
 
-      <mesh position={[0, 0, 3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
-      </mesh>
-      <mesh position={[0, 0, -3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      <mesh position={[0, 0, 4.01]} castShadow>
+        <boxGeometry args={[14.8, 5.8, 0.1]} />
+        <meshStandardMaterial color="#001122" transparent opacity={0.9} />
       </mesh>
 
-      {[0, 1, 2, 3].map(level => (
-        <group key={level} position={[0, -2 + level * 2, 0]}>
-          <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
-            <meshStandardMaterial color="#8b4513" />
-          </mesh>
-          
-          <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
-            <meshStandardMaterial color="#a67c52" />
+      {[0, 1, 2].map(level => (
+        <group key={level} position={[0, -1.5 + level * 2, 0]}>
+          <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+            <boxGeometry args={[12, 0.1, 3]} />
+            <meshStandardMaterial color="#2c3e50" metalness={0.7} />
           </mesh>
           
           <group>
-            {level === 0 && [-3, 0, 3].map((x, i) => (
-              <LemonTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 0 && [-4, -2, 0, 2, 4].map((x, i) => (
+              <ServerRack key={i} position={[x, 1, -1]} activityLevel={serverActivity[i]} />
             ))}
             
-            {level === 1 && [-4, -2, 0, 2, 4].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 1 && [-3, 0, 3].map((x, i) => (
+              <HologramDisplay key={i} position={[x, 1, -1]} dataFlow={dataFlow} />
             ))}
             
-            {level === 2 && [-3, 0, 3].map((x, i) => (
-              <AppleTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
-            ))}
-            
-            {level === 3 && [-3, 0, 3].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
+            {level === 2 && [-4, -2, 2, 4].map((x, i) => (
+              <RobotArm key={i} position={[x, 1, -1]} isActive={serverActivity[i] > 0.5} />
             ))}
           </group>
-          
-          <SoilSensor 
-            position={[4, 1, 1]} 
-            moistureLevel={moistureLevels[level]} 
-          />
         </group>
       ))}
 
-      <AutomatedIrrigation 
-        position={[-5, 0, 0]} 
-        isActive={irrigationActive} 
-      />
+      <Drone position={[-6, 3, 0]} isFlying={dronesFlying} />
+      <Drone position={[6, 4, 0]} isFlying={dronesFlying} />
 
-      <mesh position={[5, 1, 2.9]} castShadow>
+      <mesh position={[5, 2, 3.9]} castShadow>
         <boxGeometry args={[2, 2, 0.2]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
 
       {[0, 1].map(i => (
-        <mesh key={i} position={[4.5 + i * 1, 1.5, 2.91]} castShadow>
+        <mesh key={i} position={[4.5 + i * 1, 2.5, 3.91]} castShadow>
           <planeGeometry args={[0.8, 0.6]} />
-          <meshStandardMaterial color={i === 0 ? "#00ff00" : "#0000ff"} />
+          <meshStandardMaterial color={i === 0 ? "#00ff00" : "#0000ff"} emissive={i === 0 ? "#00ff00" : "#0000ff"} />
         </mesh>
       ))}
 
+      <Sparkles count={50} scale={[14, 5, 7]} size={2} speed={0.3} color="#00ffff" />
+
       <Text
-        position={[0, 5, 0]}
+        position={[0, 4.5, 0]}
         fontSize={0.5}
-        color="#27ae60"
+        color="#00ffff"
         anchorX="center"
         anchorY="middle"
       >
-        🍋 Vertical Farm
+        🤖 Tech Hub
       </Text>
 
-      <Html position={[0, 6, 0]} transform>
+      <Html position={[0, 7, 0]} transform>
         <div style={{
-          background: 'rgba(255,255,255,0.95)',
+          background: 'rgba(0,0,0,0.95)',
           padding: '15px',
           borderRadius: '12px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          boxShadow: '0 8px 25px rgba(0,255,255,0.3)',
           minWidth: '300px',
-          textAlign: 'center'
+          textAlign: 'center',
+          color: '#00ffff',
+          border: '1px solid #00ffff'
         }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#27ae60' }}>🏢 Vertical Farming System</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: '#00ffff' }}>🏢 Modern Tech Hub</h3>
           
           <div style={{ 
             display: 'grid', 
@@ -351,33 +291,31 @@ function VerticalFarm({ position = [0, 0, 0] }) {
             marginBottom: '12px'
           }}>
             <div style={{ textAlign: 'left' }}>
-              <div>🌱 Growth Progress: {Math.round(growthProgress * 100)}%</div>
-              <div>💧 Moisture Levels:</div>
-              {moistureLevels.map((level, i) => (
-                <div key={i} style={{ fontSize: '12px', marginLeft: '10px' }}>
-                  Level {i+1}: {Math.round(level * 100)}%
-                </div>
-              ))}
+              <div>🖥️ Server Activity: {Math.round(serverActivity.reduce((a, b) => a + b, 0) / serverActivity.length * 100)}%</div>
+              <div>📊 Data Flow: {Math.round(dataFlow * 100)}%</div>
+              <div>🤖 Active Robots: {serverActivity.filter(a => a > 0.5).length}</div>
+              <div>🚁 Drones: {dronesFlying ? 'ACTIVE' : 'STANDBY'}</div>
             </div>
             
             <div style={{ textAlign: 'left' }}>
-              <div>🍋 Lemons: {Math.floor(growthProgress * 8)}</div>
-              <div>🍅 Tomatoes: {Math.floor(growthProgress * 6)}</div>
-              <div>🍎 Apples: {Math.floor(growthProgress * 6)}</div>
-              <div>🚰 Irrigation: {irrigationActive ? 'ACTIVE' : 'IDLE'}</div>
+              <div>💾 Storage: 85%</div>
+              <div>🌐 Network: 92%</div>
+              <div>⚡ Power: 78%</div>
+              <div>❄️ Cooling: 65%</div>
             </div>
           </div>
 
           <div style={{ 
-            background: '#ecf0f1', 
+            background: 'rgba(0,255,255,0.1)', 
             padding: '8px', 
             borderRadius: '6px',
-            fontSize: '12px'
+            fontSize: '12px',
+            border: '1px solid #00ffff'
           }}>
-            <div>✅ Automated Soil Monitoring</div>
-            <div>✅ Smart Irrigation System</div>
-            <div>✅ Multi-Level Cultivation</div>
-            <div>✅ Real-time Growth Tracking</div>
+            <div>✅ AI Processing Active</div>
+            <div>✅ Real-time Data Analytics</div>
+            <div>✅ Automated Systems</div>
+            <div>✅ Drone Deployment Ready</div>
           </div>
         </div>
       </Html>
@@ -1880,10 +1818,10 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Vertical Farm - MOVED FAR AWAY from roads and society */}
-      <VerticalFarm position={[45, 0, -25]} />
+      {/* Modern Tech Hub - REPLACED Vertical Farm */}
+      <DataCenter position={[45, 0, -25]} />
       
-      {/* Energy Efficient Society - SEPARATED from Vertical Farm */}
+      {/* Energy Efficient Society - SEPARATED from Tech Hub */}
       <EnergyEfficientSociety position={[0, 0, -40]} />
       
       {/* Regular buildings */}
@@ -2062,7 +2000,7 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🏢 Vertical Farm': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
+    '🤖 Tech Hub': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
@@ -2285,10 +2223,10 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          🌟 Features: Cultural Center • Vertical Farming • Energy Society • Accessible Homes
+          🌟 Features: Cultural Center • Tech Hub • Energy Society • Accessible Homes
         </div>
         <div style={{ fontSize: 11, color: '#3498db', marginTop: 2 }}>
-          🍋 Vertical Farm: Lemons • Tomatoes • Apples • Automated Systems
+          🤖 Tech Hub: AI Processing • Robotics • Drones • Data Analytics
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           ⚙️ Click settings icon (top-right) for city controls
