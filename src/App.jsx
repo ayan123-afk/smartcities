@@ -1232,7 +1232,7 @@ function CulturalCenter({ position = [0, 0, 0] }) {
       name: "Sindhi", 
       color: "#ff6b6b", 
       pattern: "🎵",
-      image: "🎨",
+      image: "https://image.slidesharecdn.com/sindhpresentation2-210223101116/75/Sindhi-Culture-1-2048.jpg",
       description: "Sindhi Culture - Music & Ajrak",
       features: ["Traditional Music", "Ajrak Patterns", "Sufi Heritage"]
     },
