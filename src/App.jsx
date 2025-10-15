@@ -41,299 +41,251 @@ const useStore = create((set) => ({
   setCollectedWaste: (waste) => set({ collectedWaste: waste })
 }))
 
-/* ----- Vertical Farming Components ----- */
-function LemonTree({ position = [0, 0, 0], growthStage = 1 }) {
+/* ----- Sports Complex Components ----- */
+function BasketballCourt({ position = [0, 0, 0] }) {
   return (
     <group position={position}>
-      <mesh position={[0, 1.5, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.3, 3, 8]} />
-        <meshStandardMaterial color="#8b4513" />
+      {/* Court surface */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[15, 8]} />
+        <meshStandardMaterial color="#ff6b35" />
       </mesh>
       
-      <mesh position={[0, 3, 0]} castShadow>
-        <sphereGeometry args={[1.2, 8, 8]} />
+      {/* Court lines */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[14.8, 7.8]} />
+        <meshStandardMaterial color="#f8f9fa" transparent opacity={0.8} />
+      </mesh>
+      
+      {/* Basketball hoops */}
+      {[-6.5, 6.5].map((x, i) => (
+        <group key={i} position={[x, 0, 0]}>
+          <mesh position={[0, 2.5, 0]} castShadow>
+            <cylinderGeometry args={[0.05, 0.05, 0.8, 8]} />
+            <meshStandardMaterial color="#e74c3c" />
+          </mesh>
+          <mesh position={[0, 2.9, 0.4]} castShadow>
+            <cylinderGeometry args={[0.4, 0.4, 0.05, 16]} />
+            <meshStandardMaterial color="#e74c3c" />
+          </mesh>
+          <mesh position={[0, 2.5, 0]} castShadow>
+            <boxGeometry args={[1.2, 0.05, 0.05]} />
+            <meshStandardMaterial color="#2c3e50" />
+          </mesh>
+        </group>
+      ))}
+      
+      {/* Players */}
+      <Person position={[-3, 0.5, 2]} color="#3498db" speed={0.4} path={[
+        [-3, 0.5, 2], [-1, 0.5, 1], [1, 0.5, 2], [3, 0.5, 1], [1, 0.5, -1], [-1, 0.5, -2]
+      ]} />
+      <Person position={[2, 0.5, -1]} color="#e74c3c" speed={0.3} path={[
+        [2, 0.5, -1], [0, 0.5, 0], [-2, 0.5, 1], [0, 0.5, 2], [2, 0.5, 1], [4, 0.5, 0]
+      ]} />
+    </group>
+  )
+}
+
+function TennisCourt({ position = [0, 0, 0] }) {
+  return (
+    <group position={position}>
+      {/* Court surface */}
+      <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[12, 6]} />
         <meshStandardMaterial color="#27ae60" />
       </mesh>
       
-      {growthStage > 0.5 && Array.from({ length: Math.floor(growthStage * 8) }).map((_, i) => {
-        const angle = (i / 8) * Math.PI * 2
-        const radius = 0.8
-        return (
-          <mesh 
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              2.5 + Math.sin(i * 2) * 0.3,
-              Math.sin(angle) * radius
-            ]} 
-            castShadow
-          >
-            <sphereGeometry args={[0.15, 8, 8]} />
-            <meshStandardMaterial color="#ffff00" />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-function TomatoPlant({ position = [0, 0, 0], growthStage = 1 }) {
-  return (
-    <group position={position}>
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <cylinderGeometry args={[0.05, 0.08, 1.6, 8]} />
-        <meshStandardMaterial color="#2ecc71" />
+      {/* Court lines */}
+      <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[11.8, 5.8]} />
+        <meshStandardMaterial color="#ffffff" transparent opacity={0.9} />
       </mesh>
       
-      {[0.4, 0.8, 1.2].map((y, i) => (
-        <mesh key={i} position={[0.3, y, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
-          <sphereGeometry args={[0.2, 6, 6]} />
-          <meshStandardMaterial color="#27ae60" />
+      {/* Net */}
+      <mesh position={[0, 1, 0]} castShadow>
+        <boxGeometry args={[0.1, 2, 6.2]} />
+        <meshStandardMaterial color="#ecf0f1" />
+      </mesh>
+      
+      {/* Net posts */}
+      {[-3, 3].map((z, i) => (
+        <mesh key={i} position={[0, 1.5, z]} castShadow>
+          <cylinderGeometry args={[0.08, 0.08, 3, 8]} />
+          <meshStandardColorMaterial color="#34495e" />
         </mesh>
       ))}
       
-      {growthStage > 0.6 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => (
-        <mesh 
-          key={i}
-          position={[
-            Math.cos(i * 1.5) * 0.2,
-            0.5 + i * 0.15,
-            Math.sin(i * 1.5) * 0.2
-          ]} 
-          castShadow
-        >
-          <sphereGeometry args={[0.1, 6, 6]} />
-          <meshStandardMaterial color="#ff4444" />
-        </mesh>
-      ))}
+      {/* Players */}
+      <Person position={[-4, 0.5, 0]} color="#9b59b6" speed={0.2} path={[
+        [-4, 0.5, -1], [-4, 0.5, 1], [-3, 0.5, 0], [-4, 0.5, -1]
+      ]} />
+      <Person position={[4, 0.5, 0]} color="#f39c12" speed={0.25} path={[
+        [4, 0.5, 1], [4, 0.5, -1], [3, 0.5, 0], [4, 0.5, 1]
+      ]} />
     </group>
   )
 }
 
-function AppleTree({ position = [0, 0, 0], growthStage = 1 }) {
+function SwimmingPool({ position = [0, 0, 0] }) {
   return (
     <group position={position}>
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <cylinderGeometry args={[0.15, 0.2, 2.4, 8]} />
-        <meshStandardMaterial color="#8b4513" />
+      {/* Pool structure */}
+      <mesh position={[0, -0.5, 0]} castShadow receiveShadow>
+        <boxGeometry args={[10, 1, 5]} />
+        <meshStandardMaterial color="#34495e" />
       </mesh>
       
-      <mesh position={[0, 2.5, 0]} castShadow>
-        <sphereGeometry args={[1, 8, 8]} />
-        <meshStandardMaterial color="#2ecc71" />
+      {/* Water */}
+      <mesh position={[0, -0.2, 0]} castShadow>
+        <boxGeometry args={[9.8, 0.6, 4.8]} />
+        <meshStandardMaterial color="#3498db" transparent opacity={0.7} />
       </mesh>
       
-      {growthStage > 0.7 && Array.from({ length: Math.floor(growthStage * 6) }).map((_, i) => {
-        const angle = (i / 6) * Math.PI * 2
-        const radius = 0.7
-        return (
-          <mesh 
-            key={i}
-            position={[
-              Math.cos(angle) * radius,
-              2.2 + Math.sin(i * 3) * 0.2,
-              Math.sin(angle) * radius
-            ]} 
-            castShadow
-          >
-            <sphereGeometry args={[0.12, 6, 6]} />
-            <meshStandardMaterial color="#ff4444" />
-          </mesh>
-        )
-      })}
-    </group>
-  )
-}
-
-function SoilSensor({ position = [0, 0, 0], moistureLevel = 0.7 }) {
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <cylinderGeometry args={[0.1, 0.12, 0.3, 8]} />
-        <meshStandardMaterial color="#3498db" />
-      </mesh>
-      
-      <mesh position={[0, -0.4, 0]} castShadow>
-        <cylinderGeometry args={[0.03, 0.03, 0.8, 8]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      <mesh position={[0, 0.25, 0]} castShadow>
-        <sphereGeometry args={[0.05, 6, 6]} />
-        <meshStandardMaterial 
-          color={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
-          emissive={moistureLevel > 0.3 ? "#00ff00" : "#ff4444"}
-          emissiveIntensity={0.5}
-        />
-      </mesh>
-      
-      <Html position={[0, 0.6, 0]}>
-        <div style={{
-          background: 'rgba(255,255,255,0.9)',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          color: moistureLevel > 0.3 ? '#27ae60' : '#e74c3c'
-        }}>
-          💧 {Math.round(moistureLevel * 100)}%
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-function AutomatedIrrigation({ position = [0, 0, 0], isActive = true }) {
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-        <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
-      </mesh>
-      
-      <mesh position={[0, -0.5, 0]} castShadow>
-        <cylinderGeometry args={[0.75, 0.75, 1, 16]} />
-        <meshStandardMaterial color="#2980b9" />
-      </mesh>
-      
-      <mesh position={[0.9, 0.5, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
-        <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
+      {/* Pool edges */}
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <boxGeometry args={[10.2, 0.2, 5.2]} />
         <meshStandardMaterial color="#95a5a6" />
       </mesh>
       
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <boxGeometry args={[0.6, 0.3, 0.6]} />
+      {/* Diving board */}
+      <mesh position={[0, 0.2, -2]} castShadow>
+        <boxGeometry args={[1.5, 0.1, 3]} />
+        <meshStandardMaterial color="#8b4513" />
+      </mesh>
+      
+      <mesh position={[0, 1, -0.5]} castShadow>
+        <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
         <meshStandardMaterial color="#2c3e50" />
       </mesh>
       
-      <mesh position={[0, 1.35, 0.31]} castShadow>
-        <sphereGeometry args={[0.08, 6, 6]} />
-        <meshStandardMaterial 
-          color={isActive ? "#00ff00" : "#ff4444"}
-          emissive={isActive ? "#00ff00" : "#ff4444"}
-          emissiveIntensity={0.8}
-        />
+      {/* Swimmers */}
+      <mesh position={[2, -0.1, 1]} castShadow>
+        <sphereGeometry args={[0.3, 8, 8]} />
+        <meshStandardMaterial color="#ff6b6b" />
       </mesh>
       
-      <Html position={[0, 2, 0]}>
-        <div style={{
-          background: 'rgba(255,255,255,0.9)',
-          padding: '6px 10px',
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          color: isActive ? '#27ae60' : '#e74c3c'
-        }}>
-          {isActive ? '🚰 IRRIGATION ACTIVE' : '🚰 IRRIGATION OFF'}
-        </div>
-      </Html>
+      <mesh position={[-2, -0.1, -1]} castShadow>
+        <sphereGeometry args={[0.3, 8, 8]} />
+        <meshStandardMaterial color="#4ecdc4" />
+      </mesh>
+      
+      <mesh position={[0, -0.1, 0]} castShadow>
+        <sphereGeometry args={[0.3, 8, 8]} />
+        <meshStandardMaterial color="#45b7d1" />
+      </mesh>
     </group>
   )
 }
 
-function VerticalFarm({ position = [0, 0, 0] }) {
-  const [growthProgress, setGrowthProgress] = useState(0)
-  const [moistureLevels, setMoistureLevels] = useState([0.8, 0.6, 0.7, 0.5])
-  const [irrigationActive, setIrrigationActive] = useState(true)
+function RunningTrack({ position = [0, 0, 0] }) {
+  const trackRef = useRef()
+  
+  useFrame((_, dt) => {
+    if (trackRef.current) {
+      trackRef.current.rotation.y += dt * 0.1
+    }
+  })
+
+  return (
+    <group position={position} ref={trackRef}>
+      {/* Outer track */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <ringGeometry args={[8, 10, 32]} />
+        <meshStandardMaterial color="#c0392b" />
+      </mesh>
+      
+      {/* Inner track */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <ringGeometry args={[6, 8, 32]} />
+        <meshStandardMaterial color="#ecf0f1" />
+      </mesh>
+      
+      {/* Field */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <circleGeometry args={[6, 32]} />
+        <meshStandardMaterial color="#27ae60" />
+      </mesh>
+      
+      {/* Runners */}
+      <Person position={[9, 0.5, 0]} color="#e74c3c" speed={0.5} path={[
+        [9, 0.5, 0], [0, 0.5, 9], [-9, 0.5, 0], [0, 0.5, -9], [9, 0.5, 0]
+      ]} />
+      
+      <Person position={[8.5, 0.5, 1]} color="#3498db" speed={0.45} path={[
+        [8.5, 0.5, 1], [-0.5, 0.5, 8.5], [-8.5, 0.5, -1], [0.5, 0.5, -8.5], [8.5, 0.5, 1]
+      ]} />
+    </group>
+  )
+}
+
+function SportsComplex({ position = [0, 0, 0] }) {
+  const [activeUsers, setActiveUsers] = useState(12)
+  const [events, setEvents] = useState([
+    { name: "Basketball Tournament", time: "10:00 AM", participants: 20 },
+    { name: "Tennis Match", time: "2:00 PM", participants: 4 },
+    { name: "Swimming Competition", time: "4:00 PM", participants: 15 }
+  ])
 
   useFrame((_, dt) => {
-    setGrowthProgress(prev => Math.min(1, prev + dt * 0.1))
-    
-    if (Math.random() < 0.02) {
-      setMoistureLevels(prev =>
-        prev.map(level => Math.max(0.1, Math.min(1, level + (Math.random() - 0.5) * 0.1)))
-      );
-    }
-    
-    if (moistureLevels.some(level => level < 0.3)) {
-      setIrrigationActive(true)
-      setMoistureLevels(prev =>
-        prev.map(level => Math.min(1, level + 0.1))
-      );
+    // Randomly update active users
+    if (Math.random() < 0.01) {
+      setActiveUsers(prev => Math.max(8, Math.min(25, prev + Math.floor(Math.random() * 5 - 2))))
     }
   })
 
   return (
     <group position={position}>
+      {/* Main complex building */}
       <mesh castShadow receiveShadow>
-        <boxGeometry args={[12, 8, 6]} />
-        <meshStandardMaterial color="#34495e" roughness={0.8} />
+        <boxGeometry args={[25, 4, 20]} />
+        <meshStandardMaterial color="#2c3e50" roughness={0.8} />
       </mesh>
 
-      <mesh position={[0, 0, 3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
-      </mesh>
-      <mesh position={[0, 0, -3.01]} castShadow>
-        <boxGeometry args={[11.8, 7.8, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.3} />
+      {/* Entrance */}
+      <mesh position={[0, 2, 10.1]} castShadow>
+        <boxGeometry args={[6, 3, 0.2]} />
+        <meshStandardMaterial color="#3498db" />
       </mesh>
 
-      {[0, 1, 2, 3].map(level => (
-        <group key={level} position={[0, -2 + level * 2, 0]}>
-          <mesh position={[0, 0.9, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
-            <meshStandardMaterial color="#8b4513" />
-          </mesh>
-          
-          <mesh position={[0, 0.85, 0]} castShadow receiveShadow>
-            <boxGeometry args={[10, 0.1, 4]} />
-            <meshStandardMaterial color="#a67c52" />
-          </mesh>
-          
-          <group>
-            {level === 0 && [-3, 0, 3].map((x, i) => (
-              <LemonTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
-            ))}
-            
-            {level === 1 && [-4, -2, 0, 2, 4].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
-            ))}
-            
-            {level === 2 && [-3, 0, 3].map((x, i) => (
-              <AppleTree key={i} position={[x, 1, -1]} growthStage={growthProgress} />
-            ))}
-            
-            {level === 3 && [-3, 0, 3].map((x, i) => (
-              <TomatoPlant key={i} position={[x, 1, -1]} growthStage={growthProgress} />
-            ))}
-          </group>
-          
-          <SoilSensor 
-            position={[4, 1, 1]} 
-            moistureLevel={moistureLevels[level]} 
-          />
-        </group>
+      {/* Windows */}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i} position={[-8 + i * 2.5, 2, 10.01]} castShadow>
+          <boxGeometry args={[1.5, 2, 0.1]} />
+          <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
+        </mesh>
       ))}
 
-      <AutomatedIrrigation 
-        position={[-5, 0, 0]} 
-        isActive={irrigationActive} 
-      />
+      {/* Sports facilities */}
+      <BasketballCourt position={[-15, 0, -8]} />
+      <TennisCourt position={[15, 0, -8]} />
+      <SwimmingPool position={[-15, 0, 15]} />
+      <RunningTrack position={[15, 0, 15]} />
 
-      <mesh position={[5, 1, 2.9]} castShadow>
-        <boxGeometry args={[2, 2, 0.2]} />
-        <meshStandardMaterial color="#2c3e50" />
+      {/* Spectator stands */}
+      <mesh position={[0, 1, -25]} castShadow receiveShadow>
+        <boxGeometry args={[30, 2, 8]} />
+        <meshStandardMaterial color="#e74c3c" />
       </mesh>
 
-      {[0, 1].map(i => (
-        <mesh key={i} position={[4.5 + i * 1, 1.5, 2.91]} castShadow>
-          <planeGeometry args={[0.8, 0.6]} />
-          <meshStandardMaterial color={i === 0 ? "#00ff00" : "#0000ff"} />
+      {/* Spectators */}
+      {Array.from({ length: 10 }).map((_, i) => (
+        <mesh key={i} position={[-12 + i * 2.5, 2.5, -25]} castShadow>
+          <sphereGeometry args={[0.3, 8, 8]} />
+          <meshStandardMaterial color={i % 2 === 0 ? "#3498db" : "#e74c3c"} />
         </mesh>
       ))}
 
       <Text
-        position={[0, 5, 0]}
-        fontSize={0.5}
-        color="#27ae60"
+        position={[0, 8, 0]}
+        fontSize={0.6}
+        color="#e74c3c"
         anchorX="center"
         anchorY="middle"
       >
-        🍋 Vertical Farm
+        🏟️ Sports Complex
       </Text>
 
-      <Html position={[0, 6, 0]} transform>
+      <Html position={[0, 12, 0]} transform>
         <div style={{
           background: 'rgba(255,255,255,0.95)',
           padding: '15px',
@@ -342,7 +294,7 @@ function VerticalFarm({ position = [0, 0, 0] }) {
           minWidth: '300px',
           textAlign: 'center'
         }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#27ae60' }}>🏢 Vertical Farming System</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: '#e74c3c' }}>🏟️ Sports Complex</h3>
           
           <div style={{ 
             display: 'grid', 
@@ -351,20 +303,20 @@ function VerticalFarm({ position = [0, 0, 0] }) {
             marginBottom: '12px'
           }}>
             <div style={{ textAlign: 'left' }}>
-              <div>🌱 Growth Progress: {Math.round(growthProgress * 100)}%</div>
-              <div>💧 Moisture Levels:</div>
-              {moistureLevels.map((level, i) => (
-                <div key={i} style={{ fontSize: '12px', marginLeft: '10px' }}>
-                  Level {i+1}: {Math.round(level * 100)}%
-                </div>
-              ))}
+              <div>👥 Active Users: {activeUsers}</div>
+              <div>🏀 Basketball Court: Active</div>
+              <div>🎾 Tennis Court: In Use</div>
+              <div>🏊 Pool: Open</div>
+              <div>🏃 Running Track: Available</div>
             </div>
             
             <div style={{ textAlign: 'left' }}>
-              <div>🍋 Lemons: {Math.floor(growthProgress * 8)}</div>
-              <div>🍅 Tomatoes: {Math.floor(growthProgress * 6)}</div>
-              <div>🍎 Apples: {Math.floor(growthProgress * 6)}</div>
-              <div>🚰 Irrigation: {irrigationActive ? 'ACTIVE' : 'IDLE'}</div>
+              <div><strong>Today's Events:</strong></div>
+              {events.map((event, index) => (
+                <div key={index} style={{ fontSize: '12px', marginLeft: '10px' }}>
+                  {event.name} - {event.time}
+                </div>
+              ))}
             </div>
           </div>
 
@@ -374,10 +326,10 @@ function VerticalFarm({ position = [0, 0, 0] }) {
             borderRadius: '6px',
             fontSize: '12px'
           }}>
-            <div>✅ Automated Soil Monitoring</div>
-            <div>✅ Smart Irrigation System</div>
-            <div>✅ Multi-Level Cultivation</div>
-            <div>✅ Real-time Growth Tracking</div>
+            <div>✅ Multiple Sports Facilities</div>
+            <div>✅ Spectator Stands</div>
+            <div>✅ Professional Equipment</div>
+            <div>✅ Daily Events & Tournaments</div>
           </div>
         </div>
       </Html>
@@ -1880,10 +1832,10 @@ function CityLayout() {
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Vertical Farm - MOVED FAR AWAY from roads and society */}
-      <VerticalFarm position={[45, 0, -25]} />
+      {/* Sports Complex - REPLACED Vertical Farm */}
+      <SportsComplex position={[45, 0, -25]} />
       
-      {/* Energy Efficient Society - SEPARATED from Vertical Farm */}
+      {/* Energy Efficient Society - SEPARATED from Sports Complex */}
       <EnergyEfficientSociety position={[0, 0, -40]} />
       
       {/* Regular buildings */}
@@ -2062,7 +2014,7 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🏢 Vertical Farm': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
+    '🏟️ Sports Complex': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
@@ -2285,10 +2237,10 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          🌟 Features: Cultural Center • Vertical Farming • Energy Society • Accessible Homes
+          🌟 Features: Cultural Center • Sports Complex • Energy Society • Accessible Homes
         </div>
-        <div style={{ fontSize: 11, color: '#3498db', marginTop: 2 }}>
-          🍋 Vertical Farm: Lemons • Tomatoes • Apples • Automated Systems
+        <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2 }}>
+          🏟️ Sports Complex: Basketball • Tennis • Swimming • Running Track
         </div>
         <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
           ⚙️ Click settings icon (top-right) for city controls
