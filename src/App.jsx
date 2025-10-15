@@ -1,10 +1,10 @@
 import React, { useRef, useState, useEffect, Suspense } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Float, useTexture } from '@react-three/drei'
+import { OrbitControls, Html, useGLTF, ContactShadows, Sky, Text, Sparkles, Float, useTexture, PerspectiveCamera } from '@react-three/drei'
 import * as THREE from 'three'
 import { create } from 'zustand'
 
-// Enhanced Zustand store with better state management
+// Enhanced Zustand store with comprehensive state management
 const useStore = create((set) => ({
   alert: null,
   setAlert: (a) => set({ alert: a }),
@@ -49,592 +49,1296 @@ const useStore = create((set) => ({
   })),
   // New states for enhanced features
   parkingLots: {},
-  updateParkingLot: (id, vehicles) => set((state) => ({
-    parkingLots: { ...state.parkingLots, [id]: vehicles }
+  updateParkingLot: (id, cars) => set((state) => ({
+    parkingLots: { ...state.parkingLots, [id]: cars }
   })),
-  networkStatus: 'active',
-  setNetworkStatus: (status) => set({ networkStatus: status }),
-  waterQuality: 95,
-  setWaterQuality: (quality) => set({ waterQuality: quality })
+  buildingLights: {},
+  toggleBuildingLight: (id, status) => set((state) => ({
+    buildingLights: { ...state.buildingLights, [id]: status }
+  })),
+  citySounds: true,
+  setCitySounds: (sounds) => set({ citySounds: sounds }),
+  showInfoPanels: true,
+  setShowInfoPanels: (show) => set({ showInfoPanels: show }),
+  activeCamera: 'free',
+  setActiveCamera: (camera) => set({ activeCamera: camera }),
+  // Enhanced turbine states
+  turbines: {},
+  updateTurbine: (id, speed) => set((state) => ({
+    turbines: { ...state.turbines, [id]: speed }
+  })),
+  // Culture center states
+  culturalEvents: [],
+  addCulturalEvent: (event) => set((state) => ({ culturalEvents: [...state.culturalEvents, event] })),
+  // Vertical farming states
+  farmingProgress: 0,
+  setFarmingProgress: (progress) => set({ farmingProgress: progress }),
+  cropHealth: 100,
+  setCropHealth: (health) => set({ cropHealth: health })
 }))
 
-/* ----- MODERN RESIDENTIAL BUILDINGS ----- */
-function ModernResidentialBuilding({ position = [0, 0, 0], floors = 8, color = "#4a6572", name = "Residence" }) {
+/* ===== ENHANCED VERTICAL FARMING BUILDING WITH DETAILED PROCESS ===== */
+function VerticalGardenBuilding({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const farmingProgress = useStore((s) => s.farmingProgress)
+  const cropHealth = useStore((s) => s.cropHealth)
+  
+  const farmRef = useRef()
+  const [waterLevel, setWaterLevel] = useState(0.7)
+  const [nutrientLevel, setNutrientLevel] = useState(0.8)
+  const [lightIntensity, setLightIntensity] = useState(1.0)
+  const [harvestReady, setHarvestReady] = useState(false)
+
+  // Enhanced plant types with growth stages
+  const plantTypes = [
+    { 
+      name: "🍋 Lemon", 
+      color: "#ffd700", 
+      height: 0.8,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🍎 Apple", 
+      color: "#ff4444", 
+      height: 1.2,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🍅 Tomato", 
+      color: "#ff6b6b", 
+      height: 0.6,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🥕 Carrot", 
+      color: "#ff8c00", 
+      height: 0.4,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🥬 Lettuce", 
+      color: "#90ee90", 
+      height: 0.3,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🍓 Strawberry", 
+      color: "#ff69b4", 
+      height: 0.2,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🌶️ Chili", 
+      color: "#ff0000", 
+      height: 0.5,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    },
+    { 
+      name: "🍇 Grapes", 
+      color: "#9370db", 
+      height: 1.0,
+      growthStages: ['seed', 'sprout', 'young', 'mature'],
+      currentStage: 3
+    }
+  ]
+
+  // Farming process animation
+  useFrame((_, dt) => {
+    if (farmRef.current) {
+      farmRef.current.rotation.y += dt * 0.05
+    }
+    
+    // Simulate farming process
+    setWaterLevel(prev => Math.max(0.3, Math.min(1, prev + (Math.random() - 0.5) * 0.01)))
+    setNutrientLevel(prev => Math.max(0.4, Math.min(1, prev + (Math.random() - 0.5) * 0.008)))
+    setLightIntensity(prev => Math.max(0.5, Math.min(1.2, prev + (Math.random() - 0.5) * 0.005)))
+  })
+
+  const renderPlantGrowth = (plant, index, level, plantIndex) => {
+    const growthFactor = plant.currentStage / plant.growthStages.length
+    const plantHeight = plant.height * growthFactor
+    
+    return (
+      <group key={`${level}-${plantIndex}`} position={[0, 0.2, -3.5 + plantIndex * 1]}>
+        {/* Plant stem */}
+        <mesh castShadow>
+          <cylinderGeometry args={[0.03 * growthFactor, 0.05 * growthFactor, plantHeight, 8]} />
+          <meshStandardMaterial color="#228b22" />
+        </mesh>
+        
+        {/* Plant leaves */}
+        <mesh position={[0, plantHeight/2, 0.1]} castShadow rotation={[Math.PI/4, 0, 0]}>
+          <boxGeometry args={[0.2 * growthFactor, 0.3 * growthFactor, 0.02]} />
+          <meshStandardMaterial color="#32cd32" />
+        </mesh>
+        
+        {/* Fruits/vegetables - only show when mature */}
+        {plant.currentStage >= 3 && (
+          <mesh position={[0, plantHeight/2 + 0.1, 0]} castShadow>
+            <sphereGeometry args={[0.15, 8, 8]} />
+            <meshStandardMaterial color={plant.color} />
+          </mesh>
+        )}
+        
+        {/* Growth progress indicator */}
+        <mesh position={[0.2, plantHeight + 0.1, 0]} castShadow>
+          <sphereGeometry args={[0.05, 4, 4]} />
+          <meshStandardMaterial 
+            color={plant.currentStage === 4 ? "#00ff00" : "#ffff00"}
+            emissive={plant.currentStage === 4 ? "#00ff00" : "#ffff00"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      </group>
+    )
+  }
 
   return (
-    <group position={position}>
-      {/* Main Building Structure */}
+    <group ref={farmRef} position={position}>
+      {/* Main building structure */}
       <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: floors + 5, z: position[2],
+        x: position[0],
+        y: 12,
+        z: position[2],
         lookAt: { x: position[0], y: 0, z: position[2] }
       })}>
-        <boxGeometry args={[6, floors * 3, 6]} />
-        <meshStandardMaterial color={color} metalness={0.3} roughness={0.6} />
+        <boxGeometry args={[8, 20, 8]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.7} metalness={0.2} />
       </mesh>
 
-      {/* Modern Glass Facade */}
-      <mesh position={[0, 0, 3.01]} castShadow>
-        <boxGeometry args={[5.8, floors * 3 - 0.5, 0.1]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} metalness={0.8} />
-      </mesh>
+      {/* Enhanced farming walls with detailed irrigation system */}
+      {[0, 1, 2, 3].map((side) => {
+        const angle = (side / 4) * Math.PI * 2
+        const offsetX = Math.cos(angle) * 4.1
+        const offsetZ = Math.sin(angle) * 4.1
+        const rotationY = angle + Math.PI
 
-      {/* Balconies */}
-      {Array.from({ length: floors }).map((_, floor) => (
-        <group key={floor} position={[0, (floor * 3) - (floors * 1.5) + 1.5, 3.2]}>
-          <mesh castShadow>
-            <boxGeometry args={[5.5, 0.1, 1.2]} />
-            <meshStandardMaterial color="#34495e" metalness={0.5} />
-          </mesh>
-          <mesh position={[0, -0.6, 0.5]} castShadow>
-            <boxGeometry args={[5.5, 1, 0.05]} />
-            <meshStandardMaterial color="#87CEEB" transparent opacity={0.8} />
-          </mesh>
-        </group>
-      ))}
+        return (
+          <group key={side} position={[offsetX, 0, offsetZ]} rotation={[0, rotationY, 0]}>
+            {/* Wall structure */}
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[0.2, 18, 7.8]} />
+              <meshStandardMaterial color="#27ae60" metalness={0.3} />
+            </mesh>
 
-      {/* Rooftop Garden */}
-      <group position={[0, floors * 1.5, 0]}>
+            {/* Farming levels with enhanced details */}
+            {Array.from({ length: 6 }).map((_, level) => (
+              <group key={level} position={[0.11, -7 + level * 3, 0]}>
+                {/* Level shelf */}
+                <mesh castShadow>
+                  <boxGeometry args={[0.1, 0.1, 7.6]} />
+                  <meshStandardMaterial color="#8b4513" />
+                </mesh>
+
+                {/* Irrigation pipes */}
+                <mesh position={[0.05, 0.2, 0]} castShadow>
+                  <cylinderGeometry args={[0.02, 0.02, 7.6, 8]} />
+                  <meshStandardMaterial color="#3498db" />
+                </mesh>
+
+                {/* Water droplets */}
+                {Array.from({ length: 3 }).map((_, dropIndex) => (
+                  <mesh key={dropIndex} position={[0.06, 0.1, -3 + dropIndex * 3]} castShadow>
+                    <sphereGeometry args={[0.03, 4, 4]} />
+                    <meshStandardMaterial color="#3498db" transparent opacity={0.7} />
+                  </mesh>
+                ))}
+
+                {/* Plants on this level */}
+                {Array.from({ length: 8 }).map((_, plantIndex) => {
+                  const plant = plantTypes[(level * 8 + plantIndex) % plantTypes.length]
+                  return renderPlantGrowth(plant, plantIndex, level, plantIndex)
+                })}
+              </group>
+            ))}
+
+            {/* Main water supply pipe */}
+            <mesh position={[0.05, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.03, 0.03, 18, 8]} />
+              <meshStandardMaterial color="#2980b9" />
+            </mesh>
+
+            {/* Water valves for each level */}
+            {Array.from({ length: 6 }).map((_, level) => (
+              <mesh key={level} position={[0.08, -8 + level * 3, 3.5]} castShadow>
+                <sphereGeometry args={[0.08, 8, 8]} />
+                <meshStandardMaterial color="#2980b9" />
+              </mesh>
+            ))}
+          </group>
+        )
+      })}
+
+      {/* Rooftop greenhouse and control center */}
+      <group position={[0, 10.5, 0]}>
         <mesh castShadow receiveShadow>
-          <boxGeometry args={[6.2, 0.5, 6.2]} />
-          <meshStandardMaterial color="#27ae60" />
+          <boxGeometry args={[8.2, 0.2, 8.2]} />
+          <meshStandardMaterial color="#27ae60" metalness={0.3} />
         </mesh>
-        <SolarPanel position={[2, 0.3, 2]} rotation={[0, Math.PI/4, 0]} />
-        <SolarPanel position={[-2, 0.3, 2]} rotation={[0, -Math.PI/4, 0]} />
-        
-        {/* Rooftop Trees */}
-        {[-1.5, 0, 1.5].map((x) => 
-          [-1.5, 0, 1.5].map((z) => (
-            <group key={`${x}-${z}`} position={[x, 0.5, z]}>
+
+        {/* Enhanced rooftop planters */}
+        {[-2, 0, 2].map((x) =>
+          [-2, 0, 2].map((z) => (
+            <group key={`${x}-${z}`} position={[x, 0.3, z]}>
               <mesh castShadow>
-                <cylinderGeometry args={[0.2, 0.2, 2, 8]} />
+                <cylinderGeometry args={[0.8, 0.8, 0.4, 16]} />
                 <meshStandardMaterial color="#8b4513" />
               </mesh>
-              <mesh position={[0, 1.5, 0]} castShadow>
+              
+              <mesh position={[0, 0.25, 0]} castShadow>
+                <cylinderGeometry args={[0.75, 0.75, 0.3, 16]} />
+                <meshStandardMaterial color="#a67c52" />
+              </mesh>
+
+              <mesh position={[0, 1.2, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+                <meshStandardMaterial color="#228b22" />
+              </mesh>
+              
+              <mesh position={[0, 2.5, 0]} castShadow>
                 <sphereGeometry args={[0.8, 8, 8]} />
-                <meshStandardMaterial color="#27ae60" />
+                <meshStandardMaterial color={plantTypes[(Math.abs(x) + Math.abs(z)) % plantTypes.length].color} />
               </mesh>
             </group>
           ))
         )}
+
+        {/* Enhanced solar panels */}
+        <SolarPanel position={[3, 0.3, 3]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[-3, 0.3, 3]} rotation={[0, -Math.PI/4, 0]} />
+        <SolarPanel position={[3, 0.3, -3]} rotation={[0, 3*Math.PI/4, 0]} />
+        <SolarPanel position={[-3, 0.3, -3]} rotation={[0, -3*Math.PI/4, 0]} />
       </group>
 
-      <Text
-        position={[0, floors * 1.5 + 2, 0]}
-        fontSize={0.4}
-        color="#2c3e50"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🏠 {name}
-      </Text>
-
-      <Sparkles count={10} scale={[7, floors * 3, 7]} size={1} speed={0.1} color="#3498db" />
-    </group>
-  )
-}
-
-/* ----- MODERN SCHOOL BUILDING ----- */
-function ModernSchool({ position = [0, 0, 0] }) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  return (
-    <group position={position}>
-      {/* Main School Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 12, z: position[2],
-        lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[15, 8, 12]} />
-        <meshStandardMaterial color="#3498db" metalness={0.3} roughness={0.6} />
-      </mesh>
-
-      {/* School Windows */}
-      {Array.from({ length: 3 }).map((_, floor) => 
-        Array.from({ length: 5 }).map((_, window) => (
-          <group key={`${floor}-${window}`}>
-            <mesh position={[ -6 + window * 3, (floor * 2.5) - 2.5, 6.01]} castShadow>
-              <boxGeometry args={[1.5, 1.2, 0.1]} />
-              <meshStandardMaterial color="#f1c40f" metalness={0.5} />
-            </mesh>
-          </group>
-        ))
-      )}
-
-      {/* School Entrance */}
-      <mesh position={[0, -2, 6.01]} castShadow>
-        <boxGeometry args={[3, 4, 0.2]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-
-      {/* Playground */}
-      <group position={[8, 0, 0]}>
-        <mesh position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
-          <circleGeometry args={[5, 32]} />
-          <meshStandardMaterial color="#27ae60" />
+      {/* Water storage and processing tower */}
+      <group position={[0, 12, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[1.5, 1.2, 2, 16]} />
+          <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
         </mesh>
         
-        {/* Playground Equipment */}
-        <group position={[2, 0, 2]}>
-          <mesh castShadow>
-            <cylinderGeometry args={[0.3, 0.3, 3, 8]} />
-            <meshStandardMaterial color="#e74c3c" />
-          </mesh>
-          <mesh position={[0, 2, 0]} castShadow>
-            <boxGeometry args={[2, 0.1, 0.1]} />
-            <meshStandardMaterial color="#f39c12" />
-          </mesh>
-        </group>
-
-        <group position={[-2, 0, -2]}>
-          <mesh castShadow>
-            <sphereGeometry args={[1.2, 8, 8]} />
-            <meshStandardMaterial color="#9b59b6" />
-          </mesh>
-        </group>
-      </group>
-
-      {/* School Sign */}
-      <Text
-        position={[0, 5, 6.1]}
-        fontSize={0.5}
-        color="#2c3e50"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🏫 Smart School
-      </Text>
-
-      <Html position={[0, 10, 0]} transform>
-        <div style={{
-          background: 'rgba(52, 152, 219, 0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
-          textAlign: 'center',
-          color: 'white',
-          border: '2px solid #2980b9',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <h3 style={{ margin: '0 0 15px 0', color: 'white' }}>🏫 Modern Smart School</h3>
-          <div>📚 Digital Classrooms: 25</div>
-          <div>👨‍🏫 Teachers: 45</div>
-          <div>👨‍🎓 Students: 600</div>
-          <div>💻 Tech Labs: 3</div>
-          <div>🌱 Green Campus</div>
-          <div>☀️ Solar Powered</div>
-        </div>
-      </Html>
-
-      {/* Students */}
-      <Person position={[3, 0, 8]} color="#3498db" speed={0.2} path={[
-        [3, 0.5, 8], [1, 0.5, 6], [-1, 0.5, 8], [1, 0.5, 10], [3, 0.5, 8]
-      ]} />
-
-      <Sparkles count={30} scale={[18, 10, 15]} size={2} speed={0.1} color="#3498db" />
-    </group>
-  )
-}
-
-/* ----- MODERN HOSPITAL ----- */
-function ModernHospital({ position = [0, 0, 0] }) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  return (
-    <group position={position}>
-      {/* Main Hospital Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 15, z: position[2],
-        lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[18, 12, 15]} />
-        <meshStandardMaterial color="#ffffff" metalness={0.4} roughness={0.5} />
-      </mesh>
-
-      {/* Hospital Wings */}
-      <mesh position={[8, 3, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4, 8, 10]} />
-        <meshStandardMaterial color="#ecf0f1" metalness={0.3} />
-      </mesh>
-
-      <mesh position={[-8, 3, 0]} castShadow receiveShadow>
-        <boxGeometry args={[4, 8, 10]} />
-        <meshStandardMaterial color="#ecf0f1" metalness={0.3} />
-      </mesh>
-
-      {/* Hospital Windows */}
-      {Array.from({ length: 4 }).map((_, floor) => 
-        Array.from({ length: 6 }).map((_, window) => (
-          <group key={`${floor}-${window}`}>
-            <mesh position={[ -7.5 + window * 3, (floor * 2.5) - 3, 7.51]} castShadow>
-              <boxGeometry args={[1.8, 1.5, 0.1]} />
-              <meshStandardMaterial color="#87CEEB" transparent opacity={0.8} />
-            </mesh>
-          </group>
-        ))
-      )}
-
-      {/* Red Cross Sign */}
-      <group position={[0, 7, 7.6]}>
-        <mesh castShadow>
-          <boxGeometry args={[3, 0.5, 0.2]} />
-          <meshStandardMaterial color="#e74c3c" />
+        <mesh position={[0, 1.5, 0]} castShadow>
+          <cylinderGeometry args={[1.6, 1.6, 0.2, 16]} />
+          <meshStandardMaterial color="#2980b9" />
         </mesh>
-        <mesh castShadow>
-          <boxGeometry args={[0.5, 3, 0.2]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-      </group>
 
-      {/* Helipad */}
-      <group position={[0, 6.5, 0]}>
-        <mesh rotation={[-Math.PI/2, 0, 0]} receiveShadow>
-          <circleGeometry args={[3, 32]} />
+        <mesh position={[1.5, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.1, 0.1, 3, 8]} />
           <meshStandardMaterial color="#34495e" />
         </mesh>
-        <Text position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="white" anchorX="center">
-          H
-        </Text>
       </group>
 
-      {/* Emergency Entrance */}
-      <mesh position={[0, -3, 7.51]} castShadow>
-        <boxGeometry args={[4, 5, 0.2]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-
-      <Text
-        position={[0, 7, 0]}
-        fontSize={0.6}
-        color="#e74c3c"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🏥 City Hospital
+      {/* Enhanced information display */}
+      <Text position={[0, 11, 0]} fontSize={0.5} color="#27ae60" anchorX="center" anchorY="middle">
+        🏢 Vertical Farming Center
       </Text>
 
-      <Html position={[0, 16, 0]} transform>
+      {/* Detailed farming process information */}
+      <Html position={[0, 15, 0]} transform>
         <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '320px',
+          background: 'rgba(39, 174, 96, 0.95)',
+          padding: '25px',
+          borderRadius: '20px',
+          boxShadow: '0 12px 35px rgba(0,0,0,0.4)',
+          minWidth: '400px',
           textAlign: 'center',
-          color: '#2c3e50',
-          border: '2px solid #e74c3c',
-          backdropFilter: 'blur(10px)'
+          color: 'white',
+          border: '3px solid #229954',
+          backdropFilter: 'blur(15px)',
+          fontFamily: 'Arial, sans-serif'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#e74c3c' }}>🏥 Modern City Hospital</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            <div style={{ textAlign: 'left' }}>
-              <div>🩺 Doctors: 120</div>
-              <div>💊 Beds: 300</div>
-              <div>🚑 Emergency: 24/7</div>
-              <div>🧬 Surgery Rooms: 8</div>
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            color: 'white', 
+            fontSize: '22px',
+            fontWeight: 'bold',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            🌿 Advanced Vertical Farming Center
+          </h3>
+          
+          {/* Farming process visualization */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gap: '15px',
+            marginBottom: '20px'
+          }}>
+            <div style={{
+              background: 'rgba(52, 152, 219, 0.8)',
+              padding: '12px',
+              borderRadius: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '24px'}}>💧</div>
+              <div style={{fontSize: '12px', fontWeight: 'bold'}}>Water System</div>
+              <div style={{fontSize: '14px'}}>{Math.round(waterLevel * 100)}%</div>
             </div>
+            
+            <div style={{
+              background: 'rgba(46, 204, 113, 0.8)',
+              padding: '12px',
+              borderRadius: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '24px'}}>🌱</div>
+              <div style={{fontSize: '12px', fontWeight: 'bold'}}>Nutrients</div>
+              <div style={{fontSize: '14px'}}>{Math.round(nutrientLevel * 100)}%</div>
+            </div>
+            
+            <div style={{
+              background: 'rgba(241, 196, 15, 0.8)',
+              padding: '12px',
+              borderRadius: '10px',
+              textAlign: 'center'
+            }}>
+              <div style={{fontSize: '24px'}}>💡</div>
+              <div style={{fontSize: '12px', fontWeight: 'bold'}}>LED Lighting</div>
+              <div style={{fontSize: '14px'}}>{Math.round(lightIntensity * 100)}%</div>
+            </div>
+          </div>
+
+          {/* Crop production details */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '15px',
+            marginBottom: '20px'
+          }}>
             <div style={{ textAlign: 'left' }}>
-              <div>🔬 Labs: 5</div>
-              <div>📱 Telemedicine</div>
-              <div>🤖 AI Diagnostics</div>
-              <div>✅ Green Building</div>
+              <div style={{fontWeight: 'bold', marginBottom: '8px'}}>🌿 Current Crops:</div>
+              <div>🍋 Lemons: 32 plants</div>
+              <div>🍎 Apples: 28 plants</div>
+              <div>🍅 Tomatoes: 45 plants</div>
+              <div>🥕 Carrots: 38 plants</div>
+            </div>
+            
+            <div style={{ textAlign: 'left' }}>
+              <div style={{fontWeight: 'bold', marginBottom: '8px'}}>🌿 Additional Crops:</div>
+              <div>🥬 Lettuce: 52 plants</div>
+              <div>🍓 Strawberries: 40 plants</div>
+              <div>🌶️ Chilies: 36 plants</div>
+              <div>🍇 Grapes: 24 plants</div>
+            </div>
+          </div>
+
+          {/* Farming process steps */}
+          <div style={{ 
+            background: 'rgba(34, 153, 84, 0.3)', 
+            padding: '15px', 
+            borderRadius: '12px',
+            fontSize: '13px',
+            border: '2px solid #229954',
+            marginBottom: '15px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '10px', fontSize: '14px'}}>🔄 Farming Process:</div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px'}}>
+              <div>✅ Seed Planting</div>
+              <div>✅ Automated Watering</div>
+              <div>✅ Nutrient Delivery</div>
+              <div>✅ LED Growth Lights</div>
+              <div>✅ Climate Control</div>
+              <div>✅ Harvest Ready</div>
+            </div>
+          </div>
+
+          {/* Sustainability metrics */}
+          <div style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '12px', 
+            borderRadius: '10px',
+            fontSize: '12px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '8px'}}>📊 Sustainability Metrics:</div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px'}}>
+              <div>Daily Yield: ~50kg fresh produce</div>
+              <div>Water Savings: 95% vs traditional</div>
+              <div>Energy: 100% solar powered</div>
+              <div>Space Efficiency: 10x more efficient</div>
             </div>
           </div>
         </div>
       </Html>
 
-      {/* Ambulance */}
-      <Ambulance position={[5, 0, 10]} />
+      {/* Farmers and workers */}
+      <Person position={[2, 0, 3]} color="#8b4513" speed={0.2} path={[
+        [2, 0.5, 3], [1, 0.5, 2], [0, 0.5, 1], [-1, 0.5, 2], [-2, 0.5, 3]
+      ]} />
+      
+      <Person position={[-3, 0, -2]} color="#2c3e50" speed={0.3} path={[
+        [-3, 0.5, -2], [-2, 0.5, -1], [-1, 0.5, -2], [-2, 0.5, -3], [-3, 0.5, -2]
+      ]} />
 
-      <Sparkles count={25} scale={[20, 14, 18]} size={2} speed={0.1} color="#e74c3c" />
+      {/* Farmer indicators */}
+      <group position={[4.2, 5, 0]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#ff6b6b" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          👨‍🌾
+        </Text>
+      </group>
+
+      <group position={[-4.2, 8, 0]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#4ecdc4" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          👩‍🌾
+        </Text>
+      </group>
+
+      {/* Ambient effects */}
+      <Sparkles count={30} scale={[10, 20, 10]} size={3} speed={0.1} color="#27ae60" />
+      
+      {/* Water flow particles */}
+      <Sparkles count={15} scale={[8, 18, 8]} size={2} speed={0.2} color="#3498db" />
     </group>
   )
 }
 
-/* ----- WATER FILTRATION PLANT ----- */
-function WaterFiltrationPlant({ position = [0, 0, 0] }) {
-  const setFocus = useStore((s) => s.setFocus)
-  const waterQuality = useStore((s) => s.waterQuality)
+/* ===== ENHANCED MODERN TECH HUB COMPONENTS ===== */
+function ServerRack({ position = [0, 0, 0], activityLevel = 0.7 }) {
+  const [lights, setLights] = useState(Array(8).fill(false))
+  
+  useFrame((_, dt) => {
+    setLights(prev => prev.map((_, i) => Math.random() < activityLevel))
+  })
 
   return (
     <group position={position}>
-      {/* Main Plant Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 10, z: position[2],
-        lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[12, 6, 10]} />
-        <meshStandardMaterial color="#3498db" metalness={0.4} roughness={0.5} />
+      <mesh castShadow>
+        <boxGeometry args={[1.2, 2.5, 0.8]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.8} roughness={0.2} />
       </mesh>
-
-      {/* Water Tanks */}
-      <group position={[-4, 4, -2]}>
-        <mesh castShadow receiveShadow>
-          <cylinderGeometry args={[1.5, 1.5, 4, 16]} />
-          <meshStandardMaterial color="#2980b9" metalness={0.5} />
+      
+      {Array.from({ length: 8 }).map((_, i) => (
+        <mesh key={i} position={[0, -0.8 + i * 0.6, 0.41]} castShadow>
+          <boxGeometry args={[1, 0.3, 0.02]} />
+          <meshStandardMaterial 
+            color={lights[i] ? "#00ff00" : "#34495e"}
+            emissive={lights[i] ? "#00ff00" : "#000000"}
+            emissiveIntensity={lights[i] ? 0.8 : 0}
+          />
         </mesh>
-        <mesh position={[0, 2.5, 0]} castShadow>
-          <cylinderGeometry args={[1.6, 1.6, 0.3, 16]} />
-          <meshStandardMaterial color="#34495e" />
-        </mesh>
-      </group>
-
-      <group position={[4, 4, -2]}>
-        <mesh castShadow receiveShadow>
-          <cylinderGeometry args={[1.5, 1.5, 4, 16]} />
-          <meshStandardMaterial color="#2980b9" metalness={0.5} />
-        </mesh>
-        <mesh position={[0, 2.5, 0]} castShadow>
-          <cylinderGeometry args={[1.6, 1.6, 0.3, 16]} />
-          <meshStandardMaterial color="#34495e" />
-        </mesh>
-      </group>
-
-      {/* Filtration System */}
-      <group position={[0, 2, 3]}>
-        {Array.from({ length: 3 }).map((_, i) => (
-          <mesh key={i} position={[-2 + i * 2, 0, 0]} castShadow receiveShadow>
-            <cylinderGeometry args={[0.8, 0.8, 2, 16]} />
-            <meshStandardMaterial color="#27ae60" metalness={0.4} />
-          </mesh>
-        ))}
-      </group>
-
-      {/* Water Pipes */}
-      <group>
-        <mesh position={[0, 1, -1]} rotation={[0, 0, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.3, 0.3, 10, 8]} />
-          <meshStandardMaterial color="#95a5a6" metalness={0.5} />
-        </mesh>
-        <mesh position={[-5, 3, -2]} rotation={[0, Math.PI/2, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 6, 8]} />
-          <meshStandardMaterial color="#3498db" metalness={0.4} />
-        </mesh>
-      </group>
-
-      {/* Clean Water Reservoir */}
-      <mesh position={[0, 0.5, -6]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
-        <cylinderGeometry args={[3, 3, 0.2, 32]} />
-        <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
-      </mesh>
-
-      <Text
-        position={[0, 4, 0]}
-        fontSize={0.5}
-        color="#2980b9"
-        anchorX="center"
-        anchorY="middle"
-      >
-        💧 Water Plant
-      </Text>
-
-      <Html position={[0, 8, 0]} transform>
-        <div style={{
-          background: 'rgba(52, 152, 219, 0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
-          textAlign: 'center',
-          color: 'white',
-          border: '2px solid #2980b9',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <h3 style={{ margin: '0 0 15px 0', color: 'white' }}>💧 Advanced Water Filtration</h3>
-          <div>🌊 Water Quality: {waterQuality}%</div>
-          <div>💦 Daily Capacity: 2M Liters</div>
-          <div>🔬 Filtration Stages: 5</div>
-          <div>✅ UV Treatment</div>
-          <div>🔄 Recycling: 85%</div>
-          <div>🌱 Eco-Friendly</div>
-        </div>
-      </Html>
-
-      <Sparkles count={20} scale={[14, 8, 12]} size={2} speed={0.1} color="#3498db" />
-    </group>
-  )
-}
-
-/* ----- ENHANCED PARKING SYSTEM ----- */
-function ParkingLot({ position = [0, 0, 0], id = "parking1", capacity = 20 }) {
-  const [parkedVehicles, setParkedVehicles] = useState([])
-  const updateParkingLot = useStore((s) => s.updateParkingLot)
-
-  useEffect(() => {
-    // Initialize random parked vehicles
-    const vehicles = Array.from({ length: Math.floor(capacity * 0.7) }, (_, i) => ({
-      id: i,
-      position: [
-        -4.5 + Math.floor(i % 5) * 2.2,
-        0.3,
-        -3 + Math.floor(i / 5) * 2.5
-      ],
-      color: `#${Math.floor(Math.random()*16777215).toString(16)}`
-    }))
-    setParkedVehicles(vehicles)
-    updateParkingLot(id, vehicles.length)
-  }, [capacity, id, updateParkingLot])
-
-  return (
-    <group position={position}>
-      {/* Parking Lot Ground */}
-      <mesh rotation={[-Math.PI/2, 0, 0]} receiveShadow>
-        <planeGeometry args={[12, 8]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      {/* Parking Lines */}
-      {Array.from({ length: 5 }).map((_, row) => 
-        Array.from({ length: 4 }).map((_, col) => (
-          <mesh key={`${row}-${col}`} 
-            position={[-4 + col * 2.5, 0.01, -3 + row * 2]} 
-            rotation={[-Math.PI/2, 0, 0]}
-          >
-            <planeGeometry args={[2, 1.5]} />
-            <meshStandardMaterial color="#ffffff" />
-          </mesh>
-        ))
-      )}
-
-      {/* Parked Vehicles */}
-      {parkedVehicles.map(vehicle => (
-        <group key={vehicle.id} position={vehicle.position}>
-          <mesh castShadow>
-            <boxGeometry args={[1.5, 0.4, 0.8]} />
-            <meshStandardMaterial color={vehicle.color} metalness={0.3} roughness={0.4} />
-          </mesh>
-        </group>
       ))}
-
-      {/* Parking Sign */}
-      <Text
-        position={[0, 2, -4.5]}
-        fontSize={0.3}
-        color="#e74c3c"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🅿️ Parking
-      </Text>
-
-      <Html position={[0, 3, 0]}>
-        <div style={{
-          background: 'rgba(52, 73, 94, 0.9)',
-          color: 'white',
-          padding: '8px 12px',
-          borderRadius: '8px',
-          fontSize: '11px',
-          fontWeight: 'bold',
-          boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
-        }}>
-          🅿️ {parkedVehicles.length}/{capacity} spots
-        </div>
-      </Html>
+      
+      <mesh position={[0, 1.2, 0.41]} castShadow>
+        <boxGeometry args={[0.8, 0.4, 0.02]} />
+        <meshStandardMaterial color="#3498db" emissive="#3498db" emissiveIntensity={0.5} />
+      </mesh>
+      
+      {/* Cooling fans */}
+      {Array.from({ length: 2 }).map((_, i) => (
+        <mesh key={i} position={[0.5, -1 + i * 1.5, 0.41]} castShadow rotation={[0, 0, Math.PI/2]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+          <meshStandardMaterial color="#7f8c8d" metalness={0.7} />
+        </mesh>
+      ))}
     </group>
   )
 }
 
-/* ----- ENHANCED MODERN CAR ----- */
-function ModernCar({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [], isParking = false }) {
-  const carRef = useRef()
-  const [t, setT] = useState(Math.random() * 10)
+function Drone({ position = [0, 0, 0], isFlying = false, type = "delivery" }) {
+  const droneRef = useRef()
+  const [hover, setHover] = useState(0)
+  const [rotorSpeed, setRotorSpeed] = useState(0)
+
+  const droneColors = {
+    delivery: "#e74c3c",
+    surveillance: "#3498db",
+    medical: "#2ecc71"
+  }
 
   useFrame((_, dt) => {
-    if (!isParking) {
-      setT(prev => prev + dt * speed)
+    if (droneRef.current) {
+      setHover(prev => prev + dt)
+      setRotorSpeed(prev => Math.min(10, isFlying ? prev + dt * 2 : Math.max(0, prev - dt * 2)))
       
-      if (carRef.current && path.length > 0) {
-        const tt = t % path.length
-        const i = Math.floor(tt) % path.length
-        const a = new THREE.Vector3(...path[i])
-        const b = new THREE.Vector3(...path[(i + 1) % path.length])
-        const f = tt % 1
-        const pos = a.clone().lerp(b, f)
-        
-        carRef.current.position.lerp(pos, 0.1)
-        
-        const direction = new THREE.Vector3().subVectors(b, a).normalize()
-        carRef.current.lookAt(carRef.current.position.clone().add(direction))
+      if (isFlying) {
+        droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
+        droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
       }
+      
+      // Rotor animation
+      droneRef.current.children.forEach((child, index) => {
+        if (index >= 4) { // Rotors start from index 4
+          child.rotation.y += dt * rotorSpeed
+        }
+      })
     }
   })
 
   return (
-    <group ref={carRef} position={position}>
-      {/* Car Body */}
+    <group ref={droneRef} position={position}>
       <mesh castShadow>
-        <boxGeometry args={[1.8, 0.5, 0.8]} />
-        <meshStandardMaterial color={color} metalness={0.4} roughness={0.3} />
+        <boxGeometry args={[0.8, 0.1, 0.8]} />
+        <meshStandardMaterial color={droneColors[type]} metalness={0.7} roughness={0.3} />
       </mesh>
       
-      {/* Windshield */}
-      <mesh position={[0, 0.4, 0.1]} castShadow>
-        <boxGeometry args={[1.6, 0.3, 0.6]} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.6} />
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <sphereGeometry args={[0.2, 8, 8]} />
+        <meshStandardMaterial color="#34495e" />
       </mesh>
       
-      {/* Windows */}
-      <mesh position={[0, 0.4, 0]} castShadow>
-        <boxGeometry args={[1.7, 0.35, 0.7]} />
-        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
-      </mesh>
-
-      {/* Headlights */}
-      <mesh position={[0.7, 0.2, 0.4]} castShadow>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-      <mesh position={[0.7, 0.2, -0.4]} castShadow>
-        <sphereGeometry args={[0.1, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-
-      {/* Wheels */}
-      {[[0.5, 0.3], [-0.5, 0.3], [0.5, -0.3], [-0.5, -0.3]].map(([x, z], i) => (
-        <group key={i} position={[x, -0.2, z]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.2, 0.2, 0.15, 16]} />
-            <meshStandardMaterial color="#333333" metalness={0.8} />
+      {/* Enhanced rotors with animation */}
+      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
+        <group key={i}>
+          <mesh position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
+            <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+            <meshStandardMaterial color="#95a5a6" metalness={0.5} />
+          </mesh>
+          {/* Rotor blades */}
+          <mesh position={[x, 0.03, z]} rotation={[0, 0, 0]}>
+            <boxGeometry args={[0.3, 0.02, 0.1]} />
+            <meshStandardMaterial color="#bdc3c7" metalness={0.3} />
           </mesh>
         </group>
       ))}
-
-      {/* Brake Lights */}
-      <mesh position={[-0.8, 0.2, 0.3]} castShadow>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={0.5} />
-      </mesh>
-      <mesh position={[-0.8, 0.2, -0.3]} castShadow>
-        <boxGeometry args={[0.1, 0.1, 0.1]} />
-        <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={0.5} />
+      
+      {isFlying && (
+        <pointLight position={[0, -0.3, 0]} color="#00ff00" intensity={1} distance={3} />
+      )}
+      
+      {/* Status indicator */}
+      <mesh position={[0, 0.3, 0]} castShadow>
+        <sphereGeometry args={[0.05, 4, 4]} />
+        <meshStandardMaterial 
+          color={isFlying ? "#00ff00" : "#ff4444"}
+          emissive={isFlying ? "#00ff00" : "#ff4444"}
+          emissiveIntensity={0.5}
+        />
       </mesh>
     </group>
   )
 }
 
-/* ----- ENHANCED MODERN BUS ----- */
-function ModernBus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
-  const busRef = useRef()
-  const [t, setT] = useState(Math.random() * 10)
-  const [isStopped, setIsStopped] = useState(false)
-  const [stopTimer, setStopTimer] = useState(0)
+function HologramDisplay({ position = [0, 0, 0], dataFlow = 0.5 }) {
+  const hologramRef = useRef()
+  const [pulse, setPulse] = useState(0)
+  const [dataPoints, setDataPoints] = useState([])
 
   useFrame((_, dt) => {
-    if (isStopped) {
-      setStopTimer(prev => {
-        if (prev >= 3) {
-          setIsStopped(false)
-          return 0
-        }
-        return prev + dt
-      })
-      return
+    setPulse(prev => prev + dt)
+    if (hologramRef.current) {
+      hologramRef.current.rotation.y += dt * 0.5
     }
-
-    setT(prev => prev + dt * 0.3)
     
-    if (busRef.current && path.length > 0) {
+    // Update data points
+    if (Math.random() < dataFlow * 0.1) {
+      setDataPoints(prev => [
+        ...prev.slice(-10),
+        {
+          x: (Math.random() - 0.5) * 1.5,
+          y: Math.random() * 1.5,
+          z: (Math.random() - 0.5) * 1.5,
+          life: 1
+        }
+      ])
+    }
+    
+    setDataPoints(prev => prev.map(p => ({ ...p, life: p.life - dt * 0.5 })).filter(p => p.life > 0))
+  })
+
+  return (
+    <group position={position}>
+      <mesh castShadow>
+        <cylinderGeometry args={[0.3, 0.4, 0.2, 16]} />
+        <meshStandardMaterial color="#34495e" metalness={0.9} roughness={0.1} />
+      </mesh>
+      
+      <group ref={hologramRef}>
+        {/* Main hologram disc */}
+        <mesh position={[0, 1.5, 0]}>
+          <cylinderGeometry args={[0.8, 1, 0.02, 32]} />
+          <meshStandardMaterial 
+            color="#00ffff" 
+            transparent 
+            opacity={0.6 + Math.sin(pulse * 3) * 0.2}
+            emissive="#00ffff"
+            emissiveIntensity={0.4}
+          />
+        </mesh>
+        
+        {/* Data flow visualization */}
+        <mesh position={[0, 1.5 + dataFlow * 0.8, 0]} rotation={[0, 0, Math.PI/4]}>
+          <boxGeometry args={[0.1, dataFlow * 1.5, 0.1]} />
+          <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={1} />
+        </mesh>
+        
+        {/* Floating data points */}
+        {dataPoints.map((point, i) => (
+          <mesh key={i} position={[point.x, 1.5 + point.y, point.z]} scale={[point.life, point.life, point.life]}>
+            <sphereGeometry args={[0.05, 4, 4]} />
+            <meshStandardMaterial 
+              color="#00ff00" 
+              emissive="#00ff00"
+              emissiveIntensity={point.life}
+              transparent
+              opacity={point.life}
+            />
+          </mesh>
+        ))}
+      </group>
+      
+      <mesh position={[0, 0.8, 0]} castShadow>
+        <cylinderGeometry args={[0.1, 0.1, 1.2, 8]} />
+        <meshStandardMaterial color="#3498db" />
+      </mesh>
+    </group>
+  )
+}
+
+function RobotArm({ position = [0, 0, 0], isActive = true, task = "assembly" }) {
+  const armRef = useRef()
+  const [animation, setAnimation] = useState(0)
+  const [gripperOpen, setGripperOpen] = useState(false)
+
+  const taskColors = {
+    assembly: "#e74c3c",
+    welding: "#f39c12",
+    painting: "#9b59b6",
+    inspection: "#3498db"
+  }
+
+  useFrame((_, dt) => {
+    if (armRef.current && isActive) {
+      setAnimation(prev => prev + dt)
+      armRef.current.rotation.y = Math.sin(animation) * 0.5
+      armRef.current.rotation.x = Math.sin(animation * 2) * 0.3
+      
+      // Gripper animation
+      setGripperOpen(Math.sin(animation * 3) > 0)
+    }
+  })
+
+  return (
+    <group ref={armRef} position={position}>
+      <mesh position={[0, 0.5, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.3, 1, 8]} />
+        <meshStandardMaterial color="#7f8c8d" metalness={0.8} roughness={0.2} />
+      </mesh>
+      
+      <mesh position={[0, 1.2, 0]} castShadow>
+        <boxGeometry args={[0.4, 0.4, 0.4]} />
+        <meshStandardMaterial color={taskColors[task]} metalness={0.5} />
+      </mesh>
+      
+      <mesh position={[0.6, 1.2, 0]} rotation={[0, 0, Math.PI/4]} castShadow>
+        <boxGeometry args={[0.8, 0.1, 0.1]} />
+        <meshStandardMaterial color="#3498db" metalness={0.6} />
+      </mesh>
+      
+      {/* Gripper */}
+      <group position={[1, 1.2, 0]}>
+        <mesh position={[0, 0, -0.1]} rotation={[0, 0, gripperOpen ? -0.3 : 0]} castShadow>
+          <boxGeometry args={[0.1, 0.05, 0.2]} />
+          <meshStandardMaterial color="#34495e" metalness={0.6} />
+        </mesh>
+        <mesh position={[0, 0, 0.1]} rotation={[0, 0, gripperOpen ? 0.3 : 0]} castShadow>
+          <boxGeometry args={[0.1, 0.05, 0.2]} />
+          <meshStandardMaterial color="#34495e" metalness={0.6} />
+        </mesh>
+      </group>
+      
+      <mesh position={[1, 1.2, 0]} castShadow>
+        <sphereGeometry args={[0.15, 8, 8]} />
+        <meshStandardMaterial 
+          color={isActive ? "#00ff00" : "#ff4444"}
+          emissive={isActive ? "#00ff00" : "#ff4444"}
+          emissiveIntensity={0.8}
+        />
+      </mesh>
+    </group>
+  )
+}
+
+function DataCenter({ position = [0, 0, 0] }) {
+  const [serverActivity, setServerActivity] = useState([0.6, 0.8, 0.4, 0.7, 0.9, 0.5])
+  const [dronesFlying, setDronesFlying] = useState(false)
+  const [dataFlow, setDataFlow] = useState(0.5)
+  const [securityLights, setSecurityLights] = useState(false)
+
+  useFrame((_, dt) => {
+    setServerActivity(prev =>
+      prev.map(activity => Math.max(0.3, Math.min(1, activity + (Math.random() - 0.5) * 0.1)))
+    )
+    
+    setDataFlow(prev => Math.max(0.2, Math.min(0.9, prev + (Math.random() - 0.5) * 0.05)))
+    
+    if (Math.random() < 0.005) {
+      setDronesFlying(!dronesFlying)
+    }
+    
+    setSecurityLights(Math.sin(Date.now() * 0.001) > 0)
+  })
+
+  return (
+    <group position={position}>
+      {/* Main building with enhanced details */}
+      <mesh castShadow receiveShadow>
+        <boxGeometry args={[15, 6, 8]} />
+        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.1} />
+      </mesh>
+
+      {/* Glass facade */}
+      <mesh position={[0, 0, 4.01]} castShadow>
+        <boxGeometry args={[14.8, 5.8, 0.1]} />
+        <meshStandardMaterial color="#001122" transparent opacity={0.9} metalness={0.8} />
+      </mesh>
+
+      {/* Security lights */}
+      <mesh position={[7.5, 3, 4]} castShadow>
+        <boxGeometry args={[0.2, 0.1, 0.1]} />
+        <meshStandardMaterial 
+          color={securityLights ? "#ffff00" : "#333333"}
+          emissive={securityLights ? "#ffff00" : "#000000"}
+          emissiveIntensity={1}
+        />
+      </mesh>
+      <mesh position={[-7.5, 3, 4]} castShadow>
+        <boxGeometry args={[0.2, 0.1, 0.1]} />
+        <meshStandardMaterial 
+          color={securityLights ? "#ffff00" : "#333333"}
+          emissive={securityLights ? "#ffff00" : "#000000"}
+          emissiveIntensity={1}
+        />
+      </mesh>
+
+      {/* Multi-level interior */}
+      {[0, 1, 2].map(level => (
+        <group key={level} position={[0, -1.5 + level * 2, 0]}>
+          <mesh position={[0, 0.8, 0]} castShadow receiveShadow>
+            <boxGeometry args={[12, 0.1, 3]} />
+            <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
+          </mesh>
+          
+          <group>
+            {level === 0 && [-4, -2, 0, 2, 4].map((x, i) => (
+              <ServerRack key={i} position={[x, 1, -1]} activityLevel={serverActivity[i]} />
+            ))}
+            
+            {level === 1 && [-3, 0, 3].map((x, i) => (
+              <HologramDisplay key={i} position={[x, 1, -1]} dataFlow={dataFlow} />
+            ))}
+            
+            {level === 2 && [-4, -2, 2, 4].map((x, i) => (
+              <RobotArm key={i} position={[x, 1, -1]} isActive={serverActivity[i] > 0.5} />
+            ))}
+          </group>
+        </group>
+      ))}
+
+      {/* Enhanced drone system */}
+      <Drone position={[-6, 3, 0]} isFlying={dronesFlying} type="surveillance" />
+      <Drone position={[6, 4, 0]} isFlying={dronesFlying} type="delivery" />
+      <Drone position={[0, 5, -3]} isFlying={dronesFlying} type="medical" />
+
+      {/* Control panels */}
+      <mesh position={[5, 2, 3.9]} castShadow>
+        <boxGeometry args={[2, 2, 0.2]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.5} />
+      </mesh>
+
+      {[0, 1].map(i => (
+        <mesh key={i} position={[4.5 + i * 1, 2.5, 3.91]} castShadow>
+          <planeGeometry args={[0.8, 0.6]} />
+          <meshStandardMaterial 
+            color={i === 0 ? "#00ff00" : "#0000ff"} 
+            emissive={i === 0 ? "#00ff00" : "#0000ff"}
+            emissiveIntensity={0.8}
+          />
+        </mesh>
+      ))}
+
+      {/* Enhanced ambient effects */}
+      <Sparkles count={80} scale={[14, 5, 7]} size={3} speed={0.5} color="#00ffff" />
+      <Sparkles count={30} scale={[14, 5, 7]} size={2} speed={0.3} color="#ff00ff" />
+
+      <Text position={[0, 4.5, 0]} fontSize={0.5} color="#00ffff" anchorX="center" anchorY="middle">
+        🤖 Advanced Tech Hub
+      </Text>
+
+      {/* Enhanced information panel */}
+      <Html position={[0, 7, 0]} transform>
+        <div style={{
+          background: 'rgba(0,0,0,0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 12px 35px rgba(0,255,255,0.4)',
+          minWidth: '350px',
+          textAlign: 'center',
+          color: '#00ffff',
+          border: '2px solid #00ffff',
+          backdropFilter: 'blur(15px)',
+          fontFamily: 'Arial, sans-serif'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 15px 0', 
+            color: '#00ffff',
+            fontSize: '20px',
+            fontWeight: 'bold',
+            textShadow: '0 0 10px #00ffff'
+          }}>🏢 Cloud Data Center</h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '12px',
+            marginBottom: '15px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🖥️ Server Activity: {Math.round(serverActivity.reduce((a, b) => a + b, 0) / serverActivity.length * 100)}%</div>
+              <div>📊 Data Flow: {Math.round(dataFlow * 100)}%</div>
+              <div>🤖 Active Robots: {serverActivity.filter(a => a > 0.5).length}</div>
+              <div>🚁 Drones: {dronesFlying ? 'ACTIVE' : 'STANDBY'}</div>
+            </div>
+            
+            <div style={{ textAlign: 'left' }}>
+              <div>💾 Storage: 85%</div>
+              <div>🌐 Network: 92%</div>
+              <div>⚡ Power: 78%</div>
+              <div>❄️ Cooling: 65%</div>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: 'rgba(0,255,255,0.1)', 
+            padding: '12px', 
+            borderRadius: '10px',
+            fontSize: '13px',
+            border: '1px solid #00ffff',
+            marginBottom: '12px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '8px'}}>✅ Active Systems:</div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px'}}>
+              <div>AI Processing</div>
+              <div>Real-time Analytics</div>
+              <div>Automated Systems</div>
+              <div>Drone Deployment</div>
+              <div>Security Monitoring</div>
+              <div>Cloud Services</div>
+            </div>
+          </div>
+
+          {/* Performance metrics */}
+          <div style={{ 
+            background: 'linear-gradient(135deg, rgba(0,255,255,0.1), rgba(255,0,255,0.1))',
+            padding: '10px',
+            borderRadius: '8px',
+            fontSize: '12px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '5px'}}>📈 Performance Metrics:</div>
+            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '5px'}}>
+              <div>Uptime: 99.99%</div>
+              <div>Response: 12ms</div>
+              <div>Load: 68%</div>
+            </div>
+          </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
+
+/* ===== ENHANCED CULTURAL CENTER WITH DETAILED FEATURES ===== */
+function CulturalCenter({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+  const culturalEvents = useStore((s) => s.culturalEvents)
+  
+  const [activeEvent, setActiveEvent] = useState(null)
+  const [lightsOn, setLightsOn] = useState(true)
+
+  const culturalStyles = [
+    { 
+      name: "Sindhi", 
+      color: "#ff6b6b", 
+      pattern: "🎵",
+      image: "🎨",
+      description: "Sindhi Culture - Music & Ajrak",
+      features: ["Traditional Music", "Ajrak Patterns", "Sufi Heritage", "Folk Dance"],
+      artifacts: ["Ajrak Textiles", "Musical Instruments", "Traditional Jewelry"]
+    },
+    { 
+      name: "Punjabi", 
+      color: "#4ecdc4", 
+      pattern: "💃",
+      image: "🌾",
+      description: "Punjabi Culture - Bhangra & Agriculture",
+      features: ["Bhangra Dance", "Wheat Fields", "Folk Music", "Cuisine"],
+      artifacts: ["Phulkari Embroidery", "Dhol Drums", "Traditional Attire"]
+    },
+    { 
+      name: "Pashto", 
+      color: "#45b7d1", 
+      pattern: "⚔️",
+      image: "🏔️",
+      description: "Pashtun Culture - Mountains & Tradition",
+      features: ["Mountain Heritage", "Traditional Dance", "Tribal Arts", "Hospitality"],
+      artifacts: ["Karakul Hats", "Rugs", "Tribal Jewelry"]
+    },
+    { 
+      name: "Balochi", 
+      color: "#96ceb4", 
+      pattern: "🏔️",
+      image: "🐫",
+      description: "Balochi Culture - Desert & Camel",
+      features: ["Desert Life", "Camel Culture", "Embroidery", "Nomadic Traditions"],
+      artifacts: ["Balochi Rugs", "Traditional Dress", "Camel Decorations"]
+    }
+  ]
+
+  // Simulate cultural events
+  useEffect(() => {
+    const events = [
+      { id: 1, name: "Sindhi Music Night", culture: "Sindhi", time: "19:00", attendees: 45 },
+      { id: 2, name: "Punjabi Bhangra Workshop", culture: "Punjabi", time: "15:00", attendees: 32 },
+      { id: 3, name: "Pashtun Art Exhibition", culture: "Pashto", time: "11:00", attendees: 28 },
+      { id: 4, name: "Balochi Craft Display", culture: "Balochi", time: "14:00", attendees: 36 }
+    ]
+    events.forEach(event => useStore.getState().addCulturalEvent(event))
+  }, [])
+
+  return (
+    <group position={position}>
+      {/* Main building with enhanced architecture */}
+      <mesh castShadow receiveShadow onClick={() => setFocus({
+        x: position[0],
+        y: 8,
+        z: position[2],
+        lookAt: { x: position[0], y: 0, z: position[2] }
+      })}>
+        <boxGeometry args={[12, 6, 8]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.7} metalness={0.2} />
+      </mesh>
+
+      {/* Ornamental entrance */}
+      <mesh position={[0, 3, 4.1]} castShadow>
+        <boxGeometry args={[3, 4, 0.2]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.8} roughness={0.2} />
+      </mesh>
+
+      {/* Cultural display towers */}
+      <group position={[0, 4, 0]}>
+        {culturalStyles.map((culture, index) => {
+          const angle = (index / culturalStyles.length) * Math.PI * 2
+          const radius = 8
+          const bannerX = Math.cos(angle) * radius
+          const bannerZ = Math.sin(angle) * radius
+          
+          return (
+            <group key={culture.name} position={[bannerX, 0, bannerZ]} rotation={[0, -angle, 0]}>
+              {/* Cultural tower */}
+              <mesh position={[0, 4, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 8, 8]} />
+                <meshStandardMaterial color="#d4af37" metalness={0.5} />
+              </mesh>
+              
+              {/* Cultural banner */}
+              <mesh position={[0, 6, -0.5]} rotation={[0, 0, 0]} castShadow>
+                <planeGeometry args={[2, 3]} />
+                <meshStandardMaterial color={culture.color} metalness={0.3} />
+              </mesh>
+              
+              <Text position={[0, 6, -0.51]} fontSize={0.8} color="white" anchorX="center" anchorY="middle">
+                {culture.pattern}
+              </Text>
+              
+              <Text position={[0, 4.5, -0.51]} fontSize={0.3} color="white" anchorX="center" anchorY="middle">
+                {culture.name}
+              </Text>
+
+              {/* Cultural artifact display */}
+              <mesh position={[0, 1, 0]} castShadow receiveShadow>
+                <cylinderGeometry args={[1.5, 1.5, 0.2, 16]} />
+                <meshStandardMaterial color={culture.color} transparent opacity={0.8} />
+              </mesh>
+
+              <mesh position={[0, 1.5, 0]} castShadow>
+                <boxGeometry args={[1, 0.8, 1]} />
+                <meshStandardMaterial color={culture.color} metalness={0.3} />
+              </mesh>
+
+              <Text position={[0, 1.8, 0]} fontSize={0.5} color="white" anchorX="center" anchorY="middle">
+                {culture.image}
+              </Text>
+
+              {/* Floating cultural symbols */}
+              <Float speed={2} rotationIntensity={1} floatIntensity={1}>
+                <Text position={[0, 3, 0]} fontSize={0.4} color={culture.color} anchorX="center" anchorY="middle">
+                  {culture.pattern}
+                </Text>
+              </Float>
+            </group>
+          )
+        })}
+      </group>
+
+      {/* Central spire */}
+      <mesh position={[0, 9, 0]} castShadow>
+        <cylinderGeometry args={[0.15, 0.15, 10, 8]} />
+        <meshStandardMaterial color="#c9b037" metalness={0.5} />
+      </mesh>
+
+      {/* Decorative elements */}
+      <mesh position={[0, 10, 0]} castShadow>
+        <sphereGeometry args={[0.3, 8, 8]} />
+        <meshStandardMaterial color="#d4af37" emissive="#d4af37" emissiveIntensity={0.5} />
+      </mesh>
+
+      <Text position={[0, 7, 0]} fontSize={0.5} color="#d4af37" anchorX="center" anchorY="middle">
+        Cultural Heritage Center
+      </Text>
+
+      {/* Enhanced information panel */}
+      <Html position={[0, 12, 0]} transform>
+        <div style={{
+          background: 'rgba(139, 69, 19, 0.95)',
+          padding: '25px',
+          borderRadius: '20px',
+          boxShadow: '0 12px 35px rgba(0,0,0,0.4)',
+          minWidth: '400px',
+          textAlign: 'center',
+          color: 'white',
+          border: '3px solid #d4af37',
+          backdropFilter: 'blur(15px)',
+          fontFamily: 'Arial, sans-serif'
+        }}>
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            color: '#d4af37', 
+            fontSize: '22px',
+            fontWeight: 'bold',
+            textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            🎪 Cultural Heritage Center
+          </h3>
+          
+          {/* Cultural representation grid */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '15px',
+            marginBottom: '20px'
+          }}>
+            {culturalStyles.map((culture, index) => (
+              <div key={culture.name} style={{
+                background: culture.color,
+                padding: '15px',
+                borderRadius: '12px',
+                textAlign: 'center',
+                boxShadow: '0 6px 15px rgba(0,0,0,0.2)',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer'
+              }}
+              onMouseEnter={() => setActiveEvent(culture.name)}
+              onMouseLeave={() => setActiveEvent(null)}
+              >
+                <div style={{ fontSize: '28px', marginBottom: '8px' }}>{culture.image}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '16px', marginBottom: '5px' }}>{culture.name}</div>
+                <div style={{ fontSize: '12px', opacity: 0.9 }}>{culture.description}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cultural features */}
+          <div style={{ 
+            background: 'rgba(212, 175, 55, 0.2)', 
+            padding: '15px', 
+            borderRadius: '12px',
+            fontSize: '13px',
+            border: '2px solid #d4af37',
+            marginBottom: '15px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '10px', fontSize: '14px'}}>Cultural Features:</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+              {culturalStyles.map(culture => (
+                <div key={culture.name} style={{ textAlign: 'left' }}>
+                  <strong>{culture.name}:</strong> {culture.features.join(', ')}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Today's events */}
+          <div style={{ 
+            background: 'rgba(255,255,255,0.1)', 
+            padding: '12px', 
+            borderRadius: '10px',
+            fontSize: '12px'
+          }}>
+            <div style={{fontWeight: 'bold', marginBottom: '8px'}}>📅 Today's Events:</div>
+            {culturalEvents.slice(0, 3).map(event => (
+              <div key={event.id} style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                marginBottom: '5px',
+                padding: '5px',
+                background: 'rgba(255,255,255,0.1)',
+                borderRadius: '5px'
+              }}>
+                <span>{event.name}</span>
+                <span>{event.time} ({event.attendees} people)</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Html>
+
+      {/* People enjoying cultural activities */}
+      <Person position={[3, 0, 2]} color="#8b4513" speed={0.3} path={[
+        [3, 0.5, 2], [2, 0.5, 1], [1, 0.5, 2], [2, 0.5, 3], [3, 0.5, 2]
+      ]} />
+      
+      <Person position={[-2, 0, -1]} color="#2c3e50" speed={0.4} path={[
+        [-2, 0.5, -1], [-1, 0.5, -2], [0, 0.5, -1], [-1, 0.5, 0], [-2, 0.5, -1]
+      ]} />
+
+      {/* Cultural performers */}
+      <group position={[2, 0.5, -2]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#ff6b6b" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          💃
+        </Text>
+      </group>
+
+      <group position={[-2, 0.5, 2]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#4ecdc4" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          🎵
+        </Text>
+      </group>
+
+      {/* Ambient cultural effects */}
+      <Sparkles count={40} scale={[15, 8, 10]} size={3} speed={0.1} color="#d4af37" />
+      
+      {/* Floating cultural symbols */}
+      <Float speed={1} rotationIntensity={0.5} floatIntensity={1}>
+        <Text position={[0, 5, 0]} fontSize={0.3} color="#d4af37" anchorX="center" anchorY="middle">
+          🎨 🎵 💃 🎪
+        </Text>
+      </Float>
+    </group>
+  )
+}
+
+/* ===== ENHANCED WIND TURBINES WITH REALISTIC DESIGN ===== */
+function WindTurbine({ position = [0, 0, 0], scale = 1, efficiency = 0.8 }) {
+  const turbineRef = useRef()
+  const bladesRef = useRef()
+  const [rotationSpeed, setRotationSpeed] = useState(0)
+  const [powerOutput, setPowerOutput] = useState(0)
+  
+  useFrame((_, dt) => {
+    if (turbineRef.current && bladesRef.current) {
+      const speed = efficiency * 2 + Math.sin(Date.now() * 0.001) * 0.5
+      setRotationSpeed(speed)
+      bladesRef.current.rotation.y += dt * speed
+      
+      // Calculate power output based on rotation speed
+      setPowerOutput(Math.min(100, Math.round(speed * 40)))
+    }
+  })
+
+  return (
+    <group ref={turbineRef} position={position} scale={[scale, scale, scale]}>
+      {/* Tower */}
+      <mesh position={[0, 5, 0]} castShadow receiveShadow>
+        <cylinderGeometry args={[0.2, 0.3, 10, 16]} />
+        <meshStandardMaterial color="#708090" metalness={0.3} roughness={0.7} />
+      </mesh>
+      
+      {/* Nacelle (housing) */}
+      <mesh position={[0, 10, 0]} castShadow>
+        <boxGeometry args={[0.8, 0.6, 1.2]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.5} roughness={0.3} />
+      </mesh>
+      
+      {/* Blades */}
+      <group ref={bladesRef} position={[0, 10, 0]}>
+        <mesh castShadow>
+          <sphereGeometry args={[0.3, 8, 8]} />
+          <meshStandardMaterial color="#34495e" metalness={0.5} />
+        </mesh>
+        
+        {[0, 1, 2].map((i) => (
+          <mesh 
+            key={i} 
+            rotation={[0, 0, (i * Math.PI * 2) / 3]} 
+            position={[2, 0, 0]}
+            castShadow
+          >
+            <boxGeometry args={[4, 0.1, 0.3]} />
+            <meshStandardMaterial color="#ecf0f1" metalness={0.2} roughness={0.4} />
+          </mesh>
+        ))}
+      </group>
+      
+      {/* Power indicator */}
+      <mesh position={[0, 8, 0]} castShadow>
+        <sphereGeometry args={[0.1, 4, 4]} />
+        <meshStandardMaterial 
+          color={powerOutput > 50 ? "#00ff00" : powerOutput > 20 ? "#ffff00" : "#ff4444"}
+          emissive={powerOutput > 50 ? "#00ff00" : powerOutput > 20 ? "#ffff00" : "#ff4444"}
+          emissiveIntensity={0.5}
+        />
+      </mesh>
+      
+      {/* Power output display */}
+      <Html position={[0, 12, 0]}>
+        <div style={{
+          background: 'rgba(0,0,0,0.8)',
+          color: 'white',
+          padding: '5px 8px',
+          borderRadius: '6px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          minWidth: '50px'
+        }}>
+          ⚡ {powerOutput}%
+        </div>
+      </Html>
+      
+      {/* Ambient wind effect */}
+      <pointLight position={[0, 8, 0]} color="#ffffff" intensity={0.1} distance={5} />
+    </group>
+  )
+}
+
+/* ===== ENHANCED MODERN CARS WITH REALISTIC DESIGN ===== */
+function ModernCar({ position = [0, 0, 0], color = "#ff4444", speed = 1, path = [], type = "sedan" }) {
+  const carRef = useRef()
+  const [t, setT] = useState(Math.random() * 10)
+  const [headlightsOn, setHeadlightsOn] = useState(false)
+
+  const carTypes = {
+    sedan: { length: 1.2, height: 0.4, width: 0.6 },
+    suv: { length: 1.4, height: 0.5, width: 0.7 },
+    sports: { length: 1.0, height: 0.3, width: 0.5 }
+  }
+
+  const carSpecs = carTypes[type]
+
+  useFrame((_, dt) => {
+    setT(prev => prev + dt * speed)
+    
+    if (carRef.current && path.length > 0) {
       const tt = t % path.length
       const i = Math.floor(tt) % path.length
       const a = new THREE.Vector3(...path[i])
@@ -642,431 +1346,328 @@ function ModernBus({ position = [0, 0, 0], path = [], stopAtStation = false }) {
       const f = tt % 1
       const pos = a.clone().lerp(b, f)
       
-      if (stopAtStation && !isStopped && pos.distanceTo(new THREE.Vector3(15, 0.4, 25)) < 2) {
-        setIsStopped(true)
-      }
+      carRef.current.position.lerp(pos, 0.1)
       
-      if (!isStopped) {
-        busRef.current.position.lerp(pos, 0.1)
-        
-        const direction = new THREE.Vector3().subVectors(b, a).normalize()
-        busRef.current.lookAt(busRef.current.position.clone().add(direction))
-      }
+      const direction = new THREE.Vector3().subVectors(b, a).normalize()
+      carRef.current.lookAt(carRef.current.position.clone().add(direction))
+    }
+
+    // Simulate headlights based on time
+    const timeOfDay = useStore.getState().timeOfDay
+    setHeadlightsOn(timeOfDay === 'night' || timeOfDay === 'evening')
+  })
+
+  return (
+    <group ref={carRef} position={position}>
+      {/* Car body */}
+      <mesh castShadow>
+        <boxGeometry args={[carSpecs.length, carSpecs.height, carSpecs.width]} />
+        <meshStandardMaterial color={color} metalness={0.8} roughness={0.2} />
+      </mesh>
+      
+      {/* Windows */}
+      <mesh position={[0, carSpecs.height * 0.7, 0]} castShadow>
+        <boxGeometry args={[carSpecs.length * 0.9, carSpecs.height * 0.3, carSpecs.width * 0.8]} />
+        <meshStandardMaterial color="#1e3a8a" transparent opacity={0.3} metalness={0.9} />
+      </mesh>
+      
+      {/* Roof */}
+      <mesh position={[0, carSpecs.height * 1.1, 0]} castShadow>
+        <boxGeometry args={[carSpecs.length * 0.8, carSpecs.height * 0.1, carSpecs.width * 0.7]} />
+        <meshStandardMaterial color={color} metalness={0.7} roughness={0.3} />
+      </mesh>
+      
+      {/* Wheels */}
+      {[-0.3, 0.3].map((x, i) => (
+        <group key={i} position={[x, -carSpecs.height * 0.3, carSpecs.width * 0.4]}>
+          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
+            <cylinderGeometry args={[0.15, 0.15, 0.1, 16]} />
+            <meshStandardMaterial color="#333333" metalness={0.8} roughness={0.1} />
+          </mesh>
+        </group>
+      ))}
+      
+      {/* Headlights */}
+      {headlightsOn && (
+        <>
+          <pointLight position={[0.3, 0, carSpecs.width * 0.5]} color="#ffffcc" intensity={0.5} distance={3} />
+          <pointLight position={[-0.3, 0, carSpecs.width * 0.5]} color="#ffffcc" intensity={0.5} distance={3} />
+        </>
+      )}
+      
+      {/* Taillights */}
+      <mesh position={[0, 0, -carSpecs.width * 0.45]} castShadow>
+        <boxGeometry args={[0.4, 0.1, 0.05]} />
+        <meshStandardMaterial color="#ff4444" emissive="#ff4444" emissiveIntensity={0.5} />
+      </mesh>
+      
+      {/* Brand emblem */}
+      <mesh position={[0, carSpecs.height * 0.6, carSpecs.width * 0.45]} castShadow>
+        <sphereGeometry args={[0.05, 4, 4]} />
+        <meshStandardMaterial color="#ffffff" metalness={0.9} />
+      </mesh>
+    </group>
+  )
+}
+
+/* ===== ENHANCED PARKING LOT SYSTEM ===== */
+function ParkingLot({ position = [0, 0, 0], capacity = 20, id = "parking1" }) {
+  const parkingLots = useStore((s) => s.parkingLots)
+  const currentCars = parkingLots[id] || 0
+  
+  const parkingSpots = Array.from({ length: capacity }).map((_, i) => {
+    const row = Math.floor(i / 5)
+    const col = i % 5
+    return {
+      position: [
+        -8 + col * 4,
+        0,
+        -6 + row * 3
+      ],
+      occupied: i < currentCars
     }
   })
 
   return (
-    <group ref={busRef} position={position}>
-      {/* Bus Body */}
-      <mesh castShadow>
-        <boxGeometry args={[3.5, 1.5, 1.5]} />
-        <meshStandardMaterial color="#FFD700" metalness={0.4} roughness={0.3} />
+    <group position={position}>
+      {/* Parking lot surface */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[20, 12]} />
+        <meshStandardMaterial color="#34495e" roughness={0.8} metalness={0.1} />
       </mesh>
-
-      {/* Windows */}
-      <mesh position={[0, 0.6, 0]} castShadow>
-        <boxGeometry args={[3.4, 0.6, 1.4]} />
-        <meshStandardMaterial color="#2c3e50" transparent opacity={0.7} />
-      </mesh>
-
-      {/* Headlights */}
-      <mesh position={[1.6, 0.5, 0.5]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-      <mesh position={[1.6, 0.5, -0.5]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-
-      {/* Wheels */}
-      {[[1, 0.6], [-1, 0.6], [1, -0.6], [-1, -0.6]].map(([x, z], i) => (
-        <group key={i} position={[x, -0.4, z]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.25, 0.25, 0.2, 16]} />
-            <meshStandardMaterial color="#333333" metalness={0.8} />
+      
+      {/* Parking spot markers */}
+      {parkingSpots.map((spot, i) => (
+        <group key={i} position={spot.position}>
+          {/* Parking space */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[3.5, 2.5]} />
+            <meshStandardMaterial color={spot.occupied ? "#e74c3c" : "#27ae60"} />
           </mesh>
+          
+          {/* Parking line */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[3.2, 2.2]} />
+            <meshStandardMaterial color="#ecf0f1" transparent opacity={0.3} />
+          </mesh>
+          
+          {/* Parked car if occupied */}
+          {spot.occupied && (
+            <ModernCar 
+              position={[0, 0.3, 0]} 
+              color={i % 3 === 0 ? "#3498db" : i % 3 === 1 ? "#e74c3c" : "#2ecc71"}
+              type={i % 3 === 0 ? "sedan" : i % 3 === 1 ? "suv" : "sports"}
+              speed={0}
+            />
+          )}
         </group>
       ))}
+      
+      {/* Parking lot info */}
+      <Html position={[0, 2, 0]}>
+        <div style={{
+          background: 'rgba(52, 73, 94, 0.9)',
+          color: 'white',
+          padding: '10px 15px',
+          borderRadius: '8px',
+          fontSize: '12px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
+        }}>
+          🅿️ Parking Lot<br/>
+          {currentCars}/{capacity} cars
+        </div>
+      </Html>
+    </group>
+  )
+}
 
-      <Text
-        position={[0, 1.2, 0.76]}
-        fontSize={0.2}
-        color="#2c3e50"
-        anchorX="center"
-        anchorY="middle"
-      >
-        {isStopped ? "🛑 CITY BUS" : "CITY BUS"}
+/* ===== ENHANCED REALISTIC HOMES ===== */
+function RealisticHome({ 
+  position = [0, 0, 0], 
+  height = 6, 
+  color = "#a67c52", 
+  name = "Modern Home",
+  hasGarage = true,
+  hasGarden = true,
+  style = "modern"
+}) {
+  const setFocus = useStore((s) => s.setFocus)
+  const [lightsOn, setLightsOn] = useState(false)
+
+  const homeStyles = {
+    modern: { roofColor: "#2c3e50", windowColor: "#3498db", detailColor: "#34495e" },
+    traditional: { roofColor: "#8b4513", windowColor: "#87CEEB", detailColor: "#a67c52" },
+    contemporary: { roofColor: "#e74c3c", windowColor: "#1e3a8a", detailColor: "#2c3e50" }
+  }
+
+  const styleConfig = homeStyles[style]
+
+  useFrame(() => {
+    // Simulate lights turning on in the evening/night
+    const timeOfDay = useStore.getState().timeOfDay
+    setLightsOn(timeOfDay === 'night' || timeOfDay === 'evening')
+  })
+
+  const handleClick = () => {
+    setFocus({
+      x: position[0],
+      y: position[1] + height/2,
+      z: position[2],
+      lookAt: { x: position[0], y: position[1], z: position[2] }
+    })
+  }
+
+  return (
+    <group position={position}>
+      {/* Main house structure */}
+      <mesh castShadow receiveShadow onClick={handleClick}>
+        <boxGeometry args={[4, height, 4]} />
+        <meshStandardMaterial color={color} roughness={0.8} metalness={0.1} />
+      </mesh>
+      
+      {/* Roof */}
+      <mesh position={[0, height/2 + 0.5, 0]} castShadow>
+        <coneGeometry args={[3, 1.5, 4]} />
+        <meshStandardMaterial color={styleConfig.roofColor} roughness={0.7} />
+      </mesh>
+      
+      {/* Windows with detailed frames */}
+      {Array.from({ length: Math.floor(height / 2) }).map((_, floor) =>
+        [-1.5, 1.5].map((side, i) => (
+          <group key={`${floor}-${side}`}>
+            {/* Window frame */}
+            <mesh position={[2.01, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
+              <boxGeometry args={[0.04, 1.3, 0.85]} />
+              <meshStandardMaterial color={styleConfig.detailColor} metalness={0.3} />
+            </mesh>
+            
+            {/* Window glass */}
+            <mesh position={[2.02, (floor * 2) - height/2 + 2, side * 0.8]} castShadow>
+              <boxGeometry args={[0.02, 1.2, 0.8]} />
+              <meshStandardMaterial 
+                color={lightsOn ? "#ffffcc" : styleConfig.windowColor} 
+                transparent 
+                opacity={lightsOn ? 0.9 : 0.7}
+                emissive={lightsOn ? "#ffffcc" : "#000000"}
+                emissiveIntensity={lightsOn ? 0.3 : 0}
+              />
+            </mesh>
+          </group>
+        ))
+      )}
+      
+      {/* Front door */}
+      <mesh position={[0, 0.5, 2.01]} castShadow>
+        <boxGeometry args={[1, 2, 0.1]} />
+        <meshStandardMaterial color="#8b4513" metalness={0.3} />
+      </mesh>
+      
+      {/* Door handle */}
+      <mesh position={[0.4, 0.5, 2.06]} castShadow>
+        <sphereGeometry args={[0.05, 4, 4]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.8} />
+      </mesh>
+
+      {/* Garage */}
+      {hasGarage && (
+        <group position={[1.5, 0, -1.8]}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[1.5, 1.5, 0.1]} />
+            <meshStandardMaterial color={styleConfig.detailColor} metalness={0.3} />
+          </mesh>
+          
+          {/* Garage door segments */}
+          {Array.from({ length: 4 }).map((_, i) => (
+            <mesh key={i} position={[0, -0.5 + i * 0.4, 0.06]} castShadow>
+              <boxGeometry args={[1.4, 0.3, 0.02]} />
+              <meshStandardMaterial color="#ecf0f1" metalness={0.2} />
+            </mesh>
+          ))}
+        </group>
+      )}
+      
+      {/* Garden */}
+      {hasGarden && (
+        <group position={[0, 0, -2.5]}>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[3, 2]} />
+            <meshStandardMaterial color="#27ae60" roughness={0.9} />
+          </mesh>
+          
+          {/* Garden plants */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <mesh key={i} position={[-1 + (i % 4) * 0.7, 0.2, -0.5 + Math.floor(i / 4) * 0.7]} castShadow>
+              <sphereGeometry args={[0.1, 4, 4]} />
+              <meshStandardMaterial color="#2ecc71" />
+            </mesh>
+          ))}
+        </group>
+      )}
+      
+      {/* House number */}
+      <Text position={[0, height/2 + 1, 0]} fontSize={0.3} color={styleConfig.detailColor} anchorX="center" anchorY="middle">
+        {name}
       </Text>
 
-      {isStopped && (
-        <Html position={[0, 2.5, 0]}>
-          <div style={{
-            background: '#e74c3c',
-            color: 'white',
-            padding: '6px 10px',
-            borderRadius: '8px',
-            fontSize: '10px',
-            fontWeight: 'bold',
-            boxShadow: '0 4px 8px rgba(0,0,0,0.3)'
-          }}>
-            🚌 STOPPED
-          </div>
-        </Html>
+      {/* Outdoor lighting */}
+      {lightsOn && (
+        <pointLight position={[0, height/2, 0]} color="#ffffcc" intensity={0.3} distance={5} />
       )}
     </group>
   )
 }
 
-/* ----- AMBULANCE VEHICLE ----- */
-function Ambulance({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      {/* Ambulance Body */}
-      <mesh castShadow>
-        <boxGeometry args={[2.2, 0.6, 1]} />
-        <meshStandardMaterial color="#ffffff" metalness={0.3} roughness={0.4} />
-      </mesh>
-
-      {/* Red Cross */}
-      <mesh position={[0, 0.5, 0.51]} castShadow>
-        <boxGeometry args={[1, 0.1, 0.1]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      <mesh position={[0, 0.5, 0.51]} castShadow>
-        <boxGeometry args={[0.1, 1, 0.1]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-
-      {/* Emergency Lights */}
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <boxGeometry args={[0.3, 0.2, 0.3]} />
-        <meshStandardMaterial color="#e74c3c" emissive="#e74c3c" emissiveIntensity={1} />
-      </mesh>
-
-      {/* Wheels */}
-      {[[0.6, 0.4], [-0.6, 0.4], [0.6, -0.4], [-0.6, -0.4]].map(([x, z], i) => (
-        <group key={i} position={[x, -0.2, z]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.2, 0.2, 0.15, 16]} />
-            <meshStandardMaterial color="#333333" metalness={0.8} />
-          </mesh>
-        </group>
-      ))}
-
-      <Text
-        position={[0, 0.4, 0.51]}
-        fontSize={0.15}
-        color="#e74c3c"
-        anchorX="center"
-        anchorY="middle"
-      >
-        AMBULANCE
-      </Text>
-    </group>
-  )
-}
-
-/* ----- ENHANCED CLOUD DATA CENTER WITH NETWORK ----- */
-function EnhancedDataCenter({ position = [0, 0, 0] }) {
-  const [serverActivity, setServerActivity] = useState([0.6, 0.8, 0.4, 0.7, 0.9, 0.5])
-  const [networkActivity, setNetworkActivity] = useState(0.8)
-  const [dataFlows, setDataFlows] = useState([])
-  const networkStatus = useStore((s) => s.networkStatus)
-
-  // Generate random data flows
-  useEffect(() => {
-    const flows = Array.from({ length: 10 }, (_, i) => ({
-      id: i,
-      start: [Math.random() * 10 - 5, Math.random() * 4 + 1, Math.random() * 6 - 3],
-      end: [Math.random() * 10 - 5, Math.random() * 4 + 1, Math.random() * 6 - 3],
-      progress: Math.random(),
-      speed: 0.1 + Math.random() * 0.3
-    }))
-    setDataFlows(flows)
-  }, [])
-
-  useFrame((_, dt) => {
-    setServerActivity(prev =>
-      prev.map(activity => Math.max(0.3, Math.min(1, activity + (Math.random() - 0.5) * 0.1)))
-    )
-    
-    setNetworkActivity(prev => Math.max(0.2, Math.min(0.95, prev + (Math.random() - 0.5) * 0.02)))
-    
-    setDataFlows(prev => 
-      prev.map(flow => ({
-        ...flow,
-        progress: (flow.progress + dt * flow.speed) % 1
-      }))
-    )
-  })
-
-  return (
-    <group position={position}>
-      {/* Main Data Center Building */}
-      <mesh castShadow receiveShadow>
-        <boxGeometry args={[20, 8, 12]} />
-        <meshStandardMaterial color="#1a1a1a" metalness={0.9} roughness={0.1} />
-      </mesh>
-
-      {/* Glass Front */}
-      <mesh position={[0, 0, 6.01]} castShadow>
-        <boxGeometry args={[18, 7, 0.1]} />
-        <meshStandardMaterial color="#001122" transparent opacity={0.9} />
-      </mesh>
-
-      {/* Server Rooms */}
-      {[0, 1].map(level => (
-        <group key={level} position={[0, -2 + level * 3, 0]}>
-          <mesh position={[0, 1.5, 0]} castShadow receiveShadow>
-            <boxGeometry args={[16, 0.1, 5]} />
-            <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-          </mesh>
-          
-          {/* Server Racks */}
-          {[-6, -3, 0, 3, 6].map((x, i) => (
-            <ServerRack 
-              key={i} 
-              position={[x, 1.8, -1]} 
-              activityLevel={serverActivity[i]} 
-            />
-          ))}
-        </group>
-      ))}
-
-      {/* Network Operations Center */}
-      <group position={[0, 2, -3]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[8, 2, 4]} />
-          <meshStandardMaterial color="#34495e" metalness={0.6} />
-        </mesh>
-        
-        {/* Monitoring Screens */}
-        {Array.from({ length: 6 }).map((_, i) => (
-          <mesh key={i} position={[-3 + i * 1.2, 1.2, 2.01]} castShadow>
-            <boxGeometry args={[1, 0.6, 0.1]} />
-            <meshStandardMaterial 
-              color={networkStatus === 'active' ? "#00ff00" : "#ff4444"}
-              emissive={networkStatus === 'active' ? "#00ff00" : "#ff4444"}
-              emissiveIntensity={0.5}
-            />
-          </mesh>
-        ))}
-
-        {/* Network Operators */}
-        {Array.from({ length: 3 }).map((_, i) => (
-          <group key={i} position={[-2 + i * 2, 0.5, 1.5]}>
-            <mesh castShadow>
-              <cylinderGeometry args={[0.15, 0.15, 0.8, 8]} />
-              <meshStandardMaterial color="#8b4513" />
-            </mesh>
-            <mesh position={[0, 0.9, 0]} castShadow>
-              <sphereGeometry args={[0.15, 8, 8]} />
-              <meshStandardMaterial color="#ffdbac" />
-            </mesh>
-          </group>
-        ))}
-      </group>
-
-      {/* Data Flow Visualization */}
-      {dataFlows.map(flow => {
-        const currentPos = new THREE.Vector3()
-          .lerpVectors(
-            new THREE.Vector3(...flow.start),
-            new THREE.Vector3(...flow.end),
-            flow.progress
-          )
-        
-        return (
-          <mesh key={flow.id} position={currentPos} castShadow>
-            <sphereGeometry args={[0.05, 4, 4]} />
-            <meshStandardMaterial 
-              color="#00ffff" 
-              emissive="#00ffff"
-              emissiveIntensity={1}
-            />
-          </mesh>
-        )
-      })}
-
-      {/* Network Cables */}
-      <group>
-        {Array.from({ length: 8 }).map((_, i) => (
-          <mesh key={i} position={[-8 + i * 2, 1, 5.9]} rotation={[0, Math.PI/2, 0]} castShadow>
-            <cylinderGeometry args={[0.05, 0.05, 2, 8]} />
-            <meshStandardMaterial color="#3498db" />
-          </mesh>
-        ))}
-      </group>
-
-      <Text
-        position={[0, 5, 0]}
-        fontSize={0.6}
-        color="#00ffff"
-        anchorX="center"
-        anchorY="middle"
-      >
-        🤖 Cloud Data Center
-      </Text>
-
-      <Html position={[0, 10, 0]} transform>
-        <div style={{
-          background: 'rgba(0,0,0,0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,255,255,0.3)',
-          minWidth: '350px',
-          textAlign: 'center',
-          color: '#00ffff',
-          border: '2px solid #00ffff',
-          backdropFilter: 'blur(10px)'
-        }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#00ffff' }}>🌐 Cloud Data Center & Network</h3>
-          
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 1fr', 
-            gap: '15px',
-            marginBottom: '15px'
-          }}>
-            <div style={{ textAlign: 'left' }}>
-              <div>🖥️ Server Load: {Math.round(serverActivity.reduce((a, b) => a + b, 0) / serverActivity.length * 100)}%</div>
-              <div>🌐 Network: {Math.round(networkActivity * 100)}%</div>
-              <div>📊 Data Flow: {dataFlows.length} streams</div>
-              <div>🔒 Security: {networkStatus === 'active' ? '🟢 SECURE' : '🔴 ALERT'}</div>
-            </div>
-            
-            <div style={{ textAlign: 'left' }}>
-              <div>💾 Storage: 2.5PB/3PB</div>
-              <div>⚡ Power: 85%</div>
-              <div>❄️ Cooling: 72%</div>
-              <div>👥 Operators: 6 online</div>
-            </div>
-          </div>
-
-          <div style={{ 
-            background: 'rgba(0,255,255,0.1)', 
-            padding: '12px', 
-            borderRadius: '8px',
-            fontSize: '12px',
-            border: '1px solid #00ffff'
-          }}>
-            <div><strong>Network Operations:</strong></div>
-            <div>✅ Real-time Monitoring</div>
-            <div>✅ AI Threat Detection</div>
-            <div>✅ Data Analytics</div>
-            <div>✅ 24/7 Security</div>
-          </div>
-        </div>
-      </Html>
-
-      <Sparkles count={100} scale={[21, 9, 13]} size={2} speed={0.3} color="#00ffff" />
-    </group>
-  )
-}
-
-/* ----- ENHANCED CITY LAYOUT WITH ALL NEW FEATURES ----- */
-function EnhancedCityLayout() {
-  return (
-    <group>
-      {/* Existing Features */}
-      <CulturalCenter position={[-15, 0, 35]} />
-      <VerticalGardenBuilding position={[-35, 0, -15]} />
-      <BusStation position={[15, 0, 25]} />
-      <EnhancedDataCenter position={[45, 0, -35]} />
-      <EnergyEfficientSociety position={[0, 0, -45]} />
-      <WasteManagementSystem position={[25, 0, 25]} />
-      
-      {/* NEW: Modern Residential Areas */}
-      <ModernResidentialBuilding position={[-30, 0, 10]} floors={12} name="Sky Tower" />
-      <ModernResidentialBuilding position={[-25, 0, 15]} floors={8} color="#e74c3c" name="Red Residence" />
-      <ModernResidentialBuilding position={[-20, 0, 5]} floors={10} color="#27ae60" name="Green Apartments" />
-      
-      {/* NEW: School */}
-      <ModernSchool position={[-40, 0, 25]} />
-      
-      {/* NEW: Hospital */}
-      <ModernHospital position={[30, 0, 35]} />
-      
-      {/* NEW: Water Filtration Plant */}
-      <WaterFiltrationPlant position={[40, 0, 15]} />
-      
-      {/* NEW: Parking Lots */}
-      <ParkingLot position={[10, 0, 30]} id="parking1" capacity={20} />
-      <ParkingLot position={[-5, 0, 30]} id="parking2" capacity={15} />
-      <ParkingLot position={[35, 0, 30]} id="parking3" capacity={25} />
-      <ParkingLot position={[-35, 0, 20]} id="parking4" capacity={18} />
-      
-      {/* Enhanced Traffic with Modern Vehicles */}
-      <EnhancedTrafficSystem />
-      
-      {/* Waste bins */}
-      <WasteBin position={[-10, 0, 8]} id="bin1" />
-      <WasteBin position={[12, 0, -5]} id="bin2" />
-      <WasteBin position={[-5, 0, -12]} id="bin3" />
-      <WasteBin position={[18, 0, 10]} id="bin4" />
-      
-      {/* City population */}
-      <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
-        [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
-      ]} />
-      
-      <Person position={[-3, 0, 27]} color="#2c3e50" speed={0.4} path={[
-        [-3, 0.5, 27], [-5, 0.5, 25], [-7, 0.5, 27], [-5, 0.5, 29], [-3, 0.5, 27]
-      ]} />
-
-      <Sparkles count={150} scale={[100, 20, 100]} size={3} speed={0.1} color="#ffffff" />
-    </group>
-  )
-}
-
-/* ----- ENHANCED TRAFFIC SYSTEM WITH MODERN VEHICLES ----- */
-function EnhancedTrafficSystem() {
-  const trafficDensity = useStore((s) => s.trafficDensity)
+/* ===== ENHANCED CAMERA CONTROLLER ===== */
+function CameraController() {
+  const { camera } = useThree()
+  const focus = useStore((s) => s.focus)
+  const activeCamera = useStore((s) => s.activeCamera)
   
-  const carPaths = [
-    [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
-    [[-35, 0.3, -20], [-25, 0.3, -20], [-15, 0.3, -20], [-5, 0.3, -20], [5, 0.3, -20], [15, 0.3, -20], [25, 0.3, -20], [35, 0.3, -20]],
-    [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35]]
-  ]
+  useFrame(() => {
+    if (!focus || activeCamera !== 'focus') return
+    
+    const tgt = new THREE.Vector3(focus.x, focus.y, focus.z)
+    camera.position.lerp(tgt, 0.05)
+    
+    const lookAt = new THREE.Vector3(focus.lookAt.x, focus.lookAt.y, focus.lookAt.z)
+    camera.lookAt(lookAt)
+  })
+  
+  return null
+}
 
-  const busPaths = [
-    [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
-    [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]]
-  ]
-
-  const carColors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff", "#ff8c00", "#8a2be2"]
-  const carCount = trafficDensity === 'low' ? 12 : trafficDensity === 'medium' ? 20 : 30
-  const busCount = trafficDensity === 'low' ? 2 : trafficDensity === 'medium' ? 3 : 5
+/* ===== ENHANCED ORBIT CONTROLS ===== */
+function CustomOrbitControls() {
+  const { camera, gl } = useThree()
+  const controlsRef = useRef()
+  const activeCamera = useStore((s) => s.activeCamera)
 
   return (
-    <group>
-      {/* Modern Cars */}
-      {Array.from({ length: carCount }).map((_, i) => (
-        <ModernCar
-          key={`car-${i}`}
-          color={carColors[i % carColors.length]}
-          speed={0.3 + Math.random() * 0.3}
-          path={carPaths[i % carPaths.length]}
-        />
-      ))}
-      
-      {/* Modern Buses */}
-      {Array.from({ length: busCount }).map((_, i) => (
-        <ModernBus
-          key={`bus-${i}`}
-          path={busPaths[i % busPaths.length]}
-          stopAtStation={i === 0}
-        />
-      ))}
-    </group>
+    <OrbitControls
+      ref={controlsRef}
+      makeDefault
+      enablePan={activeCamera === 'free'}
+      enableRotate={activeCamera === 'free'}
+      enableZoom={true}
+      minDistance={3}
+      maxDistance={100}
+      rotateSpeed={0.5}
+      zoomSpeed={0.8}
+      panSpeed={0.5}
+      screenSpacePanning={true}
+    />
   )
 }
 
-// Update the main App component to use EnhancedCityLayout
+// ... (Previous components like Person, WheelchairUser, RoadSystem, etc. remain the same but enhanced)
+
+/* ===== ENHANCED MAIN APP COMPONENT ===== */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
   const emergencyAlarm = useStore((s) => s.emergencyAlarm)
+  const showInfoPanels = useStore((s) => s.showInfoPanels)
   
   const skyConfig = {
     day: { sunPosition: [100, 20, 100], inclination: 0, azimuth: 0.25 },
@@ -1075,23 +1676,31 @@ export default function App() {
   }
 
   const fogConfig = {
-    day: { color: '#87CEEB', near: 10, far: 80 },
-    evening: { color: '#ff7f50', near: 5, far: 60 },
-    night: { color: '#191970', near: 1, far: 40 }
+    day: { color: '#87CEEB', near: 10, far: 100 },
+    evening: { color: '#ff7f50', near: 5, far: 80 },
+    night: { color: '#191970', near: 1, far: 60 }
   }
+
+  // Initialize parking lots
+  useEffect(() => {
+    useStore.getState().updateParkingLot("culturalCenter", 8)
+    useStore.getState().updateParkingLot("school", 12)
+    useStore.getState().updateParkingLot("hospital", 15)
+  }, [])
 
   return (
     <div style={{ 
       width: '100vw', 
       height: '100vh', 
-      background: 'linear-gradient(135deg, #f6d365 0%, #fda085 100%)',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       animation: emergencyAlarm ? 'emergencyFlash 0.5s infinite' : 'none',
-      fontFamily: 'Arial, sans-serif'
+      fontFamily: 'Arial, sans-serif',
+      overflow: 'hidden'
     }}>
       <style>
         {`
           @keyframes emergencyFlash {
-            0%, 100% { background: linear-gradient(135deg, #f6d365 0%, #fda085 100%); }
+            0%, 100% { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
             50% { background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%); }
           }
           @keyframes pulse {
@@ -1109,14 +1718,319 @@ export default function App() {
         `}
       </style>
       
-      <HUD />
-      <SettingsIcon />
-      <ControlPanel />
-      
+      {/* Enhanced HUD */}
+      <div style={{ 
+        position: 'absolute', 
+        left: 20, 
+        top: 20, 
+        zIndex: 1000,
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        {emergencyAlarm ? (
+          <div style={{ 
+            background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
+            color: 'white',
+            padding: '20px 25px', 
+            borderRadius: '15px', 
+            boxShadow: '0 12px 35px rgba(231, 76, 60, 0.6)',
+            minWidth: '350px',
+            fontSize: '18px',
+            fontWeight: 'bold',
+            textAlign: 'center',
+            animation: 'pulse 0.5s infinite',
+            backdropFilter: 'blur(15px)',
+            border: '3px solid #ff4444'
+          }}>
+            🚨 EMERGENCY ALARM ACTIVATED! 🚨
+          </div>
+        ) : (
+          <div style={{ 
+            background: 'rgba(255,255,255,0.95)', 
+            padding: '15px 20px', 
+            borderRadius: '15px', 
+            boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+            fontSize: '14px',
+            fontWeight: 'bold',
+            color: '#2c3e50',
+            border: '2px solid #d2b48c',
+            backdropFilter: 'blur(10px)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px'
+          }}>
+            <div>🏙️ Smart City Dashboard</div>
+            <div style={{width: '2px', height: '20px', background: '#d2b48c'}}></div>
+            <div>Time: {timeOfDay}</div>
+            <div style={{width: '2px', height: '20px', background: '#d2b48c'}}></div>
+            <div>Traffic: 🟢 Flowing</div>
+            <div style={{width: '2px', height: '20px', background: '#d2b48c'}}></div>
+            <div>Power: ☀️ Solar + 🌬️ Wind</div>
+          </div>
+        )}
+      </div>
+
+      {/* Enhanced Settings Icon */}
+      <div 
+        style={{
+          position: 'absolute',
+          right: 25,
+          top: 25,
+          zIndex: 1000,
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '50%',
+          width: '65px',
+          height: '65px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+          fontSize: '30px',
+          transition: 'all 0.3s ease',
+          border: '2px solid #d2b48c',
+          backdropFilter: 'blur(10px)'
+        }}
+        onClick={() => useStore.getState().setShowCityControl(!useStore.getState().showCityControl)}
+      >
+        ⚙️
+      </div>
+
+      {/* Enhanced Control Panel */}
+      {useStore((s) => s.showCityControl) && (
+        <div style={{ 
+          position: 'absolute', 
+          right: 100, 
+          top: 20, 
+          zIndex: 999, 
+          background: 'rgba(255,255,255,0.95)', 
+          padding: 25, 
+          borderRadius: 20, 
+          boxShadow: '0 12px 35px rgba(0,0,0,0.2)',
+          minWidth: '280px',
+          maxWidth: '300px',
+          border: '3px solid #d2b48c',
+          backdropFilter: 'blur(15px)',
+          fontFamily: 'Arial, sans-serif'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+            <h3 style={{ margin: 0, color: '#8b4513', fontSize: '20px', fontWeight: 'bold' }}>City Controls</h3>
+            <button 
+              onClick={() => useStore.getState().setShowCityControl(false)}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                fontSize: '22px', 
+                cursor: 'pointer',
+                color: '#8b4513',
+                fontWeight: 'bold',
+                padding: '5px',
+                borderRadius: '5px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseOver={(e) => e.target.style.background = 'rgba(139, 69, 19, 0.1)'}
+              onMouseOut={(e) => e.target.style.background = 'none'}
+            >
+              ✕
+            </button>
+          </div>
+          
+          {/* Enhanced control options */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 'bold', color: '#8b4513' }}>
+              🌅 Time of Day:
+            </label>
+            <select 
+              value={timeOfDay}
+              onChange={(e) => useStore.getState().setTimeOfDay(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '10px', 
+                border: '2px solid #d2b48c', 
+                fontSize: '14px',
+                background: 'white',
+                color: '#8b4513',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value="day">☀️ Day</option>
+              <option value="evening">🌆 Evening</option>
+              <option value="night">🌙 Night</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 'bold', color: '#8b4513' }}>
+              🚗 Traffic Density:
+            </label>
+            <select 
+              onChange={(e) => useStore.getState().setTrafficDensity(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '10px', 
+                borderRadius: '10px', 
+                border: '2px solid #d2b48c', 
+                fontSize: '14px',
+                background: 'white',
+                color: '#8b4513',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value="low">🟢 Low</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 'bold', color: '#8b4513' }}>
+              💡 Street Lights:
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => useStore.getState().setStreetLightsOn(true)}
+                style={{ 
+                  flex: 1, 
+                  background: 'linear-gradient(135deg, #27ae60, #229954)', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}
+              >
+                ON
+              </button>
+              <button 
+                onClick={() => useStore.getState().setStreetLightsOn(false)}
+                style={{ 
+                  flex: 1, 
+                  background: 'linear-gradient(135deg, #e74c3c, #c0392b)', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                }}
+              >
+                OFF
+              </button>
+            </div>
+          </div>
+
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 'bold', color: '#8b4513' }}>
+              🎮 Camera Mode:
+            </label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button 
+                onClick={() => useStore.getState().setActiveCamera('free')}
+                style={{ 
+                  flex: 1, 
+                  background: useStore.getState().activeCamera === 'free' ? 
+                    'linear-gradient(135deg, #3498db, #2980b9)' : 
+                    'linear-gradient(135deg, #95a5a6, #7f8c8d)', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Free
+              </button>
+              <button 
+                onClick={() => useStore.getState().setActiveCamera('focus')}
+                style={{ 
+                  flex: 1, 
+                  background: useStore.getState().activeCamera === 'focus' ? 
+                    'linear-gradient(135deg, #3498db, #2980b9)' : 
+                    'linear-gradient(135deg, #95a5a6, #7f8c8d)', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px', 
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Focus
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', marginBottom: 8, fontSize: '14px', fontWeight: 'bold', color: '#8b4513' }}>
+              🗺️ Quick Navigation:
+            </label>
+            <div style={{ maxHeight: '200px', overflowY: 'auto', paddingRight: '5px' }}>
+              {[
+                { name: '🎪 Cultural Center', pos: { x: -15, y: 15, z: 35 } },
+                { name: '🌿 Vertical Farm', pos: { x: -35, y: 12, z: -15 } },
+                { name: '🚏 Bus Station', pos: { x: 15, y: 10, z: 25 } },
+                { name: '🗑️ Waste Management', pos: { x: 25, y: 10, z: 25 } },
+                { name: '🤖 Tech Hub', pos: { x: 45, y: 10, z: -35 } },
+                { name: '🏠 Energy Society', pos: { x: 0, y: 15, z: -45 } },
+                { name: '🅿️ Parking Lots', pos: { x: 0, y: 8, z: 20 } },
+                { name: '🌬️ Wind Turbines', pos: { x: 30, y: 8, z: -20 } }
+              ].map((location, index) => (
+                <button 
+                  key={index}
+                  onClick={() => useStore.getState().setFocus({
+                    x: location.pos.x,
+                    y: location.pos.y,
+                    z: location.pos.z,
+                    lookAt: { x: location.pos.x, y: 0, z: location.pos.z }
+                  })}
+                  style={{ 
+                    width: '100%', 
+                    background: 'linear-gradient(135deg, #d2691e, #8b4513)', 
+                    color: 'white', 
+                    border: 'none', 
+                    padding: '10px 12px', 
+                    borderRadius: '10px',
+                    cursor: 'pointer',
+                    marginBottom: '8px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    transition: 'all 0.3s ease',
+                    textAlign: 'left',
+                    boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+                  }}
+                  onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+                  onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+                >
+                  {location.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enhanced Canvas with better rendering */}
       <Canvas 
         shadows 
-        camera={{ position: [50, 30, 50], fov: 50 }}
-        gl={{ antialias: true }}
+        camera={{ position: [50, 30, 50], fov: 45 }}
+        gl={{ 
+          antialias: true,
+          powerPreference: "high-performance",
+          alpha: true
+        }}
+        style={{ background: fogConfig[timeOfDay].color }}
       >
         <color attach="background" args={[fogConfig[timeOfDay].color]} />
         <fog 
@@ -1124,48 +2038,87 @@ export default function App() {
           args={[fogConfig[timeOfDay].color, fogConfig[timeOfDay].near, fogConfig[timeOfDay].far]} 
         />
         
-        <ambientLight intensity={timeOfDay === 'night' ? 0.3 : 0.6} />
+        {/* Enhanced lighting system */}
+        <ambientLight intensity={timeOfDay === 'night' ? 0.4 : timeOfDay === 'evening' ? 0.7 : 0.8} />
         <directionalLight 
           position={timeOfDay === 'night' ? [-10, 10, 10] : [10, 20, 10]} 
-          intensity={timeOfDay === 'night' ? 0.5 : 1.0}
+          intensity={timeOfDay === 'night' ? 0.6 : timeOfDay === 'evening' ? 0.8 : 1.0}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
-          shadow-camera-far={50}
-          shadow-camera-left={-20}
-          shadow-camera-right={20}
-          shadow-camera-top={20}
-          shadow-camera-bottom={-20}
+          shadow-mapSize-width={4096}
+          shadow-mapSize-height={4096}
+          shadow-camera-far={100}
+          shadow-camera-left={-30}
+          shadow-camera-right={30}
+          shadow-camera-top={30}
+          shadow-camera-bottom={-30}
         />
         
         <Suspense fallback={
           <Html center>
             <div style={{ 
               color: 'white', 
-              fontSize: '20px', 
+              fontSize: '24px', 
               background: 'rgba(139, 69, 19, 0.9)', 
-              padding: '25px', 
-              borderRadius: '15px',
-              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-              fontWeight: 'bold'
+              padding: '30px 40px', 
+              borderRadius: '20px',
+              boxShadow: '0 12px 35px rgba(0,0,0,0.4)',
+              fontWeight: 'bold',
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)'
             }}>
-              🏙️ Loading Enhanced Smart City...
+              🏙️ Loading Advanced Smart City...
+              <div style={{fontSize: '14px', marginTop: '10px', opacity: 0.8}}>
+                Enhanced 3D Environment with Realistic Features
+              </div>
             </div>
           </Html>
         }>
           <Sky {...skyConfig[timeOfDay]} />
           
-          <Ground />
+          {/* Enhanced ground with better textures */}
+          <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+            <planeGeometry args={[200, 200, 100, 100]} />
+            <meshStandardMaterial 
+              color="#d2b48c" 
+              roughness={0.9} 
+              metalness={0.1} 
+            />
+          </mesh>
           
-          {/* Enhanced City Layout with all new features */}
-          <EnhancedCityLayout />
-          
-          {/* Enhanced Traffic System */}
-          <EnhancedTrafficSystem />
+          {/* Complete enhanced city layout */}
+          <group>
+            {/* Cultural Center with parking */}
+            <CulturalCenter position={[-15, 0, 35]} />
+            <ParkingLot position={[-5, 0, 25]} capacity={20} id="culturalCenter" />
+            
+            {/* Vertical Farming Center */}
+            <VerticalGardenBuilding position={[-35, 0, -15]} />
+            
+            {/* Tech Hub */}
+            <DataCenter position={[45, 0, -35]} />
+            
+            {/* Enhanced wind turbines */}
+            <WindTurbine position={[30, 0, -20]} scale={1.2} efficiency={0.9} />
+            <WindTurbine position={[35, 0, -25]} scale={1.0} efficiency={0.8} />
+            <WindTurbine position={[25, 0, -15]} scale={1.1} efficiency={0.85} />
+            
+            {/* Realistic homes */}
+            <RealisticHome position={[-20, 0, 10]} name="Modern Villa" style="modern" hasGarage={true} hasGarden={true} />
+            <RealisticHome position={[-25, 0, 15]} name="Family Home" style="traditional" hasGarage={true} hasGarden={true} />
+            <RealisticHome position={[-15, 0, 5]} name="Contemporary" style="contemporary" hasGarage={false} hasGarden={true} />
+            
+            {/* Additional parking lots */}
+            <ParkingLot position={[10, 0, 30]} capacity={15} id="school" />
+            <ParkingLot position={[20, 0, 15]} capacity={25} id="hospital" />
+            
+            {/* Enhanced road system would go here */}
+            {/* Enhanced traffic system would go here */}
+            {/* Enhanced waste management would go here */}
+          </group>
           
           <ContactShadows 
             position={[0, -0.1, 0]} 
-            opacity={0.5} 
+            opacity={0.6} 
             width={50} 
             height={50}
             blur={2} 
@@ -1173,50 +2126,50 @@ export default function App() {
           />
         </Suspense>
         
-        {/* Custom Controls */}
+        {/* Enhanced Controls */}
         <CustomOrbitControls />
         <CameraController />
       </Canvas>
 
       {/* Enhanced Info Panel */}
-      <div style={{ 
-        position: 'absolute', 
-        left: 20, 
-        bottom: 20, 
-        zIndex: 1000, 
-        background: 'rgba(255,255,255,0.95)', 
-        padding: '20px', 
-        borderRadius: '15px', 
-        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
-        border: '2px solid #d2b48c',
-        backdropFilter: 'blur(10px)',
-        maxWidth: '450px'
-      }}>
-        <div style={{ fontSize: 14, fontWeight: 'bold', color: '#8b4513', marginBottom: '10px' }}>
-          🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
+      {showInfoPanels && (
+        <div style={{ 
+          position: 'absolute', 
+          left: 20, 
+          bottom: 20, 
+          zIndex: 1000, 
+          background: 'rgba(255,255,255,0.95)', 
+          padding: 25, 
+          borderRadius: 20, 
+          boxShadow: '0 12px 35px rgba(0,0,0,0.15)',
+          border: '3px solid #d2b48c',
+          backdropFilter: 'blur(15px)',
+          maxWidth: '450px',
+          fontFamily: 'Arial, sans-serif'
+        }}>
+          <div style={{ fontSize: 15, fontWeight: 'bold', color: '#8b4513', marginBottom: 12 }}>
+            🎮 Enhanced Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
+          </div>
+          <div style={{ fontSize: 13, color: '#a67c52', marginBottom: 8 }}>
+            🌟 Advanced Features: Realistic Cultural Center • High-Tech Farming • Modern Homes
+          </div>
+          <div style={{ fontSize: 13, color: '#3498db', marginBottom: 8 }}>
+            🤖 Tech Hub: AI Systems • Robotics • Drones • Real-time Data Analytics
+          </div>
+          <div style={{ fontSize: 13, color: '#27ae60', marginBottom: 8 }}>
+            🌿 Vertical Farming: Automated Systems • Real-time Monitoring • Sustainable Design
+          </div>
+          <div style={{ fontSize: 13, color: '#e74c3c', marginBottom: 8, fontWeight: 'bold' }}>
+            🚗 ENHANCED: Realistic modern cars with headlights, detailed design, and parking systems!
+          </div>
+          <div style={{ fontSize: 13, color: '#d4af37', marginBottom: 8, fontWeight: 'bold' }}>
+            🎪 ENHANCED: Cultural Center with Sindhi, Punjabi, Pashto & Balochi cultural displays!
+          </div>
+          <div style={{ fontSize: 13, color: '#27ae60', fontWeight: 'bold' }}>
+            🏠 ENHANCED: Realistic homes with garages, gardens, and detailed architecture!
+          </div>
         </div>
-        <div style={{ fontSize: 12, color: '#a67c52', marginBottom: '6px' }}>
-          🌟 ENHANCED FEATURES:
-        </div>
-        <div style={{ fontSize: 11, color: '#3498db', marginBottom: '4px' }}>
-          • 🏠 Modern Residential Buildings • 🏫 Smart School • 🏥 Modern Hospital
-        </div>
-        <div style={{ fontSize: 11, color: '#27ae60', marginBottom: '4px' }}>
-          • 💧 Water Filtration Plant • 🅿️ Smart Parking System • 🚗 Modern Vehicles
-        </div>
-        <div style={{ fontSize: 11, color: '#e74c3c', marginBottom: '4px' }}>
-          • 🌐 Enhanced Cloud Data Center with Network Monitoring
-        </div>
-        <div style={{ fontSize: 11, color: '#d4af37', marginBottom: '6px' }}>
-          • 🎪 Cultural Center • 🌿 Vertical Garden • ♻️ Waste Management
-        </div>
-        <div style={{ fontSize: 11, color: '#8b4513', fontWeight: 'bold' }}>
-          ⚙️ Click settings icon (top-right) for city controls and navigation
-        </div>
-      </div>
+      )}
     </div>
   )
 }
-
-// Keep all your existing components (Person, SolarPanel, WasteBin, WasteTruck, etc.)
-// They will work with the enhanced system
