@@ -2188,26 +2188,26 @@ function CityLayout() {
 
   return (
     <group>
-      {/* Enhanced Cultural Center */}
-      <CulturalCenter position={[0, 0, 25]} />
+      {/* Enhanced Cultural Center - MOVED AWAY FROM ROAD */}
+      <CulturalCenter position={[-15, 0, 35]} />
       
-      {/* NEW: Vertical Garden Building */}
-      <VerticalGardenBuilding position={[-25, 0, -10]} />
+      {/* NEW: Vertical Garden Building - MOVED AWAY FROM ROAD */}
+      <VerticalGardenBuilding position={[-35, 0, -15]} />
       
-      {/* Bus Station near Cultural Center */}
+      {/* Bus Station near Cultural Center - KEPT ON ROAD */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Modern Tech Hub */}
-      <DataCenter position={[45, 0, -25]} />
+      {/* Modern Tech Hub - MOVED AWAY FROM ROAD */}
+      <DataCenter position={[45, 0, -35]} />
       
-      {/* Energy Efficient Society */}
-      <EnergyEfficientSociety position={[0, 0, -40]} />
+      {/* Energy Efficient Society - MOVED AWAY FROM ROAD */}
+      <EnergyEfficientSociety position={[0, 0, -45]} />
       
-      {/* Regular buildings */}
+      {/* Regular buildings - MOVED AWAY FROM ROADS */}
       {buildings.map((building, index) => (
         <SmartBuilding
           key={index}
-          position={building.position}
+          position={[building.position[0] + 5, building.position[1], building.position[2] + 5]}
           height={building.height}
           color={building.color}
           name={building.name}
@@ -2216,10 +2216,10 @@ function CityLayout() {
         />
       ))}
       
-      {/* Enhanced Waste Management System */}
-      <WasteManagementSystem position={[15, 0, 15]} />
+      {/* Enhanced Waste Management System - MOVED AWAY FROM ROAD */}
+      <WasteManagementSystem position={[25, 0, 25]} />
       
-      {/* Waste bins around town */}
+      {/* Waste bins around town - KEPT ON ROADS */}
       <WasteBin position={[-10, 0, 8]} id="bin1" />
       <WasteBin position={[12, 0, -5]} id="bin2" />
       <WasteBin position={[-5, 0, -12]} id="bin3" />
@@ -2376,13 +2376,13 @@ function ControlPanel() {
   }, [timeOfDay, setStreetLightsOn])
 
   const locations = {
-    '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
-    '🌿 Vertical Garden': { x: -25, y: 12, z: -10, lookAt: { x: -25, y: 0, z: -10 } },
+    '🎪 Cultural Center': { x: -15, y: 15, z: 35, lookAt: { x: -15, y: 0, z: 35 } },
+    '🌿 Vertical Garden': { x: -35, y: 12, z: -15, lookAt: { x: -35, y: 0, z: -15 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
-    '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🤖 Cloud Data Center': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
-    '🏠 Energy Society': { x: 0, y: 15, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
-    '🔵 Accessible Home': { x: 0, y: 8, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
+    '🗑️ Waste Management': { x: 25, y: 10, z: 25, lookAt: { x: 25, y: 0, z: 25 } },
+    '🤖 Cloud Data Center': { x: 45, y: 10, z: -35, lookAt: { x: 45, y: 0, z: -35 } },
+    '🏠 Energy Society': { x: 0, y: 15, z: -45, lookAt: { x: 0, y: 0, z: -45 } },
+    '🔵 Accessible Home': { x: 0, y: 8, z: -45, lookAt: { x: 0, y: 0, z: -45 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
