@@ -282,7 +282,7 @@ function DataCenter({ position = [0, 0, 0] }) {
           color: '#00ffff',
           border: '1px solid #00ffff'
         }}>
-          <h3 style={{ margin: '0 0 12px 0', color: '#00ffff' }}>🏢 Modern Tech Hub</h3>
+          <h3 style={{ margin: '0 0 12px 0', color: '#00ffff' }}>🏢 Cloud Data Center</h3>
           
           <div style={{ 
             display: 'grid', 
@@ -2136,7 +2136,7 @@ function ControlPanel() {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
-    '🤖 Tech Hub': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
+    '🤖 Cloud Data Center': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🔵 Accessible Home': { x: 0, y: 8, z: -40, lookAt: { x: 0, y: 0, z: -40 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
