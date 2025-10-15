@@ -945,7 +945,7 @@ function CulturalCenter({ position = [0, 0, 0] }) {
       </Html>
 
       <Person position={[3, 0, 2]} color="#8b4513" speed={0.3} path={[
-        [3, 0.5, 2], [2, 0.5, 1], [1, 0.5, 2], [2, 0.5, 3], [3, 0.5, 2]
+        [3, 0.5, 2], [2, 0.5, 1], [0, 0.5, 1], [-1, 0.5, 2], [-2, 0.5, 3]
       ]} />
       
       <Person position={[-2, 0, -1]} color="#2c3e50" speed={0.4} path={[
@@ -1459,7 +1459,7 @@ function Ground() {
 function EnergyEfficientHouse({ 
   position = [0, 0, 0], 
   height = 6, 
-  color = "#3498db", 
+  color = "#a67c52", 
   name = "Eco Home",
   hasTurbine = true,
   hasSolar = true,
@@ -1481,7 +1481,7 @@ function EnergyEfficientHouse({
     <group position={position}>
       <mesh castShadow receiveShadow onClick={handleClick}>
         <boxGeometry args={[4, height, 4]} />
-        <meshStandardMaterial color={isSpecial ? "#3498db" : color} roughness={0.8} metalness={0.1} />
+        <meshStandardMaterial color={isSpecial ? "#a67c52" : color} roughness={0.8} metalness={0.1} />
       </mesh>
       
       <group>
@@ -1600,7 +1600,7 @@ function EnergyEfficientHouse({
       {isSpecial && (
         <Html position={[0, height/2 + 2, 0]} transform>
           <div style={{
-            background: 'rgba(52, 152, 219, 0.95)',
+            background: 'rgba(166, 124, 82, 0.95)',
             color: 'white',
             padding: '12px',
             borderRadius: '8px',
@@ -1610,7 +1610,7 @@ function EnergyEfficientHouse({
             backdropFilter: 'blur(10px)'
           }}>
             <h4 style={{ margin: '0 0 8px 0' }}>♿ Accessible Eco Home</h4>
-            <div>🔵 Blue Energy Efficient Design</div>
+            <div>🟫 Brown Energy Efficient Design</div>
             <div>🪟 Double-Sided Glass Windows</div>
             <div>♿ Wheelchair Accessible</div>
             <div>🛗 Stairs with Ramp System</div>
@@ -1620,7 +1620,7 @@ function EnergyEfficientHouse({
         </Html>
       )}
 
-      <Sparkles count={10} scale={[5, height, 5]} size={1} speed={0.1} color="#3498db" />
+      <Sparkles count={10} scale={[5, height, 5]} size={1} speed={0.1} color="#a67c52" />
     </group>
   )
 }
@@ -1687,7 +1687,7 @@ function EnergyEfficientSociety({ position = [0, 0, 0] }) {
           name={house.name}
           isSpecial={house.isSpecial}
           showInterior={house.isSpecial}
-          color={house.isSpecial ? "#3498db" : "#a67c52"}
+          color={house.isSpecial ? "#a67c52" : "#a67c52"}
         />
       ))}
 
@@ -2631,7 +2631,7 @@ function ControlPanel() {
     '🗑️ Waste Management': { x: 25, y: 10, z: 25, lookAt: { x: 25, y: 0, z: 25 } },
     '🤖 Cloud Data Center': { x: 45, y: 10, z: -35, lookAt: { x: 45, y: 0, z: -35 } },
     '🏠 Energy Society': { x: 0, y: 15, z: -45, lookAt: { x: 0, y: 0, z: -45 } },
-    '🔵 Accessible Home': { x: 0, y: 8, z: -45, lookAt: { x: 0, y: 0, z: -45 } },
+    '🟫 Accessible Home': { x: 0, y: 8, z: -45, lookAt: { x: 0, y: 0, z: -45 } },
     '🛣️ Main Road': { x: 0, y: 8, z: 20, lookAt: { x: 0, y: 0, z: 0 } }
   }
 
