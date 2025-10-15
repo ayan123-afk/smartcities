@@ -41,6 +41,260 @@ const useStore = create((set) => ({
   setCollectedWaste: (waste) => set({ collectedWaste: waste })
 }))
 
+/* ----- VERTICAL GARDEN BUILDING ----- */
+function VerticalGardenBuilding({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+  
+  const plantTypes = [
+    { name: "🍋 Lemon", color: "#ffd700", height: 0.8 },
+    { name: "🍎 Apple", color: "#ff4444", height: 1.2 },
+    { name: "🍅 Tomato", color: "#ff6b6b", height: 0.6 },
+    { name: "🥕 Carrot", color: "#ff8c00", height: 0.4 },
+    { name: "🥬 Lettuce", color: "#90ee90", height: 0.3 },
+    { name: "🍓 Strawberry", color: "#ff69b4", height: 0.2 },
+    { name: "🌶️ Chili", color: "#ff0000", height: 0.5 },
+    { name: "🍇 Grapes", color: "#9370db", height: 1.0 }
+  ]
+
+  return (
+    <group position={position}>
+      <mesh 
+        castShadow 
+        receiveShadow 
+        onClick={() => setFocus({
+          x: position[0],
+          y: 12,
+          z: position[2],
+          lookAt: { x: position[0], y: 0, z: position[2] }
+        })}
+      >
+        <boxGeometry args={[8, 20, 8]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.7} />
+      </mesh>
+
+      {[0, 1, 2, 3].map((side) => {
+        const angle = (side / 4) * Math.PI * 2
+        const offsetX = Math.cos(angle) * 4.1
+        const offsetZ = Math.sin(angle) * 4.1
+        const rotationY = angle + Math.PI
+
+        return (
+          <group key={side} position={[offsetX, 0, offsetZ]} rotation={[0, rotationY, 0]}>
+            <mesh castShadow receiveShadow>
+              <boxGeometry args={[0.2, 18, 7.8]} />
+              <meshStandardMaterial color="#27ae60" />
+            </mesh>
+
+            {Array.from({ length: 6 }).map((_, level) => (
+              <group key={level} position={[0.11, -7 + level * 3, 0]}>
+                <mesh castShadow>
+                  <boxGeometry args={[0.1, 0.1, 7.6]} />
+                  <meshStandardMaterial color="#8b4513" />
+                </mesh>
+
+                {Array.from({ length: 8 }).map((_, plantIndex) => {
+                  const plant = plantTypes[(level * 8 + plantIndex) % plantTypes.length]
+                  const plantX = -3.5 + plantIndex * 1
+                  
+                  return (
+                    <group key={plantIndex} position={[0, 0.2, plantX]}>
+                      <mesh castShadow>
+                        <cylinderGeometry args={[0.05, 0.05, plant.height, 8]} />
+                        <meshStandardMaterial color="#228b22" />
+                      </mesh>
+                      
+                      <mesh position={[0, plant.height/2 + 0.1, 0]} castShadow>
+                        <sphereGeometry args={[0.15, 8, 8]} />
+                        <meshStandardMaterial color={plant.color} />
+                      </mesh>
+                      
+                      <mesh position={[0, plant.height/2, 0.1]} castShadow rotation={[Math.PI/4, 0, 0]}>
+                        <boxGeometry args={[0.2, 0.3, 0.02]} />
+                        <meshStandardMaterial color="#32cd32" />
+                      </mesh>
+                    </group>
+                  )
+                })}
+              </group>
+            ))}
+
+            <mesh position={[0.05, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.03, 0.03, 18, 8]} />
+              <meshStandardMaterial color="#3498db" />
+            </mesh>
+
+            {Array.from({ length: 6 }).map((_, level) => (
+              <mesh key={level} position={[0.08, -8 + level * 3, 3.5]} castShadow>
+                <sphereGeometry args={[0.08, 8, 8]} />
+                <meshStandardMaterial color="#2980b9" />
+              </mesh>
+            ))}
+          </group>
+        )
+      })}
+
+      <group position={[0, 10.5, 0]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[8.2, 0.2, 8.2]} />
+          <meshStandardMaterial color="#27ae60" />
+        </mesh>
+
+        {[-2, 0, 2].map((x) =>
+          [-2, 0, 2].map((z) => (
+            <group key={`${x}-${z}`} position={[x, 0.3, z]}>
+              <mesh castShadow>
+                <cylinderGeometry args={[0.8, 0.8, 0.4, 16]} />
+                <meshStandardMaterial color="#8b4513" />
+              </mesh>
+              
+              <mesh position={[0, 0.25, 0]} castShadow>
+                <cylinderGeometry args={[0.75, 0.75, 0.3, 16]} />
+                <meshStandardMaterial color="#a67c52" />
+              </mesh>
+
+              <mesh position={[0, 1.2, 0]} castShadow>
+                <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+                <meshStandardMaterial color="#228b22" />
+              </mesh>
+              
+              <mesh position={[0, 2.5, 0]} castShadow>
+                <sphereGeometry args={[0.8, 8, 8]} />
+                <meshStandardMaterial color={plantTypes[(x + z + 4) % plantTypes.length].color} />
+              </mesh>
+            </group>
+          ))
+        )}
+
+        <SolarPanel position={[3, 0.3, 3]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[-3, 0.3, 3]} rotation={[0, -Math.PI/4, 0]} />
+        <SolarPanel position={[3, 0.3, -3]} rotation={[0, 3*Math.PI/4, 0]} />
+        <SolarPanel position={[-3, 0.3, -3]} rotation={[0, -3*Math.PI/4, 0]} />
+      </group>
+
+      <group position={[0, 12, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[1.5, 1.2, 2, 16]} />
+          <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
+        </mesh>
+        
+        <mesh position={[0, 1.5, 0]} castShadow>
+          <cylinderGeometry args={[1.6, 1.6, 0.2, 16]} />
+          <meshStandardMaterial color="#2980b9" />
+        </mesh>
+
+        <mesh position={[1.5, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.1, 0.1, 3, 8]} />
+          <meshStandardMaterial color="#34495e" />
+        </mesh>
+      </group>
+
+      <Text
+        position={[0, 11, 0]}
+        fontSize={0.5}
+        color="#27ae60"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🏢 Vertical Garden
+      </Text>
+
+      <Html position={[0, 15, 0]} transform>
+        <div style={{
+          background: 'rgba(39, 174, 96, 0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '300px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #229954'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: 'white', fontSize: '18px' }}>
+            🌿 Vertical Garden Building
+          </h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '10px',
+            marginBottom: '15px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🍋 Lemons: 32 plants</div>
+              <div>🍎 Apples: 28 plants</div>
+              <div>🍅 Tomatoes: 45 plants</div>
+              <div>🥕 Carrots: 38 plants</div>
+            </div>
+            
+            <div style={{ textAlign: 'left' }}>
+              <div>🥬 Lettuce: 52 plants</div>
+              <div>🍓 Strawberries: 40 plants</div>
+              <div>🌶️ Chilies: 36 plants</div>
+              <div>🍇 Grapes: 24 plants</div>
+            </div>
+          </div>
+
+          <div style={{ 
+            background: 'rgba(34, 153, 84, 0.3)', 
+            padding: '12px', 
+            borderRadius: '8px',
+            fontSize: '12px',
+            border: '1px solid #229954'
+          }}>
+            <div><strong>🌱 Sustainable Features:</strong></div>
+            <div>✅ Vertical Farming Technology</div>
+            <div>✅ Automated Watering System</div>
+            <div>✅ Rainwater Harvesting</div>
+            <div>✅ Solar Powered</div>
+            <div>✅ Year-round Production</div>
+          </div>
+
+          <div style={{ 
+            marginTop: '10px',
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '8px', 
+            borderRadius: '6px',
+            fontSize: '11px'
+          }}>
+            <div><strong>📊 Production Stats:</strong></div>
+            <div>Daily Yield: ~50kg fresh produce</div>
+            <div>Water Savings: 70% vs traditional farming</div>
+            <div>Energy: 100% solar powered</div>
+          </div>
+        </div>
+      </Html>
+
+      <Person position={[2, 0, 3]} color="#8b4513" speed={0.2} path={[
+        [2, 0.5, 3], [1, 0.5, 2], [0, 0.5, 1], [-1, 0.5, 2], [-2, 0.5, 3]
+      ]} />
+      
+      <Person position={[-3, 0, -2]} color="#2c3e50" speed={0.3} path={[
+        [-3, 0.5, -2], [-2, 0.5, -1], [-1, 0.5, -2], [-2, 0.5, -3], [-3, 0.5, -2]
+      ]} />
+
+      <group position={[4.2, 5, 0]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#ff6b6b" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          👨‍🌾
+        </Text>
+      </group>
+
+      <group position={[-4.2, 8, 0]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#4ecdc4" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          👩‍🌾
+        </Text>
+      </group>
+    </group>
+  )
+}
+
 /* ----- Modern Tech Hub Components ----- */
 function ServerRack({ position = [0, 0, 0], activityLevel = 0.7 }) {
   return (
@@ -528,13 +782,11 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         <meshStandardMaterial color="#8b4513" roughness={0.7} />
       </mesh>
 
-      {/* Main Entrance */}
       <mesh position={[0, 3, 4.1]} castShadow>
         <boxGeometry args={[3, 4, 0.2]} />
         <meshStandardMaterial color="#a67c52" />
       </mesh>
 
-      {/* Cultural Banners with Enhanced Design */}
       <group position={[0, 4, 0]}>
         {culturalStyles.map((culture, index) => {
           const angle = (index / culturalStyles.length) * Math.PI * 2
@@ -544,19 +796,16 @@ function CulturalCenter({ position = [0, 0, 0] }) {
           
           return (
             <group key={culture.name} position={[bannerX, 0, bannerZ]} rotation={[0, -angle, 0]}>
-              {/* Banner Pole */}
               <mesh position={[0, 4, 0]} castShadow>
                 <cylinderGeometry args={[0.1, 0.1, 8, 8]} />
                 <meshStandardMaterial color="#d4af37" />
               </mesh>
               
-              {/* Banner Flag */}
               <mesh position={[0, 6, -0.5]} rotation={[0, 0, 0]} castShadow>
                 <planeGeometry args={[2, 3]} />
                 <meshStandardMaterial color={culture.color} />
               </mesh>
               
-              {/* Cultural Symbol */}
               <Text
                 position={[0, 6, -0.51]}
                 fontSize={0.8}
@@ -567,7 +816,6 @@ function CulturalCenter({ position = [0, 0, 0] }) {
                 {culture.pattern}
               </Text>
               
-              {/* Culture Name */}
               <Text
                 position={[0, 4.5, -0.51]}
                 fontSize={0.3}
@@ -578,19 +826,16 @@ function CulturalCenter({ position = [0, 0, 0] }) {
                 {culture.name}
               </Text>
 
-              {/* Cultural Display Platform */}
               <mesh position={[0, 1, 0]} castShadow receiveShadow>
                 <cylinderGeometry args={[1.5, 1.5, 0.2, 16]} />
                 <meshStandardMaterial color={culture.color} transparent opacity={0.8} />
               </mesh>
 
-              {/* Cultural Artifact */}
               <mesh position={[0, 1.5, 0]} castShadow>
                 <boxGeometry args={[1, 0.8, 1]} />
                 <meshStandardMaterial color={culture.color} />
               </mesh>
 
-              {/* Cultural Symbol on Platform */}
               <Text
                 position={[0, 1.8, 0]}
                 fontSize={0.5}
@@ -605,13 +850,11 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         })}
       </group>
 
-      {/* Central Tower */}
       <mesh position={[0, 9, 0]} castShadow>
         <cylinderGeometry args={[0.15, 0.15, 10, 8]} />
         <meshStandardMaterial color="#c9b037" />
       </mesh>
 
-      {/* Cultural Center Title */}
       <Text
         position={[0, 7, 0]}
         fontSize={0.5}
@@ -622,7 +865,6 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         Cultural Center
       </Text>
 
-      {/* Enhanced Cultural Information Display */}
       <Html position={[0, 12, 0]} transform>
         <div style={{
           background: 'rgba(139, 69, 19, 0.95)',
@@ -677,7 +919,6 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         </div>
       </Html>
 
-      {/* People engaging with culture */}
       <Person position={[3, 0, 2]} color="#8b4513" speed={0.3} path={[
         [3, 0.5, 2], [2, 0.5, 1], [1, 0.5, 2], [2, 0.5, 3], [3, 0.5, 2]
       ]} />
@@ -686,7 +927,6 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         [-2, 0.5, -1], [-1, 0.5, -2], [0, 0.5, -1], [-1, 0.5, 0], [-2, 0.5, -1]
       ]} />
 
-      {/* Cultural performers */}
       <group position={[2, 0.5, -2]}>
         <mesh position={[0, 1, 0]} castShadow>
           <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
@@ -1067,22 +1307,19 @@ function TrafficSystem() {
   )
 }
 
-/* ----- Enhanced Ground with Roads ----- */
-function Ground() {
+/* ----- Solar Panel Component ----- */
+function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
   return (
-    <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[200, 200]} />
-        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
+    <group position={position} rotation={rotation}>
+      <mesh castShadow>
+        <boxGeometry args={[1.5, 0.02, 1]} />
+        <meshStandardMaterial color={"#1e3a8a"} metalness={0.9} roughness={0.05} />
       </mesh>
-      
-      <RoadSystem />
-      
-      <StreetLightSystem />
-      
-      <gridHelper args={[200, 200, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
-      <ContactShadows position={[0, -0.03, 0]} opacity={0.3} width={50} blur={2} far={20} />
-    </>
+      <mesh position={[0, -0.1, 0]} castShadow>
+        <boxGeometry args={[1.6, 0.08, 1.1]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+    </group>
   )
 }
 
@@ -1125,19 +1362,22 @@ function WindTurbine({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- Solar Panel Component ----- */
-function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
+/* ----- Enhanced Ground with Roads ----- */
+function Ground() {
   return (
-    <group position={position} rotation={rotation}>
-      <mesh castShadow>
-        <boxGeometry args={[1.5, 0.02, 1]} />
-        <meshStandardMaterial color={"#1e3a8a"} metalness={0.9} roughness={0.05} />
+    <>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[200, 200]} />
+        <meshStandardMaterial color={"#d2b48c"} roughness={0.9} metalness={0.1} />
       </mesh>
-      <mesh position={[0, -0.1, 0]} castShadow>
-        <boxGeometry args={[1.6, 0.08, 1.1]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-    </group>
+      
+      <RoadSystem />
+      
+      <StreetLightSystem />
+      
+      <gridHelper args={[200, 200, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
+      <ContactShadows position={[0, -0.03, 0]} opacity={0.3} width={50} blur={2} far={20} />
+    </>
   )
 }
 
@@ -1951,6 +2191,9 @@ function CityLayout() {
       {/* Enhanced Cultural Center */}
       <CulturalCenter position={[0, 0, 25]} />
       
+      {/* NEW: Vertical Garden Building */}
+      <VerticalGardenBuilding position={[-25, 0, -10]} />
+      
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
@@ -1976,7 +2219,7 @@ function CityLayout() {
       {/* Enhanced Waste Management System */}
       <WasteManagementSystem position={[15, 0, 15]} />
       
-      {/* GREEN waste bins around town */}
+      {/* Waste bins around town */}
       <WasteBin position={[-10, 0, 8]} id="bin1" />
       <WasteBin position={[12, 0, -5]} id="bin2" />
       <WasteBin position={[-5, 0, -12]} id="bin3" />
@@ -2134,6 +2377,7 @@ function ControlPanel() {
 
   const locations = {
     '🎪 Cultural Center': { x: 0, y: 15, z: 25, lookAt: { x: 0, y: 0, z: 25 } },
+    '🌿 Vertical Garden': { x: -25, y: 12, z: -10, lookAt: { x: -25, y: 0, z: -10 } },
     '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
     '🗑️ Waste Management': { x: 15, y: 10, z: 15, lookAt: { x: 15, y: 0, z: 15 } },
     '🤖 Cloud Data Center': { x: 45, y: 10, z: -25, lookAt: { x: 45, y: 0, z: -25 } },
@@ -2255,7 +2499,7 @@ function ControlPanel() {
               onClick={() => setFocus(pos)}
               style={{ 
                 width: '100%', 
-                background: '#d2691e', 
+                background: name.includes('Garden') ? '#27ae60' : '#d2691e', 
                 color: 'white', 
                 border: 'none', 
                 padding: '4px 6px', 
@@ -2372,6 +2616,9 @@ export default function App() {
         </div>
         <div style={{ fontSize: 11, color: '#d4af37', marginTop: 2, fontWeight: 'bold' }}>
           🎪 ENHANCED: Cultural Center with Sindhi, Punjabi, Pashto & Balochi cultures!
+        </div>
+        <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2, fontWeight: 'bold' }}>
+          🌿 NEW: Vertical Garden Building with fruits & vegetables on walls!
         </div>
       </div>
     </div>
