@@ -543,7 +543,7 @@ function CulturalCenter({ position = [0, 0, 0] }) {
     { name: "Sindhi", color: "#ff6b6b", pattern: "🎵" },
     { name: "Punjabi", color: "#4ecdc4", pattern: "💃" },
     { name: "Pashto", color: "#45b7d1", pattern: "⚔️" },
-    { name: "Balochi", color: "#96ceb4", pattern: "🏔️" }
+    { name: "Balochi", color: "#96ceb4", pattern: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR6o23bexWrHaWh_oKRRHhxaVXhULF9kZ62hQ&s" }
   ]
 
   return (
