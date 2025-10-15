@@ -52,8 +52,554 @@ const useStore = create((set) => ({
     wasteDetected: false,
     currentPosition: [0, 0, 0]
   },
-  setMonitoringDrones: (drones) => set({ monitoringDrones: drones })
+  setMonitoringDrones: (drones) => set({ monitoringDrones: drones }),
+  // Water Plant State
+  waterPlant: {
+    isProcessing: false,
+    processTime: 0,
+    waterQuality: 95,
+    filteredWater: 0,
+    efficiency: 85
+  },
+  setWaterPlant: (plant) => set({ waterPlant: plant })
 }))
+
+/* ----- WATER FILTERING PLANT ----- */
+function WaterFilteringPlant({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+  const waterPlant = useStore((s) => s.waterPlant)
+  const setWaterPlant = useStore((s) => s.setWaterPlant)
+  const [waterParticles, setWaterParticles] = useState([])
+  const [filterActive, setFilterActive] = useState(false)
+
+  // Water processing simulation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWaterPlant(prev => {
+        const shouldProcess = Math.random() > 0.7 && !prev.isProcessing
+        const isProcessing = shouldProcess ? true : (prev.isProcessing && prev.processTime < 2)
+        
+        const newProcessTime = isProcessing ? prev.processTime + 0.5 : 0
+        const newFilteredWater = isProcessing ? prev.filteredWater + 10 : prev.filteredWater
+        const newWaterQuality = Math.max(80, Math.min(99, prev.waterQuality + (Math.random() - 0.5) * 5))
+        
+        if (isProcessing && !filterActive) {
+          setFilterActive(true)
+        } else if (!isProcessing && filterActive) {
+          setFilterActive(false)
+        }
+
+        if (newProcessTime >= 2) {
+          return {
+            isProcessing: false,
+            processTime: 0,
+            waterQuality: newWaterQuality,
+            filteredWater: newFilteredWater,
+            efficiency: Math.max(75, Math.min(95, prev.efficiency + (Math.random() - 0.5) * 3))
+          }
+        }
+
+        return {
+          ...prev,
+          isProcessing,
+          processTime: newProcessTime,
+          waterQuality: newWaterQuality,
+          filteredWater: newFilteredWater
+        }
+      })
+    }, 2000)
+
+    return () => clearInterval(interval)
+  }, [setWaterPlant, filterActive])
+
+  // Water particle effects
+  useFrame((_, dt) => {
+    if (filterActive && Math.random() < 0.3) {
+      setWaterParticles(prev => [
+        ...prev.slice(-10),
+        { 
+          id: Math.random(), 
+          position: [Math.random() * 6 - 3, 8, Math.random() * 4 - 2],
+          progress: 0,
+          speed: 0.5 + Math.random() * 0.5
+        }
+      ])
+    }
+
+    setWaterParticles(prev => 
+      prev.map(p => ({ 
+        ...p, 
+        progress: p.progress + dt * p.speed,
+        position: [p.position[0], p.position[1] - dt * 2, p.position[2]]
+      })).filter(p => p.progress < 3)
+    )
+  })
+
+  function WaterParticle({ position, progress }) {
+    return (
+      <mesh position={position} castShadow>
+        <sphereGeometry args={[0.05, 4, 4]} />
+        <meshStandardMaterial 
+          color="#3498db" 
+          transparent 
+          opacity={1 - progress/3}
+          emissive="#3498db"
+          emissiveIntensity={0.3}
+        />
+      </mesh>
+    )
+  }
+
+  function FilterTank({ position = [0, 0, 0], waterLevel = 0.7, isActive = false, label = "" }) {
+    return (
+      <group position={position}>
+        <mesh castShadow>
+          <cylinderGeometry args={[1, 1, 3, 16]} />
+          <meshStandardMaterial color="#34495e" transparent opacity={0.8} />
+        </mesh>
+        
+        <mesh position={[0, (waterLevel * 2.8) - 1.4, 0]} castShadow>
+          <cylinderGeometry args={[0.95, 0.95, waterLevel * 2.7, 16]} />
+          <meshStandardMaterial 
+            color={isActive ? "#3498db" : "#2980b9"} 
+            transparent 
+            opacity={0.7}
+            emissive={isActive ? "#3498db" : "#2980b9"}
+            emissiveIntensity={0.2}
+          />
+        </mesh>
+        
+        <mesh position={[0, 1.6, 0]} castShadow>
+          <cylinderGeometry args={[1.05, 1.05, 0.1, 16]} />
+          <meshStandardMaterial color="#2c3e50" />
+        </mesh>
+
+        <Text
+          position={[0, 2, 0]}
+          fontSize={0.2}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          {label}
+        </Text>
+
+        {isActive && (
+          <pointLight 
+            position={[0, 1, 0]} 
+            color="#3498db"
+            intensity={0.5}
+            distance={3}
+          />
+        )}
+      </group>
+    )
+  }
+
+  function ProcessingPipe({ start, end, isActive = false }) {
+    const pipeRef = useRef()
+    const [particles, setParticles] = useState([])
+
+    useFrame((_, dt) => {
+      if (isActive && Math.random() < 0.4) {
+        setParticles(prev => [
+          ...prev.slice(-5),
+          { id: Math.random(), progress: 0 }
+        ])
+      }
+
+      setParticles(prev => 
+        prev.map(p => ({ ...p, progress: p.progress + dt * 2 }))
+          .filter(p => p.progress < 1)
+      )
+    })
+
+    const direction = new THREE.Vector3().subVectors(end, start).normalize()
+    const length = new THREE.Vector3().subVectors(end, start).length()
+
+    return (
+      <group>
+        <mesh ref={pipeRef} position={start}>
+          <cylinderGeometry args={[0.1, 0.1, length, 8]} />
+          <meshStandardMaterial 
+            color={isActive ? "#3498db" : "#7f8c8d"}
+            emissive={isActive ? "#3498db" : "#000000"}
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+
+        {particles.map(particle => {
+          const particlePos = new THREE.Vector3().lerpVectors(start, end, particle.progress)
+          return (
+            <mesh key={particle.id} position={particlePos} castShadow>
+              <sphereGeometry args={[0.06, 4, 4]} />
+              <meshStandardMaterial 
+                color="#3498db" 
+                transparent 
+                opacity={1 - particle.progress}
+                emissive="#3498db"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          )
+        })}
+      </group>
+    )
+  }
+
+  return (
+    <group position={position}>
+      {/* Main Building */}
+      <mesh 
+        castShadow 
+        receiveShadow 
+        onClick={() => setFocus({
+          x: position[0],
+          y: 8,
+          z: position[2],
+          lookAt: { x: position[0], y: 0, z: position[2] }
+        })}
+      >
+        <boxGeometry args={[12, 6, 8]} />
+        <meshStandardMaterial color="#3498db" roughness={0.6} />
+      </mesh>
+
+      {/* Roof */}
+      <mesh position={[0, 3.5, 0]} castShadow>
+        <boxGeometry args={[12.2, 0.3, 8.2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {/* Filter Tanks */}
+      <FilterTank 
+        position={[-3, 0, -2]} 
+        waterLevel={0.8}
+        isActive={waterPlant.isProcessing}
+        label="INTAKE"
+      />
+      
+      <FilterTank 
+        position={[0, 0, 0]} 
+        waterLevel={0.6}
+        isActive={waterPlant.isProcessing}
+        label="FILTER"
+      />
+      
+      <FilterTank 
+        position={[3, 0, 2]} 
+        waterLevel={0.9}
+        isActive={waterPlant.isProcessing}
+        label="CLEAN"
+      />
+
+      {/* Processing Pipes */}
+      <ProcessingPipe 
+        start={[-3, 1, -2]}
+        end={[0, 1, 0]}
+        isActive={waterPlant.isProcessing}
+      />
+      
+      <ProcessingPipe 
+        start={[0, 1, 0]}
+        end={[3, 1, 2]}
+        isActive={waterPlant.isProcessing}
+      />
+
+      {/* Control Room */}
+      <mesh position={[0, 2, -3.9]} castShadow>
+        <boxGeometry args={[4, 2, 0.2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+
+      {[0, 1].map(i => (
+        <mesh key={i} position={[-1 + i * 2, 2, -3.89]} castShadow>
+          <planeGeometry args={[0.8, 0.6]} />
+          <meshStandardMaterial 
+            color={waterPlant.isProcessing ? "#00ff00" : "#ff4444"} 
+            emissive={waterPlant.isProcessing ? "#00ff00" : "#ff4444"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      ))}
+
+      {/* Water Particles */}
+      {waterParticles.map(particle => (
+        <WaterParticle
+          key={particle.id}
+          position={particle.position}
+          progress={particle.progress}
+        />
+      ))}
+
+      {/* Chimney/Smokestack */}
+      <mesh position={[4, 4, -2]} castShadow>
+        <cylinderGeometry args={[0.4, 0.5, 4, 8]} />
+        <meshStandardMaterial color="#7f8c8d" />
+      </mesh>
+
+      {waterPlant.isProcessing && (
+        <mesh position={[4, 6.5, -2]} castShadow>
+          <sphereGeometry args={[0.8, 8, 8]} />
+          <meshStandardMaterial 
+            color="#ecf0f1" 
+            transparent 
+            opacity={0.6}
+            emissive="#ecf0f1"
+            emissiveIntensity={0.3}
+          />
+        </mesh>
+      )}
+
+      <Text
+        position={[0, 4, 0]}
+        fontSize={0.4}
+        color="#3498db"
+        anchorX="center"
+        anchorY="middle"
+      >
+        💧 Water Plant
+      </Text>
+
+      <Html position={[0, 8, 0]} transform>
+        <div style={{
+          background: 'rgba(52, 152, 219, 0.95)',
+          padding: '15px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '300px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #2980b9'
+        }}>
+          <h3 style={{ margin: '0 0 12px 0', color: 'white' }}>💧 Advanced Water Filtering Plant</h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '10px',
+            marginBottom: '12px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🔧 Status: <strong>{waterPlant.isProcessing ? 'PROCESSING' : 'STANDBY'}</strong></div>
+              <div>💧 Quality: <strong>{Math.round(waterPlant.waterQuality)}%</strong></div>
+              <div>📈 Efficiency: <strong>{Math.round(waterPlant.efficiency)}%</strong></div>
+            </div>
+            
+            <div style={{ textAlign: 'left' }}>
+              <div>⏱️ Process: <strong>{Math.min(2, waterPlant.processTime).toFixed(1)}/2s</strong></div>
+              <div>💦 Filtered: <strong>{waterPlant.filteredWater}L</strong></div>
+              <div>🎯 Performance: <strong>{waterPlant.waterQuality > 90 ? 'EXCELLENT' : 'GOOD'}</strong></div>
+            </div>
+          </div>
+
+          {waterPlant.isProcessing && (
+            <div style={{ 
+              background: 'rgba(255,255,255,0.2)', 
+              padding: '8px', 
+              borderRadius: '6px',
+              marginBottom: '10px',
+              animation: 'pulse 1s infinite'
+            }}>
+              <div style={{ fontWeight: 'bold', color: '#00ff00' }}>
+                🔄 FILTERING WATER... {Math.round((waterPlant.processTime / 2) * 100)}%
+              </div>
+            </div>
+          )}
+
+          <div style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '8px', 
+            borderRadius: '6px',
+            fontSize: '12px'
+          }}>
+            <div><strong>🏭 Process Stages:</strong></div>
+            <div>1. Intake → 2. Filtration → 3. Purification</div>
+            <div>✅ Multi-stage filtering • ✅ Quality monitoring • ✅ Automated operation</div>
+          </div>
+        </div>
+      </Html>
+
+      {/* Workers */}
+      <Person position={[2, 0, -1]} color="#2c3e50" speed={0.2} path={[
+        [2, 0.5, -1], [1, 0.5, 0], [0, 0.5, 1], [-1, 0.5, 0], [-2, 0.5, -1]
+      ]} />
+      
+      <group position={[-2, 0.5, 3]}>
+        <mesh position={[0, 0.9, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          👨‍🔧
+        </Text>
+      </group>
+    </group>
+  )
+}
+
+/* ----- OPTIMIZED MONITORING DRONE ----- */
+function MonitoringDrone({ position = [0, 0, 0], isMonitoring = true, onWasteDetected }) {
+  const droneRef = useRef()
+  const [hover, setHover] = useState(0)
+  const [scanning, setScanning] = useState(false)
+  const [wasteDetected, setWasteDetected] = useState(false)
+  const lastDetectionTime = useRef(0)
+
+  useFrame((_, dt) => {
+    if (droneRef.current && isMonitoring) {
+      setHover(prev => prev + dt)
+      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
+      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
+      
+      // Optimized waste detection - less frequent checks
+      const now = Date.now()
+      if (now - lastDetectionTime.current > 2000 && Math.random() < 0.01 && !wasteDetected) {
+        lastDetectionTime.current = now
+        setWasteDetected(true)
+        setScanning(true)
+        if (onWasteDetected) onWasteDetected()
+        
+        // Reset after 2 seconds as requested
+        setTimeout(() => {
+          setWasteDetected(false)
+          setScanning(false)
+        }, 2000)
+      }
+      
+      // Less frequent scanning animation
+      if (Math.random() < 0.01 && !scanning && !wasteDetected) {
+        setScanning(true)
+        setTimeout(() => setScanning(false), 1000)
+      }
+    }
+  })
+
+  return (
+    <group ref={droneRef} position={position}>
+      <mesh castShadow>
+        <boxGeometry args={[0.8, 0.1, 0.8]} />
+        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
+      </mesh>
+      
+      <mesh position={[0, 0.1, 0]} castShadow>
+        <sphereGeometry args={[0.2, 8, 8]} />
+        <meshStandardMaterial color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#3498db"} />
+      </mesh>
+      
+      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
+        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
+          <meshStandardMaterial color="#95a5a6" />
+        </mesh>
+      ))}
+      
+      {/* Scanning Laser - Only render when active */}
+      {scanning && (
+        <mesh position={[0, -1, 0]} rotation={[Math.PI/2, 0, 0]}>
+          <cylinderGeometry args={[0.02, 0.5, 10, 8]} />
+          <meshStandardMaterial 
+            color={wasteDetected ? "#e74c3c" : "#00ff00"} 
+            transparent 
+            opacity={0.6}
+            emissive={wasteDetected ? "#e74c3c" : "#00ff00"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+      )}
+      
+      {/* Status Light */}
+      <pointLight 
+        position={[0, 0.2, 0]} 
+        color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#00ff00"}
+        intensity={1}
+        distance={2}
+      />
+
+      {/* Status Indicator - Only show when active */}
+      {(wasteDetected || scanning) && (
+        <Html position={[0, 1.5, 0]}>
+          <div style={{
+            background: wasteDetected ? '#e74c3c' : scanning ? '#f39c12' : '#27ae60',
+            color: 'white',
+            padding: '4px 8px',
+            borderRadius: '6px',
+            fontSize: '10px',
+            fontWeight: 'bold',
+            whiteSpace: 'nowrap'
+          }}>
+            {wasteDetected ? '🚨 WASTE DETECTED!' : scanning ? '🔍 SCANNING...' : '✅ MONITORING'}
+          </div>
+        </Html>
+      )}
+    </group>
+  )
+}
+
+/* ----- OPTIMIZED WASTE MONITORING SYSTEM ----- */
+function WasteMonitoringSystem({ position = [0, 0, 0] }) {
+  const [drones] = useState([
+    { id: 1, position: [10, 8, 10] },
+    { id: 2, position: [-5, 12, 15] },
+    { id: 3, position: [20, 10, -8] }
+  ])
+  
+  const setAlert = useStore((s) => s.setAlert)
+
+  const handleWasteDetection = (droneId) => {
+    setAlert({
+      type: 'emergency',
+      message: `🚨 Drone #${droneId} detected waste! Cleanup in progress...`
+    })
+  }
+
+  return (
+    <group position={position}>
+      {drones.map(drone => (
+        <MonitoringDrone
+          key={drone.id}
+          position={drone.position}
+          isMonitoring={true}
+          onWasteDetected={() => handleWasteDetection(drone.id)}
+        />
+      ))}
+      
+      {/* Control Center */}
+      <mesh position={[0, 2, 0]} castShadow>
+        <boxGeometry args={[3, 1, 2]} />
+        <meshStandardMaterial color="#2c3e50" />
+      </mesh>
+      
+      <Text
+        position={[0, 2.8, 0]}
+        fontSize={0.3}
+        color="#3498db"
+        anchorX="center"
+        anchorY="middle"
+      >
+        DRONE CONTROL
+      </Text>
+      
+      <Html position={[0, 4, 0]} transform>
+        <div style={{
+          background: 'rgba(44, 62, 80, 0.95)',
+          padding: '12px',
+          borderRadius: '8px',
+          color: 'white',
+          minWidth: '200px',
+          textAlign: 'center',
+          border: '2px solid #3498db'
+        }}>
+          <h4 style={{ margin: '0 0 8px 0', color: '#3498db' }}>🚁 Waste Monitoring</h4>
+          <div style={{ fontSize: '11px' }}>
+            <div>Active Drones: {drones.length}</div>
+            <div>Status: 🟢 Operational</div>
+            <div>Response: 2s Cleanup</div>
+          </div>
+        </div>
+      </Html>
+    </group>
+  )
+}
 
 /* ----- ENHANCED VERTICAL GARDEN BUILDING WITH SENSORS ----- */
 function VerticalGardenBuilding({ position = [0, 0, 0] }) {
@@ -631,176 +1177,6 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
           👩‍🌾
         </Text>
       </group>
-    </group>
-  )
-}
-
-/* ----- ENHANCED MONITORING DRONE ----- */
-function MonitoringDrone({ position = [0, 0, 0], isMonitoring = true, onWasteDetected }) {
-  const droneRef = useRef()
-  const [hover, setHover] = useState(0)
-  const [scanning, setScanning] = useState(false)
-  const [wasteDetected, setWasteDetected] = useState(false)
-
-  useFrame((_, dt) => {
-    if (droneRef.current && isMonitoring) {
-      setHover(prev => prev + dt)
-      droneRef.current.position.y = position[1] + Math.sin(hover * 2) * 0.5
-      droneRef.current.rotation.x = Math.sin(hover * 3) * 0.1
-      
-      // Random waste detection simulation
-      if (Math.random() < 0.005 && !wasteDetected) {
-        setWasteDetected(true)
-        setScanning(true)
-        if (onWasteDetected) onWasteDetected()
-        
-        // Reset after some time
-        setTimeout(() => {
-          setWasteDetected(false)
-          setScanning(false)
-        }, 5000)
-      }
-      
-      // Regular scanning animation
-      if (Math.random() < 0.02 && !scanning && !wasteDetected) {
-        setScanning(true)
-        setTimeout(() => setScanning(false), 1000)
-      }
-    }
-  })
-
-  return (
-    <group ref={droneRef} position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[0.8, 0.1, 0.8]} />
-        <meshStandardMaterial color="#2c3e50" metalness={0.7} roughness={0.3} />
-      </mesh>
-      
-      <mesh position={[0, 0.1, 0]} castShadow>
-        <sphereGeometry args={[0.2, 8, 8]} />
-        <meshStandardMaterial color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#3498db"} />
-      </mesh>
-      
-      {[[0.4, 0.4], [0.4, -0.4], [-0.4, 0.4], [-0.4, -0.4]].map(([x, z], i) => (
-        <mesh key={i} position={[x, 0, z]} castShadow rotation={[Math.PI/2, 0, 0]}>
-          <cylinderGeometry args={[0.15, 0.15, 0.05, 8]} />
-          <meshStandardMaterial color="#95a5a6" />
-        </mesh>
-      ))}
-      
-      {/* Scanning Laser */}
-      {scanning && (
-        <mesh position={[0, -1, 0]} rotation={[Math.PI/2, 0, 0]}>
-          <cylinderGeometry args={[0.02, 0.5, 10, 8]} />
-          <meshStandardMaterial 
-            color={wasteDetected ? "#e74c3c" : "#00ff00"} 
-            transparent 
-            opacity={0.6}
-            emissive={wasteDetected ? "#e74c3c" : "#00ff00"}
-            emissiveIntensity={0.5}
-          />
-        </mesh>
-      )}
-      
-      {/* Status Light */}
-      <pointLight 
-        position={[0, 0.2, 0]} 
-        color={wasteDetected ? "#e74c3c" : scanning ? "#f39c12" : "#00ff00"}
-        intensity={1}
-        distance={2}
-      />
-
-      {/* Status Indicator */}
-      <Html position={[0, 1.5, 0]}>
-        <div style={{
-          background: wasteDetected ? '#e74c3c' : scanning ? '#f39c12' : '#27ae60',
-          color: 'white',
-          padding: '4px 8px',
-          borderRadius: '6px',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          whiteSpace: 'nowrap'
-        }}>
-          {wasteDetected ? '🚨 WASTE DETECTED!' : scanning ? '🔍 SCANNING...' : '✅ MONITORING'}
-        </div>
-      </Html>
-    </group>
-  )
-}
-
-/* ----- WASTE MONITORING DRONE SYSTEM ----- */
-function WasteMonitoringSystem({ position = [0, 0, 0] }) {
-  const [drones, setDrones] = useState([
-    { id: 1, position: [10, 8, 10], wasteDetected: false },
-    { id: 2, position: [-5, 12, 15], wasteDetected: false },
-    { id: 3, position: [20, 10, -8], wasteDetected: false }
-  ])
-  
-  const setAlert = useStore((s) => s.setAlert)
-
-  const handleWasteDetection = (droneId) => {
-    setDrones(prev => prev.map(drone => 
-      drone.id === droneId ? { ...drone, wasteDetected: true } : drone
-    ))
-    
-    setAlert({
-      type: 'emergency',
-      message: `🚨 Drone #${droneId} detected waste outside bins! Immediate cleanup required.`
-    })
-    
-    // Reset after 8 seconds
-    setTimeout(() => {
-      setDrones(prev => prev.map(drone => 
-        drone.id === droneId ? { ...drone, wasteDetected: false } : drone
-      ))
-    }, 8000)
-  }
-
-  return (
-    <group position={position}>
-      {drones.map(drone => (
-        <MonitoringDrone
-          key={drone.id}
-          position={drone.position}
-          isMonitoring={true}
-          onWasteDetected={() => handleWasteDetection(drone.id)}
-        />
-      ))}
-      
-      {/* Control Center */}
-      <mesh position={[0, 2, 0]} castShadow>
-        <boxGeometry args={[3, 1, 2]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      
-      <Text
-        position={[0, 2.8, 0]}
-        fontSize={0.3}
-        color="#3498db"
-        anchorX="center"
-        anchorY="middle"
-      >
-        DRONE CONTROL
-      </Text>
-      
-      <Html position={[0, 4, 0]} transform>
-        <div style={{
-          background: 'rgba(44, 62, 80, 0.95)',
-          padding: '12px',
-          borderRadius: '8px',
-          color: 'white',
-          minWidth: '200px',
-          textAlign: 'center',
-          border: '2px solid #3498db'
-        }}>
-          <h4 style={{ margin: '0 0 8px 0', color: '#3498db' }}>🚁 Waste Monitoring Drones</h4>
-          <div style={{ fontSize: '11px' }}>
-            <div>Active Drones: {drones.length}</div>
-            <div>Waste Alerts: {drones.filter(d => d.wasteDetected).length}</div>
-            <div>Status: 🟢 Operational</div>
-          </div>
-        </div>
-      </Html>
     </group>
   )
 }
@@ -3180,7 +3556,7 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
   )
 }
 
-/* ----- ENHANCED CITY LAYOUT ----- */
+/* ----- OPTIMIZED CITY LAYOUT ----- */
 function CityLayout() {
   const buildings = [
     { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Residence A", hasTurbine: true },
@@ -3202,6 +3578,9 @@ function CityLayout() {
       
       {/* Smart Vertical Garden with Sensors */}
       <VerticalGardenBuilding position={[-35, 0, -15]} />
+      
+      {/* NEW: Water Filtering Plant */}
+      <WaterFilteringPlant position={[30, 0, -25]} />
       
       {/* Waste Monitoring Drones */}
       <WasteMonitoringSystem position={[0, 0, 0]} />
@@ -3247,7 +3626,7 @@ function CityLayout() {
       <MonitoringDrone position={[-25, 12, -25]} isMonitoring={true} />
       <MonitoringDrone position={[15, 18, -30]} isMonitoring={true} />
 
-      {/* More walking people around the city */}
+      {/* Reduced number of walking people for performance */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
         [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
       ]} />
@@ -3255,29 +3634,10 @@ function CityLayout() {
       <Person position={[-3, 0, 27]} color="#2c3e50" speed={0.4} path={[
         [-3, 0.5, 27], [-5, 0.5, 25], [-7, 0.5, 27], [-5, 0.5, 29], [-3, 0.5, 27]
       ]} />
-      
-      <Person position={[8, 0, 28]} color="#8b4513" speed={0.2} path={[
-        [8, 0.5, 28], [10, 0.5, 26], [12, 0.5, 28], [10, 0.5, 30], [8, 0.5, 28]
-      ]} />
 
-      {/* People walking on roads */}
-      <Person position={[-10, 0, 5]} color="#8b4513" speed={0.3} path={[
-        [-10, 0.5, 5], [-5, 0.5, 5], [0, 0.5, 5], [5, 0.5, 5], [10, 0.5, 5]
-      ]} />
-      
-      <Person position={[5, 0, -10]} color="#2c3e50" speed={0.4} path={[
-        [5, 0.5, -10], [5, 0.5, -5], [5, 0.5, 0], [5, 0.5, 5], [5, 0.5, 10]
-      ]} />
-
-      <Person position={[-20, 0, -15]} color="#8b4513" speed={0.2} path={[
-        [-20, 0.5, -15], [-15, 0.5, -15], [-10, 0.5, -15], [-15, 0.5, -20], [-20, 0.5, -15]
-      ]} />
-
-      {/* Wheelchair users around hospital and school */}
+      {/* Reduced number of wheelchair users */}
       <WheelchairUser position={[35, 0, 15]} moving={true} />
-      <WheelchairUser position={[45, 0, 5]} moving={false} />
       <WheelchairUser position={[-35, 0, -5]} moving={true} />
-      <WheelchairUser position={[-45, 0, -15]} moving={false} />
     </group>
   )
 }
@@ -3395,6 +3755,7 @@ function ControlPanel() {
   const showCityControl = useStore((s) => s.showCityControl)
   const setShowCityControl = useStore((s) => s.setShowCityControl)
   const gardenSensors = useStore((s) => s.gardenSensors)
+  const waterPlant = useStore((s) => s.waterPlant)
 
   useEffect(() => {
     if (timeOfDay === 'night') {
@@ -3404,6 +3765,7 @@ function ControlPanel() {
 
   const locations = {
     '🏢 Smart Garden': { x: -35, y: 12, z: -15, lookAt: { x: -35, y: 0, z: -15 } },
+    '💧 Water Plant': { x: 30, y: 8, z: -25, lookAt: { x: 30, y: 0, z: -25 } },
     '🚁 Drone Control': { x: 0, y: 10, z: 0, lookAt: { x: 0, y: 0, z: 0 } },
     '🏥 Modern Hospital': { x: 40, y: 15, z: 10, lookAt: { x: 40, y: 0, z: 10 } },
     '🏫 Glass School': { x: -40, y: 10, z: -10, lookAt: { x: -40, y: 0, z: -10 } },
@@ -3461,6 +3823,24 @@ function ControlPanel() {
           <div>Water: {Math.round(gardenSensors.waterLevel)}%</div>
           <div>Temp: {Math.round(gardenSensors.temperature)}°C</div>
           <div>Status: {gardenSensors.isWatering ? '💧 Watering' : '✅ Normal'}</div>
+        </div>
+      </div>
+
+      {/* Water Plant Status */}
+      <div style={{ 
+        background: 'rgba(52, 152, 219, 0.1)', 
+        padding: '8px', 
+        borderRadius: '6px',
+        marginBottom: '10px',
+        border: '1px solid #3498db'
+      }}>
+        <div style={{ fontSize: '11px', fontWeight: 'bold', color: '#3498db', marginBottom: '4px' }}>
+          💧 Water Plant
+        </div>
+        <div style={{ fontSize: '10px' }}>
+          <div>Status: {waterPlant.isProcessing ? '🔄 Processing' : '✅ Standby'}</div>
+          <div>Quality: {Math.round(waterPlant.waterQuality)}%</div>
+          <div>Filtered: {waterPlant.filteredWater}L</div>
         </div>
       </div>
       
@@ -3546,6 +3926,7 @@ function ControlPanel() {
               style={{ 
                 width: '100%', 
                 background: name.includes('Garden') ? '#27ae60' : 
+                           name.includes('Water') ? '#3498db' :
                            name.includes('Drone') ? '#3498db' :
                            name.includes('Hospital') ? '#e74c3c' : 
                            name.includes('School') ? '#3498db' : '#d2691e', 
@@ -3567,7 +3948,7 @@ function ControlPanel() {
   )
 }
 
-/* ----- MAIN APP COMPONENT ----- */
+/* ----- OPTIMIZED MAIN APP COMPONENT ----- */
 export default function App() {
   const timeOfDay = useStore((s) => s.timeOfDay)
   const emergencyAlarm = useStore((s) => s.emergencyAlarm)
@@ -3609,8 +3990,8 @@ export default function App() {
           position={timeOfDay === 'night' ? [-10, 10, 10] : [10, 20, 10]} 
           intensity={timeOfDay === 'night' ? 0.5 : 1.0}
           castShadow
-          shadow-mapSize-width={2048}
-          shadow-mapSize-height={2048}
+          shadow-mapSize-width={1024} // Reduced for performance
+          shadow-mapSize-height={1024}
         />
         
         <Suspense fallback={
@@ -3652,16 +4033,16 @@ export default function App() {
           🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
         </div>
         <div style={{ fontSize: 11, color: '#a67c52', marginTop: 4 }}>
-          🌟 Features: Smart Garden • Monitoring Drones • Hospital • Glass School
-        </div>
-        <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2, fontWeight: 'bold' }}>
-          🌿 NEW: Smart Vertical Garden with real-time soil sensors & auto-watering!
+          🌟 Features: Smart Garden • Water Plant • Monitoring Drones • Hospital
         </div>
         <div style={{ fontSize: 11, color: '#3498db', marginTop: 2, fontWeight: 'bold' }}>
-          🚁 NEW: Monitoring drones detecting waste outside bins!
+          💧 NEW: Water Filtering Plant with real-time processing!
+        </div>
+        <div style={{ fontSize: 11, color: '#27ae60', marginTop: 2 }}>
+          🚁 Drones now clean waste in 2 seconds!
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2 }}>
-          ⚙️ Click settings icon (top-right) for city controls & sensor data
+          ⚡ Performance optimized - reduced lag
         </div>
       </div>
     </div>
