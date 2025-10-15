@@ -473,15 +473,43 @@ function WheelchairUser({ position = [0, 0, 0], moving = false, onRamp = false, 
   )
 }
 
-/* ----- Cultural Center with Banners ----- */
+/* ----- Cultural Center with Enhanced Cultural Representations ----- */
 function CulturalCenter({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
 
   const culturalStyles = [
-    { name: "Sindhi", color: "#ff6b6b", pattern: "🎵" },
-    { name: "Punjabi", color: "#4ecdc4", pattern: "💃" },
-    { name: "Pashto", color: "#45b7d1", pattern: "⚔️" },
-    { name: "Balochi", color: "#96ceb4", pattern: "🏔️" }
+    { 
+      name: "Sindhi", 
+      color: "#ff6b6b", 
+      pattern: "🎵",
+      image: "🎨",
+      description: "Sindhi Culture - Music & Ajrak",
+      features: ["Traditional Music", "Ajrak Patterns", "Sufi Heritage"]
+    },
+    { 
+      name: "Punjabi", 
+      color: "#4ecdc4", 
+      pattern: "💃",
+      image: "🌾",
+      description: "Punjabi Culture - Bhangra & Agriculture",
+      features: ["Bhangra Dance", "Wheat Fields", "Folk Music"]
+    },
+    { 
+      name: "Pashto", 
+      color: "#45b7d1", 
+      pattern: "⚔️",
+      image: "🏔️",
+      description: "Pashtun Culture - Mountains & Tradition",
+      features: ["Mountain Heritage", "Traditional Dance", "Tribal Arts"]
+    },
+    { 
+      name: "Balochi", 
+      color: "#96ceb4", 
+      pattern: "🏔️",
+      image: "🐫",
+      description: "Balochi Culture - Desert & Camel",
+      features: ["Desert Life", "Camel Culture", "Embroidery"]
+    }
   ]
 
   return (
@@ -500,11 +528,13 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         <meshStandardMaterial color="#8b4513" roughness={0.7} />
       </mesh>
 
+      {/* Main Entrance */}
       <mesh position={[0, 3, 4.1]} castShadow>
         <boxGeometry args={[3, 4, 0.2]} />
         <meshStandardMaterial color="#a67c52" />
       </mesh>
 
+      {/* Cultural Banners with Enhanced Design */}
       <group position={[0, 4, 0]}>
         {culturalStyles.map((culture, index) => {
           const angle = (index / culturalStyles.length) * Math.PI * 2
@@ -514,16 +544,19 @@ function CulturalCenter({ position = [0, 0, 0] }) {
           
           return (
             <group key={culture.name} position={[bannerX, 0, bannerZ]} rotation={[0, -angle, 0]}>
+              {/* Banner Pole */}
               <mesh position={[0, 4, 0]} castShadow>
                 <cylinderGeometry args={[0.1, 0.1, 8, 8]} />
                 <meshStandardMaterial color="#d4af37" />
               </mesh>
               
+              {/* Banner Flag */}
               <mesh position={[0, 6, -0.5]} rotation={[0, 0, 0]} castShadow>
                 <planeGeometry args={[2, 3]} />
                 <meshStandardMaterial color={culture.color} />
               </mesh>
               
+              {/* Cultural Symbol */}
               <Text
                 position={[0, 6, -0.51]}
                 fontSize={0.8}
@@ -534,6 +567,7 @@ function CulturalCenter({ position = [0, 0, 0] }) {
                 {culture.pattern}
               </Text>
               
+              {/* Culture Name */}
               <Text
                 position={[0, 4.5, -0.51]}
                 fontSize={0.3}
@@ -543,16 +577,41 @@ function CulturalCenter({ position = [0, 0, 0] }) {
               >
                 {culture.name}
               </Text>
+
+              {/* Cultural Display Platform */}
+              <mesh position={[0, 1, 0]} castShadow receiveShadow>
+                <cylinderGeometry args={[1.5, 1.5, 0.2, 16]} />
+                <meshStandardMaterial color={culture.color} transparent opacity={0.8} />
+              </mesh>
+
+              {/* Cultural Artifact */}
+              <mesh position={[0, 1.5, 0]} castShadow>
+                <boxGeometry args={[1, 0.8, 1]} />
+                <meshStandardMaterial color={culture.color} />
+              </mesh>
+
+              {/* Cultural Symbol on Platform */}
+              <Text
+                position={[0, 1.8, 0]}
+                fontSize={0.5}
+                color="white"
+                anchorX="center"
+                anchorY="middle"
+              >
+                {culture.image}
+              </Text>
             </group>
           )
         })}
       </group>
 
+      {/* Central Tower */}
       <mesh position={[0, 9, 0]} castShadow>
         <cylinderGeometry args={[0.15, 0.15, 10, 8]} />
         <meshStandardMaterial color="#c9b037" />
       </mesh>
 
+      {/* Cultural Center Title */}
       <Text
         position={[0, 7, 0]}
         fontSize={0.5}
@@ -563,6 +622,62 @@ function CulturalCenter({ position = [0, 0, 0] }) {
         Cultural Center
       </Text>
 
+      {/* Enhanced Cultural Information Display */}
+      <Html position={[0, 12, 0]} transform>
+        <div style={{
+          background: 'rgba(139, 69, 19, 0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '350px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #d4af37'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#d4af37', fontSize: '18px' }}>
+            🎪 Cultural Heritage Center
+          </h3>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '15px',
+            marginBottom: '15px'
+          }}>
+            {culturalStyles.map((culture, index) => (
+              <div key={culture.name} style={{
+                background: culture.color,
+                padding: '10px',
+                borderRadius: '8px',
+                textAlign: 'center'
+              }}>
+                <div style={{ fontSize: '24px', marginBottom: '5px' }}>{culture.image}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '14px' }}>{culture.name}</div>
+                <div style={{ fontSize: '11px', opacity: 0.9 }}>{culture.description}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ 
+            background: 'rgba(212, 175, 55, 0.2)', 
+            padding: '12px', 
+            borderRadius: '8px',
+            fontSize: '12px',
+            border: '1px solid #d4af37'
+          }}>
+            <div><strong>Cultural Features:</strong></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '5px' }}>
+              {culturalStyles.map(culture => (
+                <div key={culture.name} style={{ textAlign: 'left' }}>
+                  <strong>{culture.name}:</strong> {culture.features.join(', ')}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Html>
+
+      {/* People engaging with culture */}
       <Person position={[3, 0, 2]} color="#8b4513" speed={0.3} path={[
         [3, 0.5, 2], [2, 0.5, 1], [1, 0.5, 2], [2, 0.5, 3], [3, 0.5, 2]
       ]} />
@@ -570,6 +685,27 @@ function CulturalCenter({ position = [0, 0, 0] }) {
       <Person position={[-2, 0, -1]} color="#2c3e50" speed={0.4} path={[
         [-2, 0.5, -1], [-1, 0.5, -2], [0, 0.5, -1], [-1, 0.5, 0], [-2, 0.5, -1]
       ]} />
+
+      {/* Cultural performers */}
+      <group position={[2, 0.5, -2]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#ff6b6b" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          💃
+        </Text>
+      </group>
+
+      <group position={[-2, 0.5, 2]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+          <meshStandardMaterial color="#4ecdc4" />
+        </mesh>
+        <Text position={[0, 1.5, 0]} fontSize={0.2} color="white" anchorX="center">
+          🎵
+        </Text>
+      </group>
     </group>
   )
 }
@@ -1812,16 +1948,16 @@ function CityLayout() {
 
   return (
     <group>
-      {/* Cultural Center */}
+      {/* Enhanced Cultural Center */}
       <CulturalCenter position={[0, 0, 25]} />
       
       {/* Bus Station near Cultural Center */}
       <BusStation position={[15, 0, 25]} />
       
-      {/* Modern Tech Hub - REPLACED Vertical Farm */}
+      {/* Modern Tech Hub */}
       <DataCenter position={[45, 0, -25]} />
       
-      {/* Energy Efficient Society - SEPARATED from Tech Hub */}
+      {/* Energy Efficient Society */}
       <EnergyEfficientSociety position={[0, 0, -40]} />
       
       {/* Regular buildings */}
@@ -2233,6 +2369,9 @@ export default function App() {
         </div>
         <div style={{ fontSize: 11, color: '#e74c3c', marginTop: 2, fontWeight: 'bold' }}>
           🗑️ NEW: Auto waste collection! Click bins to fill them, truck collects automatically!
+        </div>
+        <div style={{ fontSize: 11, color: '#d4af37', marginTop: 2, fontWeight: 'bold' }}>
+          🎪 ENHANCED: Cultural Center with Sindhi, Punjabi, Pashto & Balochi cultures!
         </div>
       </div>
     </div>
