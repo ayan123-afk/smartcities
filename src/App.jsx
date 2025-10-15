@@ -52,38 +52,55 @@ const useStore = create((set) => ({
   energyProduction: 1200,
   setEnergyProduction: (energy) => set({ energyProduction: energy }),
   airQuality: 95,
-  setAirQuality: (quality) => set({ airQuality: quality })
+  setAirQuality: (quality) => set({ airQuality: quality }),
+  population: 1250,
+  setPopulation: (pop) => set({ population: pop })
 }))
 
-/* ----- MODERN VERTICAL GARDEN BUILDING ----- */
+/* ----- ENHANCED VERTICAL GARDEN BUILDING ----- */
 function VerticalGardenBuilding({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const [plantsGrowing, setPlantsGrowing] = useState(false)
   
   const plantTypes = [
-    { name: "🍋 Lemon", color: "#ffd700", height: 0.8 },
-    { name: "🍎 Apple", color: "#ff4444", height: 1.2 },
-    { name: "🍅 Tomato", color: "#ff6b6b", height: 0.6 },
-    { name: "🥕 Carrot", color: "#ff8c00", height: 0.4 },
-    { name: "🥬 Lettuce", color: "#90ee90", height: 0.3 },
-    { name: "🍓 Strawberry", color: "#ff69b4", height: 0.2 },
-    { name: "🌶️ Chili", color: "#ff0000", height: 0.5 },
-    { name: "🍇 Grapes", color: "#9370db", height: 1.0 }
+    { name: "🍋 Lemon", color: "#ffd700", height: 0.8, scale: 1.2 },
+    { name: "🍎 Apple", color: "#ff4444", height: 1.2, scale: 1.1 },
+    { name: "🍅 Tomato", color: "#ff6b6b", height: 0.6, scale: 0.9 },
+    { name: "🥕 Carrot", color: "#ff8c00", height: 0.4, scale: 0.8 },
+    { name: "🥬 Lettuce", color: "#90ee90", height: 0.3, scale: 1.0 },
+    { name: "🍓 Strawberry", color: "#ff69b4", height: 0.2, scale: 0.7 },
+    { name: "🌶️ Chili", color: "#ff0000", height: 0.5, scale: 0.8 },
+    { name: "🍇 Grapes", color: "#9370db", height: 1.0, scale: 1.3 }
   ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPlantsGrowing(prev => !prev)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <group position={position}>
       {/* Modern Building Structure */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 12, z: position[2], lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[10, 25, 10]} />
+      <mesh 
+        castShadow 
+        receiveShadow 
+        onClick={() => setFocus({
+          x: position[0],
+          y: 15,
+          z: position[2],
+          lookAt: { x: position[0], y: 0, z: position[2] }
+        })}
+      >
+        <boxGeometry args={[12, 25, 12]} />
         <meshStandardMaterial color="#34495e" roughness={0.3} metalness={0.7} />
       </mesh>
 
       {/* Glass Windows */}
       {Array.from({ length: 8 }).map((_, floor) => (
-        <mesh key={floor} position={[0, -10 + floor * 3, 5.01]} castShadow>
-          <planeGeometry args={[8, 2} />
+        <mesh key={floor} position={[0, -10 + floor * 3, 6.01]} castShadow>
+          <planeGeometry args={[10, 2} />
           <meshStandardMaterial color="#87CEEB" transparent opacity={0.6} />
         </mesh>
       ))}
@@ -91,38 +108,61 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
       {/* Vertical Garden Panels */}
       {[0, 1, 2, 3].map((side) => {
         const angle = (side / 4) * Math.PI * 2
-        const offsetX = Math.cos(angle) * 5.1
-        const offsetZ = Math.sin(angle) * 5.1
+        const offsetX = Math.cos(angle) * 6.1
+        const offsetZ = Math.sin(angle) * 6.1
         const rotationY = angle + Math.PI
 
         return (
           <group key={side} position={[offsetX, 0, offsetZ]} rotation={[0, rotationY, 0]}>
             <mesh castShadow receiveShadow>
-              <boxGeometry args={[0.3, 22, 9.8]} />
+              <boxGeometry args={[0.4, 22, 11.8]} />
               <meshStandardMaterial color="#27ae60" metalness={0.4} roughness={0.2} />
             </mesh>
 
             {Array.from({ length: 7 }).map((_, level) => (
-              <group key={level} position={[0.16, -9 + level * 3, 0]}>
-                {Array.from({ length: 10 }).map((_, plantIndex) => {
-                  const plant = plantTypes[(level * 10 + plantIndex) % plantTypes.length]
-                  const plantX = -4 + plantIndex * 0.8
+              <group key={level} position={[0.21, -9 + level * 3, 0]}>
+                {Array.from({ length: 12 }).map((_, plantIndex) => {
+                  const plant = plantTypes[(level * 12 + plantIndex) % plantTypes.length]
+                  const plantX = -5 + plantIndex * 0.9
+                  const growth = plantsGrowing ? 1.2 : 1.0
                   
                   return (
-                    <group key={plantIndex} position={[0, 0.3, plantX]}>
+                    <group key={plantIndex} position={[0, 0.4, plantX]}>
+                      {/* Plant Stem */}
                       <mesh castShadow>
-                        <cylinderGeometry args={[0.06, 0.06, plant.height, 8]} />
+                        <cylinderGeometry args={[0.08, 0.08, plant.height * growth, 8]} />
                         <meshStandardMaterial color="#228b22" />
                       </mesh>
                       
-                      <mesh position={[0, plant.height/2 + 0.15, 0]} castShadow>
-                        <sphereGeometry args={[0.18, 8, 8]} />
+                      {/* Plant Fruit/Vegetable */}
+                      <mesh position={[0, plant.height * growth/2 + 0.2, 0]} castShadow>
+                        <sphereGeometry args={[0.2 * plant.scale * growth, 8, 8]} />
                         <meshStandardMaterial color={plant.color} />
+                      </mesh>
+                      
+                      {/* Leaves */}
+                      <mesh position={[0, plant.height * growth/2, 0.15]} castShadow rotation={[Math.PI/4, 0, 0]}>
+                        <boxGeometry args={[0.25, 0.4, 0.03]} />
+                        <meshStandardMaterial color="#32cd32" />
                       </mesh>
                     </group>
                   )
                 })}
               </group>
+            ))}
+
+            {/* Watering System Pipes */}
+            <mesh position={[0.25, 0, 0]} castShadow>
+              <cylinderGeometry args={[0.05, 0.05, 22, 8]} />
+              <meshStandardMaterial color="#3498db" metalness={0.6} />
+            </mesh>
+
+            {/* Sprinklers */}
+            {Array.from({ length: 7 }).map((_, level) => (
+              <mesh key={level} position={[0.3, -8 + level * 3, 5]} castShadow>
+                <sphereGeometry args={[0.1, 8, 8]} />
+                <meshStandardMaterial color="#2980b9" metalness={0.5} />
+              </mesh>
             ))}
           </group>
         )
@@ -131,421 +171,430 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
       {/* Rooftop Garden */}
       <group position={[0, 12.5, 0]}>
         <mesh castShadow receiveShadow>
-          <boxGeometry args={[10.2, 0.3, 10.2]} />
+          <boxGeometry args={[12.2, 0.4, 12.2]} />
           <meshStandardMaterial color="#27ae60" metalness={0.4} />
         </mesh>
 
+        {/* Rooftop Plant Beds */}
         {[-3, 0, 3].map((x) =>
           [-3, 0, 3].map((z) => (
             <group key={`${x}-${z}`} position={[x, 0.3, z]}>
               <mesh castShadow>
-                <cylinderGeometry args={[0.6, 0.6, 0.5, 16]} />
+                <cylinderGeometry args={[1, 1, 0.6, 16]} />
                 <meshStandardMaterial color="#8b4513" />
               </mesh>
               
-              <mesh position={[0, 0.3, 0]} castShadow>
-                <cylinderGeometry args={[0.55, 0.55, 0.4, 16]} />
+              <mesh position={[0, 0.35, 0]} castShadow>
+                <cylinderGeometry args={[0.9, 0.9, 0.4, 16]} />
                 <meshStandardMaterial color="#a67c52" />
               </mesh>
 
               <mesh position={[0, 1.5, 0]} castShadow>
-                <cylinderGeometry args={[0.08, 0.08, 2.5, 8]} />
+                <cylinderGeometry args={[0.12, 0.12, 2.5, 8]} />
                 <meshStandardMaterial color="#228b22" />
               </mesh>
               
               <mesh position={[0, 3, 0]} castShadow>
-                <sphereGeometry args={[0.7, 8, 8]} />
+                <sphereGeometry args={[0.9, 8, 8]} />
                 <meshStandardMaterial color={plantTypes[(x + z + 4) % plantTypes.length].color} />
               </mesh>
             </group>
           ))
         )}
 
-        <SolarPanel position={[4, 0.3, 4]} rotation={[0, Math.PI/4, 0]} />
-        <SolarPanel position={[-4, 0.3, 4]} rotation={[0, -Math.PI/4, 0]} />
-        <SolarPanel position={[4, 0.3, -4]} rotation={[0, 3*Math.PI/4, 0]} />
-        <SolarPanel position={[-4, 0.3, -4]} rotation={[0, -3*Math.PI/4, 0]} />
+        {/* Solar Panels */}
+        <SolarPanel position={[5, 0.3, 5]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[-5, 0.3, 5]} rotation={[0, -Math.PI/4, 0]} />
+        <SolarPanel position={[5, 0.3, -5]} rotation={[0, 3*Math.PI/4, 0]} />
+        <SolarPanel position={[-5, 0.3, -5]} rotation={[0, -3*Math.PI/4, 0]} />
       </group>
 
       {/* Water Collection System */}
-      <group position={[0, 15, 0]}>
+      <group position={[0, 16, 0]}>
         <mesh castShadow>
-          <cylinderGeometry args={[2, 1.8, 3, 16]} />
+          <cylinderGeometry args={[2.5, 2.2, 4, 16]} />
           <meshStandardMaterial color="#3498db" transparent opacity={0.9} />
         </mesh>
         
-        <mesh position={[0, 1.8, 0]} castShadow>
-          <cylinderGeometry args={[2.1, 2.1, 0.3, 16]} />
+        <mesh position={[0, 2.2, 0]} castShadow>
+          <cylinderGeometry args={[2.6, 2.6, 0.4, 16]} />
           <meshStandardMaterial color="#2980b9" />
         </mesh>
 
-        <mesh position={[2.5, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.12, 0.12, 5, 8]} />
+        {/* Water Pipes */}
+        <mesh position={[3, 0, 0]} rotation={[0, 0, Math.PI/2]} castShadow>
+          <cylinderGeometry args={[0.15, 0.15, 6, 8]} />
           <meshStandardMaterial color="#34495e" />
         </mesh>
       </group>
 
-      <Text position={[0, 14, 0]} fontSize={0.6} color="#27ae60" anchorX="center" anchorY="middle">
-        🌿 Vertical Garden
+      <Text
+        position={[0, 20, 0]}
+        fontSize={0.7}
+        color="#27ae60"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🌿 Vertical Farm
       </Text>
 
-      <Html position={[0, 18, 0]} transform>
-        <div className="info-panel">
-          <h3>🌿 Vertical Garden Building</h3>
+      <Html position={[0, 25, 0]} transform>
+        <div style={{
+          background: 'rgba(39, 174, 96, 0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '350px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #229954',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: 'white', fontSize: '18px' }}>
+            🌿 Vertical Farming Center
+          </h3>
           
-          <div className="info-grid">
-            <div>
-              <div>🍋 Lemons: 32 plants</div>
-              <div>🍎 Apples: 28 plants</div>
-              <div>🍅 Tomatoes: 45 plants</div>
-              <div>🥕 Carrots: 38 plants</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '12px',
+            marginBottom: '15px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🍋 Lemons: 144 plants</div>
+              <div>🍎 Apples: 132 plants</div>
+              <div>🍅 Tomatoes: 168 plants</div>
+              <div>🥕 Carrots: 156 plants</div>
             </div>
             
-            <div>
-              <div>🥬 Lettuce: 52 plants</div>
-              <div>🍓 Strawberries: 40 plants</div>
-              <div>🌶️ Chilies: 36 plants</div>
-              <div>🍇 Grapes: 24 plants</div>
+            <div style={{ textAlign: 'left' }}>
+              <div>🥬 Lettuce: 180 plants</div>
+              <div>🍓 Strawberries: 144 plants</div>
+              <div>🌶️ Chilies: 156 plants</div>
+              <div>🍇 Grapes: 120 plants</div>
             </div>
           </div>
 
-          <div className="feature-list">
-            <div><strong>🌱 Sustainable Features:</strong></div>
-            <div>✅ Vertical Farming Technology</div>
+          <div style={{ 
+            background: 'rgba(34, 153, 84, 0.3)', 
+            padding: '12px', 
+            borderRadius: '8px',
+            fontSize: '12px',
+            border: '1px solid #229954',
+            marginBottom: '10px'
+          }}>
+            <div><strong>🌱 Advanced Farming Features:</strong></div>
+            <div>✅ Hydroponic Technology</div>
             <div>✅ Automated Watering System</div>
             <div>✅ Rainwater Harvesting</div>
-            <div>✅ Solar Powered</div>
+            <div>✅ Solar Powered Operations</div>
             <div>✅ Year-round Production</div>
+            <div>✅ AI Monitoring System</div>
           </div>
 
-          <div className="stats-panel">
-            <div><strong>📊 Production Stats:</strong></div>
-            <div>Daily Yield: ~50kg fresh produce</div>
-            <div>Water Savings: 70% vs traditional farming</div>
-            <div>Energy: 100% solar powered</div>
+          <div style={{ 
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '10px', 
+            borderRadius: '6px',
+            fontSize: '11px'
+          }}>
+            <div><strong>📊 Production Statistics:</strong></div>
+            <div>Daily Yield: ~80kg fresh produce</div>
+            <div>Water Savings: 85% vs traditional farming</div>
+            <div>Energy: 95% solar powered</div>
+            <div>Space Efficiency: 10x traditional farming</div>
           </div>
         </div>
       </Html>
 
-      <ModernPerson position={[3, 0, 4]} color="#8b4513" speed={0.2} />
-      <ModernPerson position={[-3, 0, -3]} color="#2c3e50" speed={0.3} />
+      {/* Farmers/Workers */}
+      <ModernPerson position={[4, 0, 5]} color="#8b4513" speed={0.2} />
+      <ModernPerson position={[-4, 0, -4]} color="#2c3e50" speed={0.3} />
 
-      <Sparkles count={25} scale={[12, 25, 12]} size={2} speed={0.1} color="#27ae60" />
-    </group>
-  )
-}
-
-/* ----- MODERN HOSPITAL ----- */
-function ModernHospital({ position = [0, 0, 0] }) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  return (
-    <group position={position}>
-      {/* Main Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 8, z: position[2], lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[15, 12, 20]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.2} metalness={0.3} />
-      </mesh>
-
-      {/* Windows */}
-      {Array.from({ length: 4 }).map((_, floor) => (
-        <group key={floor} position={[0, -4 + floor * 3, 0]}>
-          {Array.from({ length: 6 }).map((_, i) => (
-            <mesh key={i} position={[-5 + i * 2, 0, 10.01]} castShadow>
-              <planeGeometry args={[1.5, 2} />
-              <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
-            </mesh>
-          ))}
-        </group>
-      ))}
-
-      {/* Red Cross Sign */}
-      <mesh position={[0, 8, 10.01]} castShadow>
-        <planeGeometry args={[3, 3} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      <mesh position={[0, 8, 10.02]} rotation={[0, 0, Math.PI/4]} castShadow>
-        <boxGeometry args={[0.5, 4, 0.1} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-      <mesh position={[0, 8, 10.02]} rotation={[0, 0, -Math.PI/4]} castShadow>
-        <boxGeometry args={[0.5, 4, 0.1} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-
-      {/* Helipad */}
-      <mesh position={[0, 6.1, 0]} rotation={[-Math.PI/2, 0, 0]} castShadow>
-        <circleGeometry args={[3, 32]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-      <mesh position={[0, 6.11, 0]} rotation={[-Math.PI/2, 0, 0]} castShadow>
-        <ringGeometry args={[2.5, 3, 32]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      <Text position={[0, 6.12, 0]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.5} color="white" anchorX="center">
-        H
-      </Text>
-
-      {/* Ambulance Entrance */}
-      <group position={[0, 0, -10]}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[8, 4, 1} />
-          <meshStandardMaterial color="#34495e" />
+      {/* Delivery Area */}
+      <group position={[8, 0, 0]}>
+        <mesh position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
+          <planeGeometry args={[6, 4]} />
+          <meshStandardMaterial color="#7f8c8d" />
         </mesh>
-        <mesh position={[0, 2, 0.51]} castShadow>
-          <planeGeometry args={[6, 3} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-        <Text position={[0, 2, 0.52]} fontSize={0.4} color="white" anchorX="center">
-          EMERGENCY
+        <Text position={[0, 0.12, 0]} rotation={[-Math.PI/2, 0, 0]} fontSize={0.3} color="white" anchorX="center">
+          DELIVERY
         </Text>
       </group>
 
-      <Text position={[0, 14, 0]} fontSize={0.6} color="#e74c3c" anchorX="center" anchorY="middle">
-        🏥 Modern Hospital
-      </Text>
-
-      <Html position={[0, 18, 0]} transform>
-        <div className="info-panel medical">
-          <h3>🏥 Modern Hospital</h3>
-          
-          <div className="info-grid">
-            <div>
-              <div>👨‍⚕️ Doctors: 45</div>
-              <div>👩‍⚕️ Nurses: 120</div>
-              <div>🛏️ Beds: 200</div>
-              <div>🚑 Ambulances: 8</div>
-            </div>
-            
-            <div>
-              <div>💊 Pharmacy: 24/7</div>
-              <div>🧬 Labs: 6</div>
-              <div>📈 Success Rate: 98%</div>
-              <div>⏰ Emergency: Instant</div>
-            </div>
-          </div>
-
-          <div className="feature-list">
-            <div><strong>🏥 Medical Services:</strong></div>
-            <div>✅ Emergency Care</div>
-            <div>✅ Surgery Units</div>
-            <div>✅ ICU Facilities</div>
-            <div>✅ Pediatric Care</div>
-            <div>✅ Cardiology</div>
-          </div>
-        </div>
-      </Html>
-
-      <Ambulance position={[5, 0, -8]} />
-      <ModernPerson position={[-2, 0, 8]} color="#ffffff" speed={0} />
-      <ModernPerson position={[3, 0, 5]} color="#ffffff" speed={0} />
-
-      <Sparkles count={20} scale={[18, 15, 22]} size={2} speed={0.1} color="#e74c3c" />
+      <Sparkles count={30} scale={[14, 28, 14]} size={2} speed={0.1} color="#27ae60" />
+      <pointLight position={[0, 10, 0]} color="#27ae60" intensity={0.3} distance={15} />
     </group>
   )
 }
 
-/* ----- MODERN SCHOOL ----- */
-function ModernSchool({ position = [0, 0, 0] }) {
+/* ----- ENHANCED CULTURAL CENTER ----- */
+function CulturalCenter({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
+  const [lightsOn, setLightsOn] = useState(true)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setLightsOn(prev => !prev)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const culturalStyles = [
+    { 
+      name: "Sindhi", 
+      color: "#ff6b6b", 
+      pattern: "🎵",
+      image: "🎨",
+      description: "Sindhi Culture - Music & Ajrak",
+      features: ["Traditional Music", "Ajrak Patterns", "Sufi Heritage", "Embroidery Art"]
+    },
+    { 
+      name: "Punjabi", 
+      color: "#4ecdc4", 
+      pattern: "💃",
+      image: "🌾",
+      description: "Punjabi Culture - Bhangra & Agriculture",
+      features: ["Bhangra Dance", "Wheat Fields", "Folk Music", "Festival Celebrations"]
+    },
+    { 
+      name: "Pashto", 
+      color: "#45b7d1", 
+      pattern: "⚔️",
+      image: "🏔️",
+      description: "Pashtun Culture - Mountains & Tradition",
+      features: ["Mountain Heritage", "Traditional Dance", "Tribal Arts", "Handicrafts"]
+    },
+    { 
+      name: "Balochi", 
+      color: "#96ceb4", 
+      pattern: "🏔️",
+      image: "🐫",
+      description: "Balochi Culture - Desert & Camel",
+      features: ["Desert Life", "Camel Culture", "Embroidery", "Nomadic Traditions"]
+    },
+    { 
+      name: "Kashmiri", 
+      color: "#ff9ff3", 
+      pattern: "❄️",
+      image: "🧣",
+      description: "Kashmiri Culture - Valley & Shawls",
+      features: ["Pashmina Shawls", "Houseboats", "Gardens", "Cuisine"]
+    },
+    { 
+      name: "Seraiki", 
+      color: "#feca57", 
+      pattern: "🎭",
+      image: "🎪",
+      description: "Seraiki Culture - Theater & Poetry",
+      features: ["Folk Theater", "Poetry", "Music", "Traditional Dress"]
+    }
+  ]
 
   return (
     <group position={position}>
-      {/* Main Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 6, z: position[2], lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[18, 8, 15]} />
-        <meshStandardMaterial color="#f1c40f" roughness={0.3} metalness={0.2} />
+      {/* Modern Cultural Center Building */}
+      <mesh 
+        castShadow 
+        receiveShadow 
+        onClick={() => setFocus({
+          x: position[0],
+          y: 10,
+          z: position[2],
+          lookAt: { x: position[0], y: 0, z: position[2] }
+        })}
+      >
+        <boxGeometry args={[20, 12, 16]} />
+        <meshStandardMaterial color="#8b4513" roughness={0.4} metalness={0.3} />
       </mesh>
 
-      {/* Windows */}
-      {Array.from({ length: 3 }).map((_, floor) => (
-        <group key={floor} position={[0, -2 + floor * 3, 0]}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <mesh key={i} position={[-7 + i * 2, 0, 7.51]} castShadow>
-              <planeGeometry args={[1.5, 2} />
-              <meshStandardMaterial color="#87CEEB" transparent opacity={0.7} />
-            </mesh>
-          ))}
-        </group>
-      ))}
-
-      {/* Entrance */}
-      <group position={[0, 0, -7.5]}>
+      {/* Ornate Entrance */}
+      <group position={[0, 0, 8]}>
         <mesh castShadow receiveShadow>
-          <boxGeometry args={[6, 4, 1} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        <mesh position={[0, 2, 0.51]} castShadow>
-          <planeGeometry args={[4, 3} />
-          <meshStandardMaterial color="#3498db" />
-        </mesh>
-      </group>
-
-      {/* Playground */}
-      <group position={[12, 0, 0]}>
-        <mesh position={[0, 0.1, 0]} rotation={[-Math.PI/2, 0, 0]} receiveShadow>
-          <circleGeometry args={[8, 32]} />
-          <meshStandardMaterial color="#27ae60" />
+          <boxGeometry args={[6, 5, 1} />
+          <meshStandardMaterial color="#a67c52" metalness={0.4} />
         </mesh>
         
-        {/* Swings */}
-        {[-3, 0, 3].map((x, i) => (
-          <group key={i} position={[x, 0, 0]}>
-            <mesh position={[0, 2.5, 0]} castShadow>
-              <boxGeometry args={[0.1, 3, 0.1} />
-              <meshStandardMaterial color="#8b4513" />
-            </mesh>
-            <mesh position={[0, 1, 0]} castShadow>
-              <boxGeometry args={[1.5, 0.1, 0.1} />
-              <meshStandardMaterial color="#e74c3c" />
-            </mesh>
-          </group>
-        ))}
+        <mesh position={[0, 2.5, 0.51]} castShadow>
+          <planeGeometry args={[4, 3} />
+          <meshStandardMaterial color="#d4af37" emissive="#d4af37" emissiveIntensity={lightsOn ? 0.5 : 0.1} />
+        </mesh>
 
-        {/* Slide */}
-        <group position={[-5, 0, 3]}>
-          <mesh position={[0, 1.5, 0]} rotation={[0, 0, -Math.PI/4]} castShadow>
-            <boxGeometry args={[0.1, 4, 0.5} />
-            <meshStandardMaterial color="#3498db" />
+        <Text position={[0, 2.5, 0.52]} fontSize={0.4} color="#8b4513" anchorX="center" anchorY="middle">
+          CULTURAL CENTER
+        </Text>
+
+        {/* Decorative Pillars */}
+        {[-3, 3].map((x, i) => (
+          <mesh key={i} position={[x, 3, 0.5]} castShadow>
+            <cylinderGeometry args={[0.3, 0.4, 6, 8]} />
+            <meshStandardMaterial color="#d4af37" metalness={0.6} />
           </mesh>
-          <mesh position={[1.4, 0.1, 0]} castShadow>
-            <boxGeometry args={[0.5, 0.2, 0.5} />
-            <meshStandardMaterial color="#e74c3c" />
-          </mesh>
-        </group>
+        ))}
       </group>
 
-      <Text position={[0, 10, 0]} fontSize={0.6} color="#f39c12" anchorX="center" anchorY="middle">
-        🏫 Modern School
-      </Text>
-
-      <Html position={[0, 13, 0]} transform>
-        <div className="info-panel education">
-          <h3>🏫 Modern School</h3>
+      {/* Cultural Display Towers */}
+      <group position={[0, 6, 0]}>
+        {culturalStyles.map((culture, index) => {
+          const angle = (index / culturalStyles.length) * Math.PI * 2
+          const radius = 14
+          const towerX = Math.cos(angle) * radius
+          const towerZ = Math.sin(angle) * radius
           
-          <div className="info-grid">
-            <div>
-              <div>👨‍🏫 Teachers: 35</div>
-              <div>👨‍🎓 Students: 500</div>
-              <div>📚 Classes: 20</div>
-              <div>🏀 Playground: Yes</div>
-            </div>
-            
-            <div>
-              <div>💻 Computer Lab</div>
-              <div>🔬 Science Labs</div>
-              <div>📊 Library</div>
-              <div>🎨 Arts Program</div>
-            </div>
-          </div>
+          return (
+            <group key={culture.name} position={[towerX, 0, towerZ]} rotation={[0, -angle, 0]}>
+              {/* Tower Structure */}
+              <mesh position={[0, 4, 0]} castShadow>
+                <cylinderGeometry args={[0.2, 0.25, 8, 8]} />
+                <meshStandardMaterial color="#d4af37" metalness={0.5} />
+              </mesh>
+              
+              {/* Cultural Banner */}
+              <mesh position={[0, 6, -1]} rotation={[0, 0, 0]} castShadow>
+                <planeGeometry args={[2.5, 4} />
+                <meshStandardMaterial color={culture.color} metalness={0.3} />
+              </mesh>
+              
+              <Text position={[0, 6, -1.01]} fontSize={0.8} color="white" anchorX="center" anchorY="middle">
+                {culture.pattern}
+              </Text>
+              
+              <Text position={[0, 4, -1.01]} fontSize={0.3} color="white" anchorX="center" anchorY="middle">
+                {culture.name}
+              </Text>
 
-          <div className="feature-list">
-            <div><strong>🎓 Facilities:</strong></div>
-            <div>✅ Smart Classrooms</div>
-            <div>✅ Sports Complex</div>
-            <div>✅ Science Labs</div>
-            <div>✅ Library</div>
-            <div>✅ Computer Center</div>
-          </div>
-        </div>
-      </Html>
+              {/* Cultural Artifact Display */}
+              <mesh position={[0, 1, 0]} castShadow receiveShadow>
+                <cylinderGeometry args={[1.8, 1.8, 0.3, 16]} />
+                <meshStandardMaterial color={culture.color} transparent opacity={0.8} />
+              </mesh>
 
-      <ModernPerson position={[2, 0, 5]} color="#f1c40f" speed={0.2} />
-      <ModernPerson position={[-3, 0, 3]} color="#f1c40f" speed={0.3} />
-      <SchoolBus position={[-8, 0, -5]} />
+              <mesh position={[0, 1.5, 0]} castShadow>
+                <boxGeometry args={[1.2, 0.8, 1.2]} />
+                <meshStandardMaterial color={culture.color} metalness={0.3} />
+              </mesh>
 
-      <Sparkles count={15} scale={[20, 10, 18]} size={2} speed={0.1} color="#f39c12" />
-    </group>
-  )
-}
+              <Text position={[0, 1.8, 0]} fontSize={0.5} color="white" anchorX="center" anchorY="middle">
+                {culture.image}
+              </Text>
+            </group>
+          )
+        })}
+      </group>
 
-/* ----- WATER TREATMENT PLANT ----- */
-function WaterTreatmentPlant({ position = [0, 0, 0] }) {
-  const waterLevel = useStore((s) => s.waterLevel)
-
-  return (
-    <group position={position}>
-      {/* Main Treatment Tanks */}
-      <group position={[0, 0, 0]}>
-        {[-4, 0, 4].map((x, i) => (
-          <group key={i} position={[x, 0, 0]}>
-            <mesh castShadow receiveShadow>
-              <cylinderGeometry args={[1.5, 1.5, 4, 16]} />
-              <meshStandardMaterial color="#3498db" metalness={0.4} />
-            </mesh>
-            
-            <mesh position={[0, waterLevel/25 - 1, 0]} castShadow>
-              <cylinderGeometry args={[1.4, 1.4, waterLevel/12.5, 16]} />
-              <meshStandardMaterial color="#2980b9" transparent opacity={0.8} />
-            </mesh>
-
-            <mesh position={[0, 2.2, 0]} castShadow>
-              <cylinderGeometry args={[1.6, 1.6, 0.3, 16]} />
-              <meshStandardMaterial color="#2c3e50" />
-            </mesh>
-          </group>
-        ))}
-      </div>
-
-      {/* Processing Building */}
-      <mesh position={[0, 0, -5]} castShadow receiveShadow>
-        <boxGeometry args={[8, 6, 4} />
-        <meshStandardMaterial color="#7f8c8d" metalness={0.5} />
+      {/* Central Dome */}
+      <mesh position={[0, 8, 0]} castShadow>
+        <sphereGeometry args={[4, 16, 16]} />
+        <meshStandardMaterial color="#d4af37" metalness={0.7} roughness={0.2} />
       </mesh>
 
-      {/* Pipes */}
-      <group>
-        <mesh position={[0, 1, -2]} rotation={[0, 0, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.3, 0.3, 12, 8]} />
-          <meshStandardMaterial color="#95a5a6" metalness={0.6} />
-        </mesh>
-        
-        <mesh position={[-4, 1, 0]} rotation={[0, Math.PI/2, Math.PI/2]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 8, 8]} />
-          <meshStandardMaterial color="#3498db" metalness={0.5} />
-        </mesh>
-      </group>
+      {/* Dome Decoration */}
+      <mesh position={[0, 8, 0]} castShadow>
+        <cylinderGeometry args={[4.2, 4.2, 0.3, 32]} />
+        <meshStandardMaterial color="#b8860b" metalness={0.8} />
+      </mesh>
 
-      <Text position={[0, 8, 0]} fontSize={0.6} color="#3498db" anchorX="center" anchorY="middle">
-        💧 Water Treatment
+      {/* Spire */}
+      <mesh position={[0, 12, 0]} castShadow>
+        <cylinderGeometry args={[0.2, 0.1, 6, 8]} />
+        <meshStandardMaterial color="#ffd700" emissive="#ffd700" emissiveIntensity={0.5} />
+      </mesh>
+
+      <Text
+        position={[0, 16, 0]}
+        fontSize={0.8}
+        color="#d4af37"
+        anchorX="center"
+        anchorY="middle"
+      >
+        🎪 Cultural Heritage Center
       </Text>
 
-      <Html position={[0, 11, 0]} transform>
-        <div className="info-panel water">
-          <h3>💧 Water Treatment Plant</h3>
+      <Html position={[0, 20, 0]} transform>
+        <div style={{
+          background: 'rgba(139, 69, 19, 0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '400px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #d4af37',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: '#d4af37', fontSize: '18px' }}>
+            🎪 Cultural Heritage Center
+          </h3>
           
-          <div className="info-grid">
-            <div>
-              <div>💧 Water Level: {waterLevel}%</div>
-              <div>🔄 Treatment: 95%</div>
-              <div>🚰 Distribution: Active</div>
-              <div>🔬 Quality: Excellent</div>
-            </div>
-            
-            <div>
-              <div>⏱️ Process: 24/7</div>
-              <div>🌱 Recycled: 80%</div>
-              <div>💡 Energy: Solar</div>
-              <div>📊 Capacity: 1000L/s</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr 1fr', 
+            gap: '10px',
+            marginBottom: '15px'
+          }}>
+            {culturalStyles.map((culture, index) => (
+              <div key={culture.name} style={{
+                background: culture.color,
+                padding: '10px',
+                borderRadius: '8px',
+                textAlign: 'center',
+                boxShadow: '0 4px 8px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{ fontSize: '20px', marginBottom: '5px' }}>{culture.image}</div>
+                <div style={{ fontWeight: 'bold', fontSize: '12px' }}>{culture.name}</div>
+                <div style={{ fontSize: '9px', opacity: 0.9 }}>{culture.description}</div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ 
+            background: 'rgba(212, 175, 55, 0.2)', 
+            padding: '12px', 
+            borderRadius: '8px',
+            fontSize: '11px',
+            border: '1px solid #d4af37'
+          }}>
+            <div><strong>🏛️ Cultural Features:</strong></div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginTop: '8px' }}>
+              {culturalStyles.map(culture => (
+                <div key={culture.name} style={{ textAlign: 'left' }}>
+                  <strong>{culture.name}:</strong> {culture.features.join(', ')}
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="feature-list">
-            <div><strong>🔧 Treatment Process:</strong></div>
-            <div>✅ Filtration System</div>
-            <div>✅ Chemical Treatment</div>
-            <div>✅ UV Purification</div>
-            <div>✅ Quality Monitoring</div>
-            <div>✅ Recycling System</div>
+          <div style={{ 
+            marginTop: '10px',
+            background: 'rgba(255,255,255,0.1)', 
+            padding: '8px', 
+            borderRadius: '6px',
+            fontSize: '10px'
+          }}>
+            <div><strong>🎭 Daily Activities:</strong></div>
+            <div>Traditional Dance Performances • Music Concerts • Art Exhibitions • Cultural Workshops</div>
           </div>
         </div>
       </Html>
 
-      <Sparkles count={20} scale={[12, 8, 10]} size={2} speed={0.1} color="#3498db" />
+      {/* Performers and Visitors */}
+      <ModernPerson position={[3, 0, 3]} color="#8b4513" speed={0.3} />
+      <ModernPerson position={[-3, 0, -2]} color="#2c3e50" speed={0.4} />
+      <ModernPerson position={[2, 0, -3]} color="#8b4513" speed={0.2} />
+
+      {/* Performance Stage */}
+      <group position={[0, 0, -6]}>
+        <mesh position={[0, 0.2, 0]} castShadow receiveShadow>
+          <boxGeometry args={[8, 0.4, 4} />
+          <meshStandardMaterial color="#a67c52" />
+        </mesh>
+        <Text position={[0, 0.5, 0]} fontSize={0.3} color="#d4af37" anchorX="center" anchorY="middle">
+          STAGE
+        </Text>
+      </group>
+
+      <Sparkles count={50} scale={[25, 15, 20]} size={2} speed={0.1} color="#d4af37" />
+      <pointLight position={[0, 10, 0]} color="#d4af37" intensity={0.4} distance={20} />
     </group>
   )
 }
@@ -558,196 +607,42 @@ function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0], isActive = tru
   useFrame((_, dt) => {
     setPulse(prev => prev + dt)
     if (panelRef.current && isActive) {
-      panelRef.current.rotation.x = Math.sin(pulse) * 0.02
+      panelRef.current.rotation.x = Math.sin(pulse * 0.5) * 0.01
     }
   })
 
   return (
     <group ref={panelRef} position={position} rotation={rotation}>
       <mesh castShadow>
-        <boxGeometry args={[2, 0.05, 1.2} />
+        <boxGeometry args={[2, 0.08, 1.2} />
         <meshStandardMaterial 
-          color={isActive ? "#1e3a8a" : "#2c3e50"} 
+          color={isActive ? "#1a237e" : "#455a64"} 
           metalness={0.9} 
           roughness={0.05}
-          emissive={isActive ? "#1e3a8a" : "#000000"}
-          emissiveIntensity={isActive ? 0.2 : 0}
+          emissive={isActive ? "#0d47a1" : "#000000"}
+          emissiveIntensity={isActive ? 0.3 : 0}
         />
       </mesh>
       
-      <mesh position={[0, -0.1, 0]} castShadow>
-        <boxGeometry args={[2.1, 0.1, 1.3} />
-        <meshStandardMaterial color="#34495e" metalness={0.4} />
+      <mesh position={[0, -0.06, 0]} castShadow>
+        <boxGeometry args={[2.1, 0.12, 1.3} />
+        <meshStandardMaterial color="#37474f" metalness={0.6} roughness={0.3} />
       </mesh>
       
-      <mesh position={[0, 0.03, 0]} castShadow>
-        <boxGeometry args={[1.8, 0.01, 1} />
+      <mesh position={[0, 0.05, 0]} castShadow>
+        <boxGeometry args={[1.8, 0.02, 1} />
         <meshStandardMaterial 
-          color={isActive ? "#00ffff" : "#7f8c8d"} 
+          color={isActive ? "#4fc3f7" : "#78909c"} 
           transparent 
-          opacity={0.3}
-          emissive={isActive ? "#00ffff" : "#000000"}
-          emissiveIntensity={isActive ? 0.3 : 0}
+          opacity={0.4}
+          emissive={isActive ? "#29b6f6" : "#000000"}
+          emissiveIntensity={isActive ? 0.5 : 0}
         />
       </mesh>
 
       {isActive && (
-        <Sparkles count={8} scale={[1.8, 0.1, 1]} size={1} speed={0.2} color="#00ffff" />
+        <Sparkles count={8} scale={[1.8, 0.1, 1]} size={1.5} speed={0.3} color="#40c4ff" />
       )}
-    </group>
-  )
-}
-
-/* ----- MODERN WIND TURBINE ----- */
-function WindTurbine({ position = [0, 0, 0], scale = 1 }) {
-  const turbineRef = useRef()
-  
-  useFrame((_, dt) => {
-    if (turbineRef.current) {
-      turbineRef.current.rotation.y += dt * 3
-    }
-  })
-
-  return (
-    <group position={position} scale={[scale, scale, scale]}>
-      <mesh position={[0, 8, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[0.3, 0.4, 16, 8]} />
-        <meshStandardMaterial color="#bdc3c7" metalness={0.4} roughness={0.6} />
-      </mesh>
-      
-      <group ref={turbineRef} position={[0, 16, 0]}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.8, 8, 8]} />
-          <meshStandardMaterial color="#2c3e50" metalness={0.6} />
-        </mesh>
-        
-        {[0, 1, 2].map((i) => (
-          <mesh 
-            key={i} 
-            rotation={[0, 0, (i * Math.PI * 2) / 3]} 
-            position={[3, 0, 0]}
-            castShadow
-          >
-            <boxGeometry args={[6, 0.3, 0.8} />
-            <meshStandardMaterial color="#ecf0f1" metalness={0.3} roughness={0.2} />
-          </mesh>
-        ))}
-      </group>
-      
-      <pointLight position={[0, 12, 0]} color="#ffffff" intensity={0.3} distance={8} />
-    </group>
-  )
-}
-
-/* ----- MODERN CAR ----- */
-function ModernCar({ position = [0, 0, 0], color = "#e74c3c", speed = 1, path = [] }) {
-  const carRef = useRef()
-  const [t, setT] = useState(Math.random() * 10)
-
-  useFrame((_, dt) => {
-    setT(prev => prev + dt * speed)
-    
-    if (carRef.current && path.length > 0) {
-      const tt = t % path.length
-      const i = Math.floor(tt) % path.length
-      const a = new THREE.Vector3(...path[i])
-      const b = new THREE.Vector3(...path[(i + 1) % path.length])
-      const f = tt % 1
-      const pos = a.clone().lerp(b, f)
-      
-      carRef.current.position.lerp(pos, 0.1)
-      
-      const direction = new THREE.Vector3().subVectors(b, a).normalize()
-      carRef.current.lookAt(carRef.current.position.clone().add(direction))
-    }
-  })
-
-  return (
-    <group ref={carRef} position={position}>
-      {/* Car Body */}
-      <mesh castShadow>
-        <boxGeometry args={[2.2, 0.6, 1} />
-        <meshStandardMaterial color={color} metalness={0.5} roughness={0.3} />
-      </mesh>
-      
-      {/* Windshield */}
-      <mesh position={[0, 0.5, 0.25]} castShadow>
-        <boxGeometry args={[1.8, 0.4, 0.8} />
-        <meshStandardMaterial color="#87CEEB" transparent opacity={0.6} />
-      </mesh>
-      
-      {/* Roof */}
-      <mesh position={[0, 0.8, 0]} castShadow>
-        <boxGeometry args={[1.6, 0.1, 0.9} />
-        <meshStandardMaterial color={color} metalness={0.6} />
-      </mesh>
-      
-      {/* Headlights */}
-      <mesh position={[0.8, 0.3, 0.51]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-      <mesh position={[-0.8, 0.3, 0.51]} castShadow>
-        <sphereGeometry args={[0.15, 8, 8]} />
-        <meshStandardMaterial color="#ffffcc" emissive="#ffff99" emissiveIntensity={1} />
-      </mesh>
-      
-      {/* Wheels */}
-      {[[0.6, 0.3], [-0.6, 0.3]].map(([x, y], i) => (
-        <group key={i} position={[x, -0.2, y]}>
-          <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-            <cylinderGeometry args={[0.25, 0.25, 0.15, 16]} />
-            <meshStandardMaterial color="#2c3e50" metalness={0.8} />
-          </mesh>
-        </group>
-      ))}
-    </group>
-  )
-}
-
-/* ----- AMBULANCE ----- */
-function Ambulance({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[2.5, 0.8, 1.2} />
-        <meshStandardMaterial color="#ffffff" metalness={0.4} />
-      </mesh>
-      
-      <mesh position={[0, 0.6, 0.3]} castShadow>
-        <boxGeometry args={[2.2, 0.5, 0.9} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-      
-      <mesh position={[0, 0.9, 0]} castShadow>
-        <boxGeometry args={[0.3, 0.3, 0.3} />
-        <meshStandardMaterial color="#ffff00" emissive="#ffff00" emissiveIntensity={2} />
-      </mesh>
-      
-      <Text position={[0, 0.6, 0.61]} fontSize={0.15} color="white" anchorX="center">
-        AMBULANCE
-      </Text>
-    </group>
-  )
-}
-
-/* ----- SCHOOL BUS ----- */
-function SchoolBus({ position = [0, 0, 0] }) {
-  return (
-    <group position={position}>
-      <mesh castShadow>
-        <boxGeometry args={[3, 1.2, 1.5} />
-        <meshStandardMaterial color="#f1c40f" metalness={0.3} />
-      </mesh>
-      
-      <mesh position={[0, 0.6, 0.4]} castShadow>
-        <boxGeometry args={[2.8, 0.8, 1.3} />
-        <meshStandardMaterial color="#ffffff" />
-      </mesh>
-      
-      <Text position={[0, 0.6, 0.76]} fontSize={0.2} color="#e74c3c" anchorX="center">
-        SCHOOL BUS
-      </Text>
     </group>
   )
 }
@@ -793,147 +688,30 @@ function ModernPerson({ position = [0, 0, 0], color = "#8b4513", speed = 1, path
   )
 }
 
-/* ----- ENHANCED CULTURAL CENTER ----- */
-function CulturalCenter({ position = [0, 0, 0] }) {
-  const setFocus = useStore((s) => s.setFocus)
-
-  const culturalStyles = [
-    { 
-      name: "Sindhi", 
-      color: "#ff6b6b", 
-      pattern: "🎵",
-      image: "🎨",
-      description: "Sindhi Culture - Music & Ajrak",
-      features: ["Traditional Music", "Ajrak Patterns", "Sufi Heritage"]
-    },
-    { 
-      name: "Punjabi", 
-      color: "#4ecdc4", 
-      pattern: "💃",
-      image: "🌾",
-      description: "Punjabi Culture - Bhangra & Agriculture",
-      features: ["Bhangra Dance", "Wheat Fields", "Folk Music"]
-    },
-    { 
-      name: "Pashto", 
-      color: "#45b7d1", 
-      pattern: "⚔️",
-      image: "🏔️",
-      description: "Pashtun Culture - Mountains & Tradition",
-      features: ["Mountain Heritage", "Traditional Dance", "Tribal Arts"]
-    },
-    { 
-      name: "Balochi", 
-      color: "#96ceb4", 
-      pattern: "🏔️",
-      image: "🐫",
-      description: "Balochi Culture - Desert & Camel",
-      features: ["Desert Life", "Camel Culture", "Embroidery"]
-    }
-  ]
-
-  return (
-    <group position={position}>
-      {/* Modern Cultural Center Building */}
-      <mesh castShadow receiveShadow onClick={() => setFocus({
-        x: position[0], y: 8, z: position[2], lookAt: { x: position[0], y: 0, z: position[2] }
-      })}>
-        <boxGeometry args={[20, 10, 15]} />
-        <meshStandardMaterial color="#8b4513" roughness={0.4} metalness={0.3} />
-      </mesh>
-
-      {/* Decorative Cultural Elements */}
-      <group position={[0, 5, 0]}>
-        {culturalStyles.map((culture, index) => {
-          const angle = (index / culturalStyles.length) * Math.PI * 2
-          const radius = 12
-          const bannerX = Math.cos(angle) * radius
-          const bannerZ = Math.sin(angle) * radius
-          
-          return (
-            <group key={culture.name} position={[bannerX, 0, bannerZ]} rotation={[0, -angle, 0]}>
-              <mesh position={[0, 6, 0]} castShadow>
-                <cylinderGeometry args={[0.15, 0.15, 12, 8]} />
-                <meshStandardMaterial color="#d4af37" metalness={0.6} />
-              </mesh>
-              
-              <mesh position={[0, 8, -0.8]} rotation={[0, 0, 0]} castShadow>
-                <planeGeometry args={[2.5, 4} />
-                <meshStandardMaterial color={culture.color} metalness={0.4} />
-              </mesh>
-              
-              <Text position={[0, 8, -0.81]} fontSize={1} color="white" anchorX="center" anchorY="middle">
-                {culture.pattern}
-              </Text>
-              
-              <Text position={[0, 5.5, -0.81]} fontSize={0.4} color="white" anchorX="center" anchorY="middle">
-                {culture.name}
-              </Text>
-            </group>
-          )
-        })}
-      </group>
-
-      {/* Central Dome */}
-      <mesh position={[0, 8, 0]} castShadow>
-        <sphereGeometry args={[3, 16, 16]} />
-        <meshStandardMaterial color="#d4af37" metalness={0.7} roughness={0.2} />
-      </mesh>
-
-      <Text position={[0, 13, 0]} fontSize={0.7} color="#d4af37" anchorX="center" anchorY="middle">
-        🎪 Cultural Center
-      </Text>
-
-      <Html position={[0, 16, 0]} transform>
-        <div className="info-panel cultural">
-          <h3>🎪 Cultural Heritage Center</h3>
-          
-          <div className="cultural-grid">
-            {culturalStyles.map((culture, index) => (
-              <div key={culture.name} className="culture-card" style={{ background: culture.color }}>
-                <div className="culture-icon">{culture.image}</div>
-                <div className="culture-name">{culture.name}</div>
-                <div className="culture-desc">{culture.description}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="feature-list">
-            <div><strong>Cultural Features:</strong></div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '5px' }}>
-              {culturalStyles.map(culture => (
-                <div key={culture.name} style={{ textAlign: 'left' }}>
-                  <strong>{culture.name}:</strong> {culture.features.join(', ')}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </Html>
-
-      <ModernPerson position={[5, 0, 3]} color="#8b4513" speed={0.3} />
-      <ModernPerson position={[-3, 0, -2]} color="#2c3e50" speed={0.4} />
-
-      <Sparkles count={40} scale={[25, 12, 18]} size={2} speed={0.1} color="#d4af37" />
-    </group>
-  )
-}
-
 /* ----- ENHANCED WASTE MANAGEMENT ----- */
 function WasteManagementSystem({ position = [25, 0, 25] }) {
-  const [isTruckActive, setIsTruckActive] = useState(false)
-  const [currentBinTarget, setCurrentBinTarget] = useState(null)
-  const wasteBins = useStore((s) => s.wasteBins)
-  const wasteProcessing = useStore((s) => s.wasteProcessing)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [processingProgress, setProcessingProgress] = useState(0)
 
-  const binPositions = [
-    [-10, 0, 8], [12, 0, -5], [-5, 0, -12], 
-    [18, 0, 10], [-15, 0, -18], [5, 0, 20]
-  ]
+  useEffect(() => {
+    let interval
+    if (isProcessing) {
+      interval = setInterval(() => {
+        setProcessingProgress(prev => {
+          if (prev >= 100) {
+            setIsProcessing(false)
+            return 0
+          }
+          return prev + 1
+        })
+      }, 50)
+    }
+    return () => clearInterval(interval)
+  }, [isProcessing])
 
   return (
     <group position={position}>
-      {/* Modern Waste Management Building */}
+      {/* Main Processing Building */}
       <mesh castShadow receiveShadow>
         <boxGeometry args={[15, 8, 12]} />
         <meshStandardMaterial color="#27ae60" roughness={0.4} metalness={0.3} />
@@ -944,11 +722,36 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
         {[-5, 0, 5].map((x, i) => (
           <group key={i} position={[x, 0, 0]}>
             <mesh castShadow receiveShadow>
-              <cylinderGeometry args={[1, 1, 3, 16]} />
+              <cylinderGeometry args={[1.2, 1.2, 3, 16]} />
               <meshStandardMaterial color={i === 0 ? "#e74c3c" : i === 1 ? "#f39c12" : "#27ae60"} metalness={0.5} />
             </mesh>
+            
+            {/* Processing Animation */}
+            {isProcessing && (
+              <mesh position={[0, processingProgress/33 - 1.5, 0]} castShadow>
+                <cylinderGeometry args={[1.1, 1.1, processingProgress/16.5, 16]} />
+                <meshStandardMaterial 
+                  color={i === 0 ? "#c0392b" : i === 1 ? "#e67e22" : "#229954"} 
+                  transparent 
+                  opacity={0.7}
+                />
+              </mesh>
+            )}
           </group>
         ))}
+      </group>
+
+      {/* Conveyor System */}
+      <group position={[0, 1, 3]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[12, 0.5, 1} />
+          <meshStandardMaterial color="#7f8c8d" metalness={0.4} />
+        </mesh>
+        
+        <mesh position={[0, 0.8, 0]} castShadow>
+          <boxGeometry args={[10, 0.1, 0.8} />
+          <meshStandardMaterial color="#95a5a6" />
+        </mesh>
       </group>
 
       {/* Solar Panels */}
@@ -958,36 +761,99 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
         ))}
       </group>
 
-      <WindTurbine position={[8, 4, 0]} scale={0.7} />
-
       <Text position={[0, 11, 0]} fontSize={0.6} color="#27ae60" anchorX="center" anchorY="middle">
         ♻️ Waste Management
       </Text>
 
       <Html position={[0, 14, 0]} transform>
-        <div className="info-panel waste">
-          <h3>♻️ Advanced Waste Management</h3>
+        <div style={{
+          background: 'rgba(39, 174, 96, 0.95)',
+          padding: '20px',
+          borderRadius: '15px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '350px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #229954',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ margin: '0 0 15px 0', color: 'white' }}>♻️ Advanced Waste Management</h3>
           
-          <div className="info-grid">
-            <div>
-              <div>🗑️ Full Bins: {Object.values(wasteBins).filter(level => level >= 1).length}</div>
-              <div>🔄 Processing: {wasteProcessing.isProcessing ? 'Active' : 'Ready'}</div>
-              <div>🚛 Truck: {isTruckActive ? 'Collecting' : 'Available'}</div>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr', 
+            gap: '10px',
+            marginBottom: '15px'
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div>🗑️ Waste Collected: 85%</div>
+              <div>🔄 Processing: {isProcessing ? 'ACTIVE' : 'READY'}</div>
+              <div>🚛 Collection Trucks: 3</div>
+              <div>⚡ Power: Solar</div>
             </div>
             
-            <div>
-              <div>♻️ Recycled: {wasteProcessing.recycledWaste}</div>
-              <div>📉 Reduced: {wasteProcessing.reducedWaste}</div>
-              <div>🔄 Reused: {wasteProcessing.reusedWaste}</div>
+            <div style={{ textAlign: 'left' }}>
+              <div>♻️ Recycling Rate: 78%</div>
+              <div>📉 Waste Reduction: 45%</div>
+              <div>🔄 Reuse Rate: 32%</div>
+              <div>🌱 Composting: 25%</div>
             </div>
           </div>
 
-          <div className="feature-list">
-            <div><strong>🔄 3R System:</strong></div>
-            <div>✅ Reduce • Reuse • Recycle</div>
-            <div>✅ Automated Collection</div>
-            <div>✅ Solar Powered</div>
-            <div>✅ Real-time Monitoring</div>
+          {isProcessing && (
+            <div style={{ 
+              background: 'rgba(255,255,255,0.2)', 
+              padding: '10px', 
+              borderRadius: '8px',
+              marginBottom: '10px'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Processing: {processingProgress}%</div>
+              <div style={{ 
+                background: '#34495e', 
+                borderRadius: '5px', 
+                height: '10px',
+                overflow: 'hidden'
+              }}>
+                <div style={{ 
+                  background: '#2ecc71', 
+                  height: '100%', 
+                  width: `${processingProgress}%`,
+                  transition: 'width 0.1s ease'
+                }}></div>
+              </div>
+            </div>
+          )}
+
+          <button 
+            onClick={() => setIsProcessing(true)}
+            disabled={isProcessing}
+            style={{
+              background: isProcessing ? 
+                'linear-gradient(135deg, #95a5a6, #7f8c8d)' : 
+                'linear-gradient(135deg, #27ae60, #229954)',
+              color: 'white',
+              border: 'none',
+              padding: '12px 20px',
+              borderRadius: '8px',
+              cursor: isProcessing ? 'not-allowed' : 'pointer',
+              width: '100%',
+              fontWeight: 'bold',
+              fontSize: '14px',
+              transition: 'all 0.3s ease'
+            }}
+          >
+            {isProcessing ? '🔄 PROCESSING WASTE...' : 'START WASTE PROCESSING'}
+          </button>
+
+          <div style={{ 
+            marginTop: '10px',
+            background: 'rgba(34, 153, 84, 0.3)', 
+            padding: '10px', 
+            borderRadius: '8px',
+            fontSize: '11px'
+          }}>
+            <div><strong>🔄 3R Waste Management System</strong></div>
+            <div>📉 Reduce • 🔄 Reuse • ♻️ Recycle</div>
           </div>
         </div>
       </Html>
@@ -997,7 +863,127 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
   )
 }
 
-/* ----- ENHANCED GROUND & ROADS ----- */
+/* ----- MODERN APARTMENT BUILDING ----- */
+function ModernApartment({ position = [0, 0, 0] }) {
+  const setFocus = useStore((s) => s.setFocus)
+  const [lightsOn, setLightsOn] = useState([])
+
+  useEffect(() => {
+    // Initialize random lights
+    const initialLights = Array.from({ length: 24 }, () => Math.random() > 0.4)
+    setLightsOn(initialLights)
+    
+    const interval = setInterval(() => {
+      setLightsOn(prev => prev.map(light => Math.random() > 0.6 ? !light : light))
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <group position={position}>
+      {/* Main Building */}
+      <mesh castShadow receiveShadow onClick={() => setFocus({
+        x: position[0], y: 8, z: position[2], lookAt: { x: position[0], y: 0, z: position[2] }
+      })}>
+        <boxGeometry args={[8, 16, 8]} />
+        <meshStandardMaterial color="#a67c52" roughness={0.3} metalness={0.2} />
+      </mesh>
+
+      {/* Windows */}
+      {Array.from({ length: 5 }).map((_, floor) => (
+        <group key={floor} position={[0, -6 + floor * 3, 0]}>
+          {Array.from({ length: 4 }).map((_, side) => {
+            const angle = (side / 4) * Math.PI * 2
+            const isFront = side === 0
+            const lightIndex = floor * 4 + side
+            
+            return (
+              <mesh key={side} position={[Math.cos(angle) * 4.01, 0, Math.sin(angle) * 4.01]} rotation={[0, -angle, 0]}>
+                <planeGeometry args={[1.5, 2} />
+                <meshStandardMaterial 
+                  color={lightsOn[lightIndex] ? "#fff8e1" : "#1a237e"} 
+                  emissive={lightsOn[lightIndex] ? "#ffecb3" : "#000000"}
+                  emissiveIntensity={lightsOn[lightIndex] ? 0.6 : 0}
+                  transparent
+                  opacity={0.9}
+                />
+              </mesh>
+            )
+          })}
+        </group>
+      ))}
+
+      {/* Balconies */}
+      {Array.from({ length: 5 }).map((_, floor) => (
+        <group key={floor} position={[0, -7 + floor * 3, 0]}>
+          {Array.from({ length: 4 }).map((_, side) => {
+            const angle = (side / 4) * Math.PI * 2
+            return (
+              <group key={side} position={[Math.cos(angle) * 4.1, 0, Math.sin(angle) * 4.1]} rotation={[0, -angle, 0]}>
+                <mesh castShadow receiveShadow>
+                  <boxGeometry args={[1.8, 0.1, 0.8} />
+                  <meshStandardMaterial color="#8d6e63" />
+                </mesh>
+                
+                {/* Balcony Railings */}
+                <mesh position={[0, 0.6, -0.4]} castShadow>
+                  <boxGeometry args={[1.8, 1.2, 0.05} />
+                  <meshStandardMaterial color="#6d4c41" />
+                </mesh>
+              </group>
+            )
+          })}
+        </group>
+      ))}
+
+      {/* Rooftop Garden */}
+      <group position={[0, 9, 0]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[8.2, 0.3, 8.2} />
+          <meshStandardMaterial color="#388e3c" />
+        </mesh>
+        
+        {/* Rooftop Planters */}
+        {[-2, 0, 2].map((x) =>
+          [-2, 0, 2].map((z) => (
+            <mesh key={`${x}-${z}`} position={[x, 0.2, z]} castShadow>
+              <cylinderGeometry args={[0.6, 0.6, 0.4, 8]} />
+              <meshStandardMaterial color="#8b4513" />
+            </mesh>
+          ))
+        )}
+      </group>
+
+      <Text position={[0, 18, 0]} fontSize={0.5} color="#a67c52" anchorX="center" anchorY="middle">
+        🏠 Modern Apartments
+      </Text>
+
+      <Html position={[0, 21, 0]} transform>
+        <div style={{
+          background: 'rgba(166, 124, 82, 0.95)',
+          padding: '15px',
+          borderRadius: '12px',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+          minWidth: '250px',
+          textAlign: 'center',
+          color: 'white',
+          border: '2px solid #8b4513',
+          backdropFilter: 'blur(10px)'
+        }}>
+          <h3 style={{ margin: '0 0 10px 0', color: 'white' }}>🏠 Residential Tower</h3>
+          <div>🏢 Floors: 5</div>
+          <div>🏠 Apartments: 20</div>
+          <div>🌿 Rooftop Garden</div>
+          <div>🔒 Security: 24/7</div>
+        </div>
+      </Html>
+
+      <Sparkles count={15} scale={[10, 18, 10]} size={2} speed={0.1} color="#a67c52" />
+    </group>
+  )
+}
+
+/* ----- ENHANCED GROUND ----- */
 function Ground() {
   return (
     <>
@@ -1029,6 +1015,7 @@ function Ground() {
       </mesh>
 
       <ContactShadows position={[0, -0.03, 0]} opacity={0.4} width={50} height={50} blur={2} far={20} />
+      <gridHelper args={[200, 50, '#8b7355', '#8b7355']} position={[0, 0.01, 0]} />
     </>
   )
 }
@@ -1038,36 +1025,23 @@ function CityLayout() {
   return (
     <group>
       {/* Major City Components */}
-      <CulturalCenter position={[0, 0, 40]} />
-      <ModernHospital position={[-30, 0, 20]} />
-      <ModernSchool position={[30, 0, 20]} />
-      <VerticalGardenBuilding position={[-30, 0, -20]} />
-      <WaterTreatmentPlant position={[30, 0, -20]} />
-      <WasteManagementSystem position={[0, 0, -40]} />
+      <VerticalGardenBuilding position={[-30, 0, 30]} />
+      <CulturalCenter position={[30, 0, 30]} />
+      <WasteManagementSystem position={[0, 0, -30]} />
       
-      {/* Residential Buildings */}
-      {Array.from({ length: 12 }).map((_, i) => {
-        const angle = (i / 12) * Math.PI * 2
-        const radius = 25
-        const x = Math.cos(angle) * radius
-        const z = Math.sin(angle) * radius
-        return (
-          <mesh key={i} position={[x, 3, z]} castShadow receiveShadow>
-            <boxGeometry args={[3, 6, 3]} />
-            <meshStandardMaterial color="#a67c52" roughness={0.3} />
-          </mesh>
-        )
-      })}
-
-      {/* Modern Cars */}
-      <ModernCar color="#e74c3c" speed={0.4} path={[[-40, 0.5, 0], [40, 0.5, 0]]} />
-      <ModernCar color="#3498db" speed={0.3} path={[[0, 0.5, -40], [0, 0.5, 40]]} />
-      <ModernCar color="#2ecc71" speed={0.5} path={[[-30, 0.5, -30], [30, 0.5, 30]]} />
+      {/* Residential Areas */}
+      <ModernApartment position={[-20, 0, 10]} />
+      <ModernApartment position={[-10, 0, 15]} />
+      <ModernApartment position={[10, 0, 10]} />
+      <ModernApartment position={[20, 0, 15]} />
+      <ModernApartment position={[-15, 0, -10]} />
+      <ModernApartment position={[15, 0, -10]} />
 
       {/* People */}
-      <ModernPerson position={[10, 0, 35]} color="#8b4513" speed={0.2} />
-      <ModernPerson position={[-10, 0, 35]} color="#2c3e50" speed={0.3} />
-      <ModernPerson position={[15, 0, -35]} color="#8b4513" speed={0.4} />
+      <ModernPerson position={[5, 0, 5]} color="#8b4513" speed={0.2} />
+      <ModernPerson position={[-5, 0, 8]} color="#2c3e50" speed={0.3} />
+      <ModernPerson position={[8, 0, -5]} color="#8b4513" speed={0.4} />
+      <ModernPerson position={[-8, 0, -8]} color="#2c3e50" speed={0.25} />
 
       {/* Street Lights */}
       {Array.from({ length: 16 }).map((_, i) => (
@@ -1094,30 +1068,69 @@ function HUD() {
   const waterLevel = useStore((s) => s.waterLevel)
   const energyProduction = useStore((s) => s.energyProduction)
   const airQuality = useStore((s) => s.airQuality)
+  const population = useStore((s) => s.population)
 
   return (
-    <div className="hud-container">
-      <div className="hud-main">
-        🏙️ Smart City Dashboard • Time: {timeOfDay} • 🌡️ Air Quality: {airQuality}%
+    <div style={{ 
+      position: 'absolute', 
+      left: 20, 
+      top: 20, 
+      zIndex: 1000,
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{ 
+        background: 'rgba(255,255,255,0.95)', 
+        padding: '12px 20px', 
+        borderRadius: '15px', 
+        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+        fontSize: '14px',
+        fontWeight: 'bold',
+        color: '#8b4513',
+        border: '2px solid #d2b48c',
+        backdropFilter: 'blur(10px)',
+        marginBottom: '10px'
+      }}>
+        🏙️ Smart City Dashboard • Time: {timeOfDay} • Population: {population}
       </div>
       
-      <div className="hud-stats">
-        <div className="stat-item">
-          <div className="stat-icon">💧</div>
-          <div className="stat-value">{waterLevel}%</div>
-          <div className="stat-label">Water</div>
+      <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ 
+          background: 'rgba(255,255,255,0.9)', 
+          padding: '10px', 
+          borderRadius: '10px', 
+          textAlign: 'center',
+          minWidth: '80px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '20px', marginBottom: '5px' }}>💧</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#3498db' }}>{waterLevel}%</div>
+          <div style={{ fontSize: '11px', color: '#7f8c8d' }}>Water</div>
         </div>
         
-        <div className="stat-item">
-          <div className="stat-icon">⚡</div>
-          <div className="stat-value">{energyProduction}kW</div>
-          <div className="stat-label">Energy</div>
+        <div style={{ 
+          background: 'rgba(255,255,255,0.9)', 
+          padding: '10px', 
+          borderRadius: '10px', 
+          textAlign: 'center',
+          minWidth: '80px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '20px', marginBottom: '5px' }}>⚡</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#f39c12' }}>{energyProduction}kW</div>
+          <div style={{ fontSize: '11px', color: '#7f8c8d' }}>Energy</div>
         </div>
         
-        <div className="stat-item">
-          <div className="stat-icon">🌱</div>
-          <div className="stat-value">{airQuality}%</div>
-          <div className="stat-label">Air Quality</div>
+        <div style={{ 
+          background: 'rgba(255,255,255,0.9)', 
+          padding: '10px', 
+          borderRadius: '10px', 
+          textAlign: 'center',
+          minWidth: '80px',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+        }}>
+          <div style={{ fontSize: '20px', marginBottom: '5px' }}>🌱</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#27ae60' }}>{airQuality}%</div>
+          <div style={{ fontSize: '11px', color: '#7f8c8d' }}>Air Quality</div>
         </div>
       </div>
     </div>
@@ -1129,42 +1142,98 @@ function SettingsPanel() {
   const setTimeOfDay = useStore((s) => s.setTimeOfDay)
   const setShowCityControl = useStore((s) => s.setShowCityControl)
   const showCityControl = useStore((s) => s.showCityControl)
+  const setFocus = useStore((s) => s.setFocus)
+
+  const locations = {
+    '🌿 Vertical Farm': { x: -30, y: 15, z: 30, lookAt: { x: -30, y: 0, z: 30 } },
+    '🎪 Cultural Center': { x: 30, y: 10, z: 30, lookAt: { x: 30, y: 0, z: 30 } },
+    '♻️ Waste Management': { x: 0, y: 10, z: -30, lookAt: { x: 0, y: 0, z: -30 } },
+    '🏠 Residential Area': { x: 0, y: 8, z: 10, lookAt: { x: 0, y: 0, z: 10 } }
+  }
 
   if (!showCityControl) return null
 
   return (
-    <div className="settings-panel">
-      <div className="settings-header">
-        <h3>City Controls</h3>
-        <button onClick={() => setShowCityControl(false)}>✕</button>
+    <div style={{ 
+      position: 'absolute', 
+      right: 100, 
+      top: 20, 
+      zIndex: 999, 
+      background: 'rgba(255,255,255,0.95)', 
+      padding: 20, 
+      borderRadius: 15, 
+      boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+      minWidth: '250px',
+      border: '2px solid #d2b48c',
+      backdropFilter: 'blur(10px)',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+        <h3 style={{ margin: 0, color: '#8b4513', fontSize: '18px', fontWeight: 'bold' }}>City Controls</h3>
+        <button 
+          onClick={() => setShowCityControl(false)}
+          style={{ 
+            background: 'none', 
+            border: 'none', 
+            fontSize: '20px', 
+            cursor: 'pointer',
+            color: '#8b4513',
+            fontWeight: 'bold',
+            padding: '5px'
+          }}
+        >
+          ✕
+        </button>
       </div>
       
-      <div className="control-group">
-        <label>🌅 Time of Day:</label>
-        <select onChange={(e) => setTimeOfDay(e.target.value)}>
+      <div style={{ marginBottom: 15 }}>
+        <label style={{ display: 'block', marginBottom: 6, fontSize: '13px', fontWeight: 'bold', color: '#8b4513' }}>
+          🌅 Time of Day:
+        </label>
+        <select 
+          onChange={(e) => setTimeOfDay(e.target.value)}
+          style={{ 
+            width: '100%', 
+            padding: '8px', 
+            borderRadius: '8px', 
+            border: '2px solid #d2b48c', 
+            fontSize: '13px',
+            background: 'white',
+            color: '#8b4513'
+          }}
+        >
           <option value="day">☀️ Day</option>
           <option value="evening">🌆 Evening</option>
           <option value="night">🌙 Night</option>
         </select>
       </div>
 
-      <div className="control-group">
-        <label>🚗 Traffic Density:</label>
-        <select>
-          <option value="low">🟢 Low</option>
-          <option value="medium">🟡 Medium</option>
-          <option value="high">🔴 High</option>
-        </select>
-      </div>
-
-      <div className="navigation-group">
-        <label>🗺️ Quick Navigation:</label>
-        <button>🎪 Cultural Center</button>
-        <button>🏥 Hospital</button>
-        <button>🏫 School</button>
-        <button>🌿 Vertical Garden</button>
-        <button>💧 Water Plant</button>
-        <button>♻️ Waste Management</button>
+      <div>
+        <label style={{ display: 'block', marginBottom: 6, fontSize: '13px', fontWeight: 'bold', color: '#8b4513' }}>
+          🗺️ Quick Navigation:
+        </label>
+        {Object.entries(locations).map(([name, pos]) => (
+          <button 
+            key={name}
+            onClick={() => setFocus(pos)}
+            style={{ 
+              width: '100%', 
+              background: 'linear-gradient(135deg, #d2691e, #8b4513)', 
+              color: 'white', 
+              border: 'none', 
+              padding: '8px 10px', 
+              borderRadius: '8px',
+              cursor: 'pointer',
+              marginBottom: '5px',
+              fontSize: '12px',
+              fontWeight: 'bold',
+              transition: 'all 0.3s ease',
+              textAlign: 'left'
+            }}
+          >
+            {name}
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -1188,253 +1257,49 @@ export default function App() {
   }
 
   return (
-    <div className="app-container">
-      <style>{`
-        .app-container {
-          width: 100vw;
-          height: 100vh;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          font-family: 'Arial', sans-serif;
-          overflow: hidden;
-        }
-
-        .hud-container {
-          position: absolute;
-          left: 20px;
-          top: 20px;
-          z-index: 1000;
-        }
-
-        .hud-main {
-          background: rgba(255,255,255,0.95);
-          padding: 12px 20px;
-          border-radius: 15px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-          font-size: 14px;
-          font-weight: bold;
-          color: #8b4513;
-          border: 2px solid #d2b48c;
-          backdrop-filter: blur(10px);
-          margin-bottom: 10px;
-        }
-
-        .hud-stats {
-          display: flex;
-          gap: 10px;
-        }
-
-        .stat-item {
-          background: rgba(255,255,255,0.9);
-          padding: 10px;
-          border-radius: 10px;
-          text-align: center;
-          min-width: 80px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        .stat-icon { font-size: 20px; margin-bottom: 5px; }
-        .stat-value { font-size: 16px; font-weight: bold; color: #2c3e50; }
-        .stat-label { font-size: 11px; color: #7f8c8d; }
-
-        .settings-panel {
-          position: absolute;
-          right: 100px;
-          top: 20px;
-          z-index: 999;
-          background: rgba(255,255,255,0.95);
-          padding: 20px;
-          border-radius: 15px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-          min-width: 250px;
-          border: 2px solid #d2b48c;
-          backdrop-filter: blur(10px);
-        }
-
-        .settings-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 16px;
-        }
-
-        .settings-header h3 {
-          margin: 0;
-          color: #8b4513;
-          font-size: 18px;
-        }
-
-        .settings-header button {
-          background: none;
-          border: none;
-          font-size: 20px;
-          cursor: pointer;
-          color: #8b4513;
-          font-weight: bold;
-        }
-
-        .control-group {
-          margin-bottom: 15px;
-        }
-
-        .control-group label {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 13px;
-          font-weight: bold;
-          color: #8b4513;
-        }
-
-        .control-group select {
-          width: 100%;
-          padding: 8px;
-          border-radius: 8px;
-          border: 2px solid #d2b48c;
-          font-size: 13px;
-          background: white;
-          color: #8b4513;
-        }
-
-        .navigation-group {
-          margin-top: 15px;
-        }
-
-        .navigation-group label {
-          display: block;
-          margin-bottom: 6px;
-          font-size: 13px;
-          font-weight: bold;
-          color: #8b4513;
-        }
-
-        .navigation-group button {
-          width: 100%;
-          background: linear-gradient(135deg, #d2691e, #8b4513);
-          color: white;
-          border: none;
-          padding: 8px 10px;
-          border-radius: 8px;
-          cursor: pointer;
-          margin-bottom: 5px;
-          font-size: 12px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-          text-align: left;
-        }
-
-        .navigation-group button:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-
-        .info-panel {
-          background: rgba(255,255,255,0.95);
-          padding: 20px;
-          border-radius: 15px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-          min-width: 300px;
-          text-align: center;
-          color: #2c3e50;
-          border: 2px solid;
-          backdrop-filter: blur(10px);
-        }
-
-        .info-panel h3 {
-          margin: 0 0 15px 0;
-          font-size: 18px;
-        }
-
-        .info-panel.cultural { border-color: #d4af37; }
-        .info-panel.medical { border-color: #e74c3c; }
-        .info-panel.education { border-color: #f39c12; }
-        .info-panel.water { border-color: #3498db; }
-        .info-panel.waste { border-color: #27ae60; }
-
-        .info-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 10px;
-          margin-bottom: 15px;
-        }
-
-        .cultural-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 15px;
-          margin-bottom: 15px;
-        }
-
-        .culture-card {
-          padding: 10px;
-          border-radius: 8px;
-          text-align: center;
-          box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-          color: white;
-        }
-
-        .culture-icon { font-size: 24px; margin-bottom: 5px; }
-        .culture-name { font-weight: bold; font-size: 14px; }
-        .culture-desc { font-size: 11px; opacity: 0.9; }
-
-        .feature-list {
-          background: rgba(52, 152, 219, 0.1);
-          padding: 12px;
-          border-radius: 8px;
-          font-size: 12px;
-          border: 1px solid;
-        }
-
-        .stats-panel {
-          margin-top: 10px;
-          background: rgba(255,255,255,0.2);
-          padding: 8px;
-          border-radius: 6px;
-          font-size: 11px;
-        }
-
-        .settings-icon {
-          position: absolute;
-          right: 25px;
-          top: 25px;
-          z-index: 1000;
-          background: rgba(255,255,255,0.95);
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-          cursor: pointer;
-          font-size: 28px;
-          transition: all 0.3s ease;
-          border: 2px solid #d2b48c;
-          backdrop-filter: blur(10px);
-        }
-
-        .info-bottom {
-          position: absolute;
-          left: 20px;
-          bottom: 20px;
-          z-index: 1000;
-          background: rgba(255,255,255,0.95);
-          padding: 20px;
-          border-radius: 15px;
-          box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-          border: 2px solid #d2b48c;
-          backdrop-filter: blur(10px);
-          max-width: 400px;
-        }
-
-        .info-bottom div {
-          font-size: 12px;
-          color: #a67c52;
-          margin-bottom: 6px;
-        }
-      `}</style>
-
+    <div style={{ 
+      width: '100vw', 
+      height: '100vh', 
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <style>
+        {`
+          * {
+            box-sizing: border-box;
+          }
+          body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+          }
+        `}
+      </style>
+      
       <HUD />
       
-      <div className="settings-icon" onClick={() => setShowCityControl(true)}>
+      <div 
+        style={{
+          position: 'absolute',
+          right: 25,
+          top: 25,
+          zIndex: 1000,
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '50%',
+          width: '60px',
+          height: '60px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 8px 25px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+          fontSize: '28px',
+          transition: 'all 0.3s ease',
+          border: '2px solid #d2b48c',
+          backdropFilter: 'blur(10px)'
+        }}
+        onClick={() => setShowCityControl(true)}
+      >
         ⚙️
       </div>
       
@@ -1467,7 +1332,15 @@ export default function App() {
         
         <Suspense fallback={
           <Html center>
-            <div className="info-panel">
+            <div style={{ 
+              color: 'white', 
+              fontSize: '20px', 
+              background: 'rgba(139, 69, 19, 0.9)', 
+              padding: '25px', 
+              borderRadius: '15px',
+              boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
+              fontWeight: 'bold'
+            }}>
               🏙️ Loading Smart City...
             </div>
           </Html>
@@ -1499,12 +1372,34 @@ export default function App() {
         />
       </Canvas>
 
-      <div className="info-bottom">
-        <div>🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus</div>
-        <div>🌟 Features: Cultural Center • Hospital • School • Vertical Garden</div>
-        <div>💧 Water Treatment Plant • Waste Management System</div>
-        <div>⚡ Solar Panels • Wind Turbines • Modern Infrastructure</div>
-        <div>🏥 Medical Care • 🏫 Education • 🌿 Sustainable Living</div>
+      <div style={{ 
+        position: 'absolute', 
+        left: 20, 
+        bottom: 20, 
+        zIndex: 1000, 
+        background: 'rgba(255,255,255,0.95)', 
+        padding: 20, 
+        borderRadius: '15px', 
+        boxShadow: '0 8px 25px rgba(0,0,0,0.1)',
+        border: '2px solid #d2b48c',
+        backdropFilter: 'blur(10px)',
+        maxWidth: '400px'
+      }}>
+        <div style={{ fontSize: 14, fontWeight: 'bold', color: '#8b4513', marginBottom: 8 }}>
+          🎮 Controls: Drag to rotate • Scroll to zoom • Click buildings to focus
+        </div>
+        <div style={{ fontSize: 12, color: '#a67c52', marginBottom: 6 }}>
+          🌟 Features: Vertical Farming • Cultural Center • Waste Management
+        </div>
+        <div style={{ fontSize: 12, color: '#27ae60', marginBottom: 6 }}>
+          🌿 Vertical Farm: Hydroponic technology with 85% water savings
+        </div>
+        <div style={{ fontSize: 12, color: '#d4af37', marginBottom: 6 }}>
+          🎪 Cultural Center: 6 regional cultures with traditional arts
+        </div>
+        <div style={{ fontSize: 12, color: '#3498db' }}>
+          ⚙️ Click settings icon (top-right) for city controls
+        </div>
       </div>
     </div>
   )
