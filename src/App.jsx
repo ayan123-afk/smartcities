@@ -1218,14 +1218,20 @@ function VerticalGardenBuilding({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- ENHANCED MODERN HOSPITAL ----- */
+/* ----- ENHANCED MODERN SMART HOSPITAL ----- */
 function ModernHospital({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
+  const [emergencyLights, setEmergencyLights] = useState(false)
   
+  // Emergency lights animation
+  useFrame(({ clock }) => {
+    setEmergencyLights(Math.sin(clock.getElapsedTime() * 5) > 0)
+  })
+
   return (
     <group position={position}>
-      {/* Main Hospital Building */}
+      {/* Main Hospital Building - Modern Glass and Steel */}
       <mesh 
         castShadow 
         receiveShadow 
@@ -1236,37 +1242,62 @@ function ModernHospital({ position = [0, 0, 0] }) {
           lookAt: { x: position[0], y: 0, z: position[2] }
         })}
       >
-        <boxGeometry args={[20, 12, 15]} />
-        <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.1} />
+        <boxGeometry args={[25, 16, 18]} />
+        <meshStandardMaterial 
+          color="#ffffff" 
+          roughness={0.2} 
+          metalness={0.8}
+          transparent
+          opacity={0.9}
+        />
       </mesh>
 
-      {/* Enhanced Hospital Windows with Night Lighting */}
-      {Array.from({ length: 4 }).map((_, floor) =>
+      {/* Building Frame Structure */}
+      <group>
+        {/* Vertical Frames */}
+        {[-10, -5, 0, 5, 10].map((x) => (
+          <mesh key={`vertical-${x}`} position={[x, 0, 0]} castShadow>
+            <boxGeometry args={[0.3, 16, 18.2]} />
+            <meshStandardMaterial color="#2c3e50" metalness={0.7} />
+          </mesh>
+        ))}
+        
+        {/* Horizontal Frames */}
+        {[-6, 0, 6].map((y) => (
+          <mesh key={`horizontal-${y}`} position={[0, y, 0]} castShadow>
+            <boxGeometry args={[25.2, 0.3, 18.2]} />
+            <meshStandardMaterial color="#2c3e50" metalness={0.7} />
+          </mesh>
+        ))}
+      </group>
+
+      {/* Enhanced Hospital Windows with Smart Lighting */}
+      {Array.from({ length: 5 }).map((_, floor) =>
         Array.from({ length: 8 }).map((_, window) => (
           <group key={`${floor}-${window}`}>
             <mesh
-              position={[-8.5, -4 + floor * 3, -6 + window * 1.7]}
+              position={[-11.01, -6 + floor * 3, -7.5 + window * 2]}
               castShadow
             >
-              <boxGeometry args={[0.1, 1.5, 1.2]} />
+              <boxGeometry args={[0.1, 2, 1.5]} />
               <meshStandardMaterial 
-                color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                color={timeOfDay === 'night' ? "#00ff00" : "#87CEEB"} 
                 transparent 
                 opacity={timeOfDay === 'night' ? 0.9 : 0.8}
-                emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                emissive={timeOfDay === 'night' ? "#00ff00" : "#000000"}
                 emissiveIntensity={timeOfDay === 'night' ? 0.7 : 0}
               />
             </mesh>
             <mesh
-              position={[8.5, -4 + floor * 3, -6 + window * 1.7]}
+              position={[11.01, -6 + floor * 3, -7.5 + window * 2]}
               castShadow
             >
-              <boxGeometry args={[0.1, 1.5, 1.2]} />
+              <boxGeometry args={[0.1, 2, 1.5]} />
               <meshStandardMaterial 
-                color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                color={timeOfDay === 'night' ? "#00ff00" : "#87CEEB"} 
                 transparent 
                 opacity={timeOfDay === 'night' ? 0.9 : 0.8}
-                emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                emissive={timeOfDay === 'night' ? "#00ff00" : "#000000"}
                 emissiveIntensity={timeOfDay === 'night' ? 0.7 : 0}
               />
             </mesh>
@@ -1274,238 +1305,455 @@ function ModernHospital({ position = [0, 0, 0] }) {
         ))
       )}
 
-      {/* Hospital Entrance */}
-      <mesh position={[0, -2, 7.6]} castShadow receiveShadow>
-        <boxGeometry args={[6, 4, 0.2]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-
-      {/* Emergency Entrance */}
-      <mesh position={[-5, -2, 7.6]} castShadow receiveShadow>
-        <boxGeometry args={[3, 3, 0.2]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-
-      {/* Helipad on Roof */}
-      <mesh position={[0, 6.5, 0]} castShadow receiveShadow>
-        <cylinderGeometry args={[3, 3, 0.2, 32]} />
-        <meshStandardMaterial color="#34495e" />
-      </mesh>
-
-      <mesh position={[0, 6.6, 0]} castShadow>
-        <ringGeometry args={[2.5, 3, 32]} />
-        <meshStandardMaterial color="#e74c3c" />
-      </mesh>
-
-      <Text
-        position={[0, 6.8, 0]}
-        fontSize={0.5}
-        color="#e74c3c"
-        anchorX="center"
-        anchorY="middle"
-      >
-        H
-      </Text>
-
-      {/* Red Cross Symbol */}
-      <group position={[0, 3, 7.7]}>
-        <mesh rotation={[0, 0, 0]} castShadow>
-          <boxGeometry args={[4, 0.5, 0.1]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-        <mesh rotation={[0, 0, Math.PI/2]} castShadow>
-          <boxGeometry args={[4, 0.5, 0.1]} />
-          <meshStandardMaterial color="#e74c3c" />
-        </mesh>
-      </group>
-
-      {/* Wheelchair Ramp */}
-      <group position={[0, -0.5, 5]}>
-        {[0, 0.2, 0.4, 0.6, 0.8, 1.0].map((y, i) => (
-          <mesh key={i} position={[0, y, -i * 0.5]} castShadow receiveShadow>
-            <boxGeometry args={[6, 0.1, 0.5]} />
-            <meshStandardMaterial color="#95a5a6" />
-          </mesh>
-        ))}
-        
-        <mesh position={[0.8, 0.35, -1.25]} rotation={[0, 0, -Math.PI/8]} castShadow receiveShadow>
-          <boxGeometry args={[0.8, 0.1, 1.2]} />
-          <meshStandardMaterial color="#bdc3c7" />
-        </mesh>
-      </group>
-
-      {/* Ambulance */}
-      <group position={[-8, 0.5, 5]}>
-        <mesh castShadow>
-          <boxGeometry args={[3, 1.2, 1.5]} />
-          <meshStandardMaterial color="#e74c3c" metalness={0.3} roughness={0.4} />
+      {/* Main Entrance - Modern Design */}
+      <group position={[0, -4, 9.1]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[8, 6, 0.2]} />
+          <meshStandardMaterial color="#3498db" metalness={0.6} />
         </mesh>
         
-        <mesh position={[0.5, 0.8, 0]} castShadow>
-          <boxGeometry args={[1.5, 0.8, 1.2]} />
-          <meshStandardMaterial color="#ffffff" />
+        {/* Automatic Glass Doors */}
+        <mesh position={[-2, 0, 0.11]} castShadow>
+          <boxGeometry args={[1.5, 4, 0.05]} />
+          <meshStandardMaterial color="#ecf0f1" transparent opacity={0.8} />
         </mesh>
+        <mesh position={[2, 0, 0.11]} castShadow>
+          <boxGeometry args={[1.5, 4, 0.05]} />
+          <meshStandardMaterial color="#ecf0f1" transparent opacity={0.8} />
+        </mesh>
+      </mesh>
 
+      {/* Emergency Entrance with Red Accents */}
+      <group position={[-8, -4, 9.1]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[5, 4, 0.2]} />
+          <meshStandardMaterial color={emergencyLights ? "#e74c3c" : "#c0392b"} />
+        </mesh>
+        
         <Text
-          position={[0, 1.2, 0]}
-          fontSize={0.2}
+          position={[0, 1.5, 0.11]}
+          fontSize={0.4}
           color="white"
           anchorX="center"
           anchorY="middle"
         >
-          AMBULANCE
+          🚨 EMERGENCY
+        </Text>
+      </group>
+
+      {/* Helipad on Roof with Rotating Light */}
+      <group position={[0, 8.5, 0]}>
+        <mesh castShadow receiveShadow>
+          <cylinderGeometry args={[4, 4, 0.3, 32]} />
+          <meshStandardMaterial color="#34495e" metalness={0.7} />
+        </mesh>
+
+        <mesh position={[0, 0.16, 0]} castShadow>
+          <ringGeometry args={[3, 3.5, 32]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+
+        <Text
+          position={[0, 0.2, 0]}
+          fontSize={0.6}
+          color="#e74c3c"
+          anchorX="center"
+          anchorY="middle"
+        >
+          🚁
         </Text>
 
-        {[-0.8, 0.8].map((x, i) => (
-          <group key={i} position={[x, -0.3, 0]}>
+        {/* Rotating Emergency Light */}
+        <mesh position={[0, 2, 0]} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 0.5, 16]} />
+          <meshStandardMaterial 
+            color={emergencyLights ? "#e74c3c" : "#ff4444"}
+            emissive={emergencyLights ? "#e74c3c" : "#ff4444"}
+            emissiveIntensity={1}
+          />
+        </mesh>
+      </group>
+
+      {/* Medical Wing Extensions */}
+      <group position={[15, 0, 0]}>
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[8, 12, 12]} />
+          <meshStandardMaterial color="#ecf0f1" roughness={0.3} metalness={0.6} />
+        </mesh>
+        
+        {/* Medical Wing Windows */}
+        {Array.from({ length: 4 }).map((_, floor) =>
+          Array.from({ length: 4 }).map((_, window) => (
+            <mesh
+              key={`wing-${floor}-${window}`}
+              position={[4.01, -4 + floor * 2.5, -4.5 + window * 3]}
+              castShadow
+            >
+              <boxGeometry args={[0.1, 1.8, 2]} />
+              <meshStandardMaterial 
+                color={timeOfDay === 'night' ? "#ffffcc" : "#87CEEB"} 
+                transparent 
+                opacity={0.8}
+                emissive={timeOfDay === 'night' ? "#ffff99" : "#000000"}
+                emissiveIntensity={timeOfDay === 'night' ? 0.5 : 0}
+              />
+            </mesh>
+          ))
+        )}
+      </group>
+
+      {/* Solar Panels on Roof */}
+      <group position={[0, 8.8, 0]}>
+        <SolarPanel position={[-8, 0, -6]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[-4, 0, -6]} rotation={[0, 0, 0]} />
+        <SolarPanel position={[0, 0, -6]} rotation={[0, -Math.PI/4, 0]} />
+        <SolarPanel position={[4, 0, -6]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[8, 0, -6]} rotation={[0, 0, 0]} />
+      </group>
+
+      {/* Red Cross Symbol - Modern Design */}
+      <group position={[0, 4, 9.2]}>
+        <mesh rotation={[0, 0, 0]} castShadow>
+          <boxGeometry args={[6, 1, 0.1]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        <mesh rotation={[0, 0, Math.PI/2]} castShadow>
+          <boxGeometry args={[6, 1, 0.1]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+      </group>
+
+      {/* Wheelchair Ramp - Modern Design */}
+      <group position={[0, -1, 6]}>
+        {[0, 0.15, 0.3, 0.45, 0.6, 0.75, 0.9].map((y, i) => (
+          <mesh key={i} position={[0, y, -i * 0.4]} castShadow receiveShadow>
+            <boxGeometry args={[8, 0.1, 0.4]} />
+            <meshStandardMaterial color="#7f8c8d" metalness={0.3} />
+          </mesh>
+        ))}
+        
+        {/* Modern Handrails */}
+        <mesh position={[4.2, 0.5, -1.2]} castShadow>
+          <boxGeometry args={[0.1, 1, 2.8]} />
+          <meshStandardMaterial color="#3498db" metalness={0.7} />
+        </mesh>
+        <mesh position={[-4.2, 0.5, -1.2]} castShadow>
+          <boxGeometry args={[0.1, 1, 2.8]} />
+          <meshStandardMaterial color="#3498db" metalness={0.7} />
+        </mesh>
+      </group>
+
+      {/* Smart Ambulance */}
+      <group position={[-12, 0.8, 8]}>
+        <mesh castShadow>
+          <boxGeometry args={[4, 1.5, 2]} />
+          <meshStandardMaterial color="#e74c3c" metalness={0.4} roughness={0.3} />
+        </mesh>
+        
+        <mesh position={[0.8, 1, 0]} castShadow>
+          <boxGeometry args={[2, 1, 1.8]} />
+          <meshStandardMaterial color="#ffffff" />
+        </mesh>
+
+        {/* Emergency Lights */}
+        <mesh position={[0, 1.8, 0]} castShadow>
+          <boxGeometry args={[0.8, 0.2, 1]} />
+          <meshStandardMaterial 
+            color={emergencyLights ? "#ff4444" : "#e74c3c"}
+            emissive={emergencyLights ? "#ff4444" : "#e74c3c"}
+            emissiveIntensity={1}
+          />
+        </mesh>
+
+        <Text
+          position={[0, 1.5, 0]}
+          fontSize={0.25}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          SMART AMBULANCE
+        </Text>
+
+        {[-1.2, 1.2].map((x, i) => (
+          <group key={i} position={[x, -0.4, 0]}>
             <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-              <cylinderGeometry args={[0.25, 0.25, 0.2, 8]} />
-              <meshStandardMaterial color="#333333" />
+              <cylinderGeometry args={[0.3, 0.3, 0.25, 16]} />
+              <meshStandardMaterial color="#2c3e50" metalness={0.8} />
             </mesh>
           </group>
         ))}
       </group>
 
       {/* Patients and Medical Staff */}
-      <WheelchairUser position={[2, 0, 3]} moving={true} />
+      <WheelchairUser position={[3, 0, 5]} moving={true} />
       
-      <group position={[-2, 0.5, 4]}>
-        <mesh position={[0, 0.9, 0]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
-          <meshStandardMaterial color="#ffffff" />
+      <group position={[-2, 0.8, 6]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.25, 0.25, 1, 8]} />
+          <meshStandardMaterial color="#ffffff" metalness={0.3} />
         </mesh>
         
-        <mesh position={[0, 1.5, 0]} castShadow>
-          <sphereGeometry args={[0.15, 8, 8]} />
+        <mesh position={[0, 1.6, 0]} castShadow>
+          <sphereGeometry args={[0.2, 16, 16]} />
           <meshStandardMaterial color="#ffdbac" />
         </mesh>
         
-        <Text position={[0, 1.8, 0]} fontSize={0.2} color="white" anchorX="center">
+        <Text position={[0, 2, 0]} fontSize={0.3} color="white" anchorX="center">
           👨‍⚕️
         </Text>
+        
+        {/* Medical Tablet */}
+        <mesh position={[0.4, 1.2, 0]} castShadow>
+          <boxGeometry args={[0.3, 0.4, 0.05]} />
+          <meshStandardMaterial color="#3498db" />
+        </mesh>
       </group>
 
-      <Html position={[0, 16, 0]} transform>
+      {/* Medical Drone */}
+      <group position={[5, 4, 8]}>
+        <mesh castShadow>
+          <boxGeometry args={[0.6, 0.1, 0.6]} />
+          <meshStandardMaterial color="#2c3e50" metalness={0.8} />
+        </mesh>
+        
+        <mesh position={[0, 0.1, 0]} castShadow>
+          <sphereGeometry args={[0.15, 8, 8]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        
+        <Text position={[0, 0.3, 0]} fontSize={0.2} color="white" anchorX="center">
+          🚁
+        </Text>
+        
+        <pointLight 
+          position={[0, -0.2, 0]} 
+          color="#00ff00"
+          intensity={0.5}
+          distance={3}
+        />
+      </group>
+
+      <Html position={[0, 20, 0]} transform>
         <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
+          background: 'linear-gradient(135deg, #3498db, #2c3e50)',
+          padding: '25px',
+          borderRadius: '20px',
+          boxShadow: '0 12px 35px rgba(0,0,0,0.4)',
+          minWidth: '380px',
           textAlign: 'center',
-          color: '#2c3e50',
-          border: '2px solid #e74c3c'
+          color: 'white',
+          border: '3px solid #e74c3c',
+          backdropFilter: 'blur(10px)'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#e74c3c', fontSize: '18px' }}>
-            🏥 Modern Hospital
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            color: 'white', 
+            fontSize: '22px',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            🏥 Smart City Hospital
           </h3>
           
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: '10px',
-            marginBottom: '15px'
+            gap: '15px',
+            marginBottom: '20px'
           }}>
             <div style={{ textAlign: 'left' }}>
-              <div>🚑 Emergency Services: 24/7</div>
-              <div>👨‍⚕️ Medical Staff: 150+</div>
-              <div>🛏️ Beds: 300</div>
-              <div>🔬 Operating Rooms: 12</div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🚑</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Emergency Services</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>24/7 Available</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>👨‍⚕️</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Medical Staff</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>200+ Professionals</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🛏️</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Smart Beds</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>500 IoT Enabled</div>
+                </div>
+              </div>
             </div>
             
             <div style={{ textAlign: 'left' }}>
-              <div>💊 Pharmacy: Available</div>
-              <div>🧬 Research: Active</div>
-              <div>🚁 Helipad: Operational</div>
-              <div>♿ Accessibility: Full</div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>💊</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Pharmacy</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>Automated Dispensing</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🧬</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Research</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>AI Diagnostics</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🚁</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Helipad</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>Drone Medical Delivery</div>
+                </div>
+              </div>
             </div>
           </div>
 
           <div style={{ 
-            background: 'rgba(231, 76, 60, 0.1)', 
-            padding: '12px', 
-            borderRadius: '8px',
-            fontSize: '12px',
-            border: '1px solid #e74c3c'
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '15px', 
+            borderRadius: '12px',
+            marginBottom: '15px',
+            border: '1px solid rgba(255,255,255,0.3)'
           }}>
-            <div><strong>🏗️ Facilities:</strong></div>
-            <div>✅ Emergency & Trauma Center</div>
-            <div>✅ Surgical Department</div>
-            <div>✅ Pediatric Care</div>
-            <div>✅ Cardiology Unit</div>
-            <div>✅ Rehabilitation Center</div>
+            <h4 style={{ margin: '0 0 12px 0', color: 'white', fontSize: '16px' }}>🏗️ Smart Facilities</h4>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '8px',
+              fontSize: '12px'
+            }}>
+              <div>✅ AI Emergency Center</div>
+              <div>✅ Robotic Surgery</div>
+              <div>✅ Pediatric Care</div>
+              <div>✅ Cardiology Unit</div>
+              <div>✅ Rehabilitation</div>
+              <div>✅ Telemedicine</div>
+            </div>
           </div>
 
           <div style={{ 
-            marginTop: '10px',
-            background: 'rgba(52, 152, 219, 0.1)', 
-            padding: '8px', 
-            borderRadius: '6px',
-            fontSize: '11px'
+            background: 'rgba(231, 76, 60, 0.3)', 
+            padding: '12px', 
+            borderRadius: '10px',
+            fontSize: '13px',
+            border: '1px solid #e74c3c'
           }}>
-            <div><strong>♿ Accessibility Features:</strong></div>
-            <div>Wheelchair Ramps • Automatic Doors • Accessible Restrooms</div>
-            <div>Elevators • Braille Signage • Hearing Assistance</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>♿ Accessibility Features</div>
+            <div style={{ fontSize: '11px', opacity: 0.9 }}>
+              Smart Wheelchair Ramps • Automatic Doors • Accessible Restrooms • 
+              Elevators • Braille Signage • Hearing Assistance • AI Navigation
+            </div>
+          </div>
+
+          {/* Real-time Status */}
+          <div style={{ 
+            marginTop: '15px',
+            padding: '10px',
+            background: 'rgba(46, 204, 113, 0.2)',
+            borderRadius: '8px',
+            border: '1px solid #27ae60'
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold' }}>📊 REAL-TIME STATUS</div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              marginTop: '5px'
+            }}>
+              <span>🟢 Operational: 98%</span>
+              <span>⚡ Power: Solar</span>
+              <span>🏥 Beds: 65%</span>
+            </div>
           </div>
         </div>
       </Html>
 
       <Text
-        position={[0, 8, 0]}
-        fontSize={0.6}
-        color="#e74c3c"
+        position={[0, 10, 0]}
+        fontSize={0.8}
+        color="#3498db"
         anchorX="center"
         anchorY="middle"
+        font="/fonts/inter-bold.woff"
       >
-        🏥 Modern Hospital
+        🏥 SMART HOSPITAL
       </Text>
+
+      {/* Green Energy Indicator */}
+      <group position={[0, 12, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.5, 0.5, 0.2, 16]} />
+          <meshStandardMaterial color="#27ae60" />
+        </mesh>
+        <Text
+          position={[0, 0.2, 0]}
+          fontSize={0.3}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          ☀️
+        </Text>
+      </group>
     </group>
   )
 }
 
-/* ----- ENHANCED INCLUSIVE GLASS SCHOOL ----- */
+/* ----- ENHANCED MODERN GLASS SCHOOL ----- */
 function InclusiveGlassSchool({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
+  const [schoolLights, setSchoolLights] = useState(false)
   
+  // School lights animation
+  useFrame(({ clock }) => {
+    setSchoolLights(Math.sin(clock.getElapsedTime() * 3) > 0)
+  })
+
   return (
     <group position={position}>
-      {/* Main School Building - Glass Structure */}
+      {/* Main School Building - Modern Glass Architecture */}
       <mesh 
         castShadow 
         receiveShadow 
         onClick={() => setFocus({
           x: position[0],
-          y: 10,
+          y: 12,
           z: position[2],
           lookAt: { x: position[0], y: 0, z: position[2] }
         })}
       >
-        <boxGeometry args={[18, 8, 12]} />
+        <boxGeometry args={[22, 10, 15]} />
         <meshStandardMaterial 
-          color="#ffffff" 
+          color="#87CEEB" 
           transparent 
-          opacity={0.3}
+          opacity={0.4}
           roughness={0.1}
           metalness={0.9}
         />
       </mesh>
 
-      {/* Enhanced Glass Frame Structure with Night Lighting */}
+      {/* Enhanced Modern Frame Structure */}
       <group>
-        {/* Vertical Frames */}
-        {[-7, 0, 7].map((x) => (
+        {/* Vertical Frames - Blue Accent */}
+        {[-9, -4.5, 0, 4.5, 9].map((x) => (
           <mesh key={`vertical-${x}`} position={[x, 0, 0]} castShadow>
-            <boxGeometry args={[0.3, 8, 12.2]} />
-            <meshStandardMaterial color="#34495e" />
+            <boxGeometry args={[0.4, 10, 15.2]} />
+            <meshStandardMaterial color="#3498db" metalness={0.8} />
           </mesh>
         ))}
         
         {/* Horizontal Frames */}
-        {[-3, 0, 3].map((y) => (
+        {[-3.5, 0, 3.5].map((y) => (
           <mesh key={`horizontal-${y}`} position={[0, y, 0]} castShadow>
-            <boxGeometry args={[18.2, 0.3, 12.2]} />
-            <meshStandardMaterial color="#34495e" />
+            <boxGeometry args={[22.2, 0.4, 15.2]} />
+            <meshStandardMaterial color="#3498db" metalness={0.8} />
           </mesh>
         ))}
 
@@ -1513,12 +1761,12 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
         {timeOfDay === 'night' && (
           <>
             {Array.from({ length: 3 }).map((_, floor) =>
-              Array.from({ length: 6 }).map((_, window) => (
+              Array.from({ length: 8 }).map((_, window) => (
                 <pointLight
                   key={`${floor}-${window}`}
-                  position={[-6 + window * 2.4, -2 + floor * 2.5, 5.9]}
-                  intensity={0.3}
-                  distance={3}
+                  position={[-9 + window * 2.5, -3 + floor * 3, 7.6]}
+                  intensity={0.4}
+                  distance={4}
                   color="#ffffcc"
                 />
               ))
@@ -1527,224 +1775,426 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
         )}
       </group>
 
-      {/* School Entrance with Ramp */}
-      <group position={[0, -1, 6]}>
-        {/* Main Entrance */}
-        <mesh position={[0, 1, 0.1]} castShadow receiveShadow>
-          <boxGeometry args={[4, 3, 0.2]} />
-          <meshStandardMaterial color="#3498db" />
+      {/* Colorful Accent Walls */}
+      <group>
+        {/* Blue Accent Wall */}
+        <mesh position={[0, 0, -7.6]} castShadow>
+          <boxGeometry args={[22, 10, 0.4]} />
+          <meshStandardMaterial color="#3498db" metalness={0.6} />
         </mesh>
-
-        {/* Wheelchair Ramp */}
-        {[0, 0.15, 0.3, 0.45, 0.6, 0.75].map((y, i) => (
-          <mesh key={i} position={[0, y, -i * 0.6]} castShadow receiveShadow>
-            <boxGeometry args={[3, 0.1, 0.6]} />
-            <meshStandardMaterial color="#7f8c8d" />
+        
+        {/* Green Accent Strips */}
+        {[-8, 8].map((x) => (
+          <mesh key={x} position={[x, 3, -7.5]} castShadow>
+            <boxGeometry args={[0.3, 6, 0.2]} />
+            <meshStandardMaterial color="#27ae60" metalness={0.7} />
           </mesh>
         ))}
-
-        {/* Ramp Handrails */}
-        <mesh position={[1.6, 0.4, -1.5]} castShadow>
-          <boxGeometry args={[0.1, 0.8, 3]} />
-          <meshStandardMaterial color="#2c3e50" />
-        </mesh>
-        <mesh position={[-1.6, 0.4, -1.5]} castShadow>
-          <boxGeometry args={[0.1, 0.8, 3]} />
-          <meshStandardMaterial color="#2c3e50" />
-        </mesh>
       </group>
 
-      {/* School Playground */}
-      <mesh position={[12, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#27ae60" />
-      </mesh>
-
-      {/* Playground Equipment */}
-      <group position={[12, 0, 0]}>
-        {/* Swing Set */}
-        <mesh position={[0, 2, 2]} castShadow>
-          <boxGeometry args={[4, 0.1, 0.1]} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        
-        <mesh position={[-1.5, 1, 2]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        
-        <mesh position={[1.5, 1, 2]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
-          <meshStandardMaterial color="#8b4513" />
+      {/* Modern School Entrance with Colorful Design */}
+      <group position={[0, -2, 7.6]}>
+        {/* Main Entrance Structure */}
+        <mesh castShadow receiveShadow>
+          <boxGeometry args={[6, 5, 0.3]} />
+          <meshStandardMaterial color="#2c3e50" metalness={0.7} />
         </mesh>
 
-        {/* Slide */}
-        <mesh position={[3, 0, -2]} rotation={[0, 0, -Math.PI/4]} castShadow receiveShadow>
-          <boxGeometry args={[0.3, 4, 1]} />
-          <meshStandardMaterial color="#3498db" />
+        {/* Colorful Entrance Doors */}
+        <mesh position={[-1.8, 0, 0.16]} castShadow>
+          <boxGeometry args={[1.2, 3.5, 0.1]} />
+          <meshStandardMaterial color="#e74c3c" metalness={0.5} />
+        </mesh>
+        <mesh position={[1.8, 0, 0.16]} castShadow>
+          <boxGeometry args={[1.2, 3.5, 0.1]} />
+          <meshStandardMaterial color="#3498db" metalness={0.5} />
         </mesh>
 
-        {/* Accessible Swing */}
-        <group position={[0, 0.5, -2]}>
-          <mesh castShadow>
-            <boxGeometry args={[1.2, 0.1, 0.8]} />
-            <meshStandardMaterial color="#e74c3c" />
-          </mesh>
-          
-          <mesh position={[0, 0.7, -0.1]} castShadow>
-            <boxGeometry args={[1, 0.4, 0.5]} />
-            <meshStandardMaterial color="#3498db" />
-          </mesh>
-          
-          <Text position={[0, 1, 0]} fontSize={0.2} color="white" anchorX="center">
-            ♿
-          </Text>
-        </group>
-      </group>
-
-      {/* Solar Panels on Roof */}
-      <group position={[0, 4.5, 0]}>
-        <SolarPanel position={[-6, 0, -4]} rotation={[0, Math.PI/4, 0]} />
-        <SolarPanel position={[0, 0, -4]} rotation={[0, 0, 0]} />
-        <SolarPanel position={[6, 0, -4]} rotation={[0, -Math.PI/4, 0]} />
-      </group>
-
-      {/* Students and Teachers */}
-      <WheelchairUser position={[-5, 0, 3]} moving={true} />
-      
-      <group position={[5, 0.5, 3]}>
-        <mesh position={[0, 0.9, 0]} castShadow>
-          <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
-          <meshStandardMaterial color="#8b4513" />
-        </mesh>
-        
-        <mesh position={[0, 1.5, 0]} castShadow>
-          <sphereGeometry args={[0.15, 8, 8]} />
-          <meshStandardMaterial color="#ffdbac" />
-        </mesh>
-        
-        <Text position={[0, 1.8, 0]} fontSize={0.2} color="white" anchorX="center">
-          👩‍🏫
-        </Text>
-      </group>
-
-      {/* School Bus */}
-      <group position={[-10, 0.5, 0]}>
-        <mesh castShadow>
-          <boxGeometry args={[3, 1.5, 1.5]} />
-          <meshStandardMaterial color="#FFD700" metalness={0.3} roughness={0.4} />
-        </mesh>
-
-        <mesh position={[0.5, 1, 0]} castShadow>
-          <boxGeometry args={[1.5, 0.8, 1.2]} />
-          <meshStandardMaterial color="#2c3e50" transparent opacity={0.7} />
-        </mesh>
-
+        {/* School Logo */}
         <Text
-          position={[0, 1.8, 0]}
-          fontSize={0.2}
-          color="white"
+          position={[0, 2.5, 0.16]}
+          fontSize={0.4}
+          color="#f39c12"
           anchorX="center"
           anchorY="middle"
         >
-          SCHOOL BUS
+          🎓
+        </Text>
+      </group>
+
+      {/* Modern Wheelchair Ramp with Colorful Design */}
+      <group position={[0, -1.5, 5]}>
+        {[0, 0.12, 0.24, 0.36, 0.48, 0.6, 0.72].map((y, i) => (
+          <mesh key={i} position={[0, y, -i * 0.35]} castShadow receiveShadow>
+            <boxGeometry args={[5, 0.1, 0.35]} />
+            <meshStandardMaterial 
+              color={i % 2 === 0 ? "#3498db" : "#27ae60"} 
+              metalness={0.4}
+            />
+          </mesh>
+        ))}
+
+        {/* Modern Handrails */}
+        <mesh position={[2.6, 0.4, -1.1]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 2.5]} />
+          <meshStandardMaterial color="#e74c3c" metalness={0.8} />
+        </mesh>
+        <mesh position={[-2.6, 0.4, -1.1]} castShadow>
+          <boxGeometry args={[0.1, 0.8, 2.5]} />
+          <meshStandardMaterial color="#e74c3c" metalness={0.8} />
+        </mesh>
+      </group>
+
+      {/* Colorful Playground */}
+      <mesh position={[15, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[12, 10]} />
+        <meshStandardMaterial color="#27ae60" />
+      </mesh>
+
+      {/* Modern Playground Equipment */}
+      <group position={[15, 0, 0]}>
+        {/* Colorful Swing Set */}
+        <mesh position={[0, 2.5, 3]} castShadow>
+          <boxGeometry args={[5, 0.1, 0.1]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        
+        <mesh position={[-2, 1.2, 3]} castShadow>
+          <cylinderGeometry args={[0.15, 0.15, 2.5, 16]} />
+          <meshStandardMaterial color="#3498db" metalness={0.6} />
+        </mesh>
+        
+        <mesh position={[2, 1.2, 3]} castShadow>
+          <cylinderGeometry args={[0.15, 0.15, 2.5, 16]} />
+          <meshStandardMaterial color="#3498db" metalness={0.6} />
+        </mesh>
+
+        {/* Colorful Swings */}
+        {[-1.5, 0, 1.5].map((x, i) => (
+          <group key={i} position={[x, 1, 3]}>
+            <mesh castShadow>
+              <boxGeometry args={[0.8, 0.05, 0.4]} />
+              <meshStandardMaterial color={i === 0 ? "#e74c3c" : i === 1 ? "#f39c12" : "#3498db"} />
+            </mesh>
+            <mesh position={[0, -0.3, 0]} castShadow>
+              <cylinderGeometry args={[0.02, 0.02, 0.6, 8]} />
+              <meshStandardMaterial color="#2c3e50" />
+            </mesh>
+          </group>
+        ))}
+
+        {/* Modern Slide */}
+        <group position={[4, 0, -2]}>
+          <mesh rotation={[0, 0, -Math.PI/4]} castShadow receiveShadow>
+            <boxGeometry args={[0.4, 5, 1.2]} />
+            <meshStandardMaterial color="#9b59b6" metalness={0.5} />
+          </mesh>
+          
+          <mesh position={[2.5, 2.5, 0]} castShadow>
+            <boxGeometry args={[1, 0.1, 1.5]} />
+            <meshStandardMaterial color="#3498db" />
+          </mesh>
+        </group>
+
+        {/* Accessible Swing with Colorful Design */}
+        <group position={[-4, 0.8, -2]}>
+          <mesh castShadow>
+            <boxGeometry args={[1.5, 0.1, 1]} />
+            <meshStandardMaterial color="#27ae60" />
+          </mesh>
+          
+          <mesh position={[0, 0.6, 0]} castShadow>
+            <boxGeometry args={[1.3, 0.8, 0.8]} />
+            <meshStandardMaterial color="#3498db" />
+          </mesh>
+          
+          <Text position={[0, 1, 0]} fontSize={0.3} color="white" anchorX="center">
+            ♿
+          </Text>
+          
+          <mesh position={[0.8, 0.3, 0]} castShadow rotation={[0, 0, Math.PI/2]}>
+            <cylinderGeometry args={[0.15, 0.15, 1.6, 16]} />
+            <meshStandardMaterial color="#e74c3c" />
+          </mesh>
+        </group>
+      </group>
+
+      {/* Solar Panels on Roof - Colorful Arrangement */}
+      <group position={[0, 5.5, 0]}>
+        <SolarPanel position={[-8, 0, -6]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[-4, 0, -6]} rotation={[0, 0, 0]} />
+        <SolarPanel position={[0, 0, -6]} rotation={[0, -Math.PI/4, 0]} />
+        <SolarPanel position={[4, 0, -6]} rotation={[0, Math.PI/4, 0]} />
+        <SolarPanel position={[8, 0, -6]} rotation={[0, 0, 0]} />
+        
+        {/* Wind Turbine for Green Energy */}
+        <WindTurbine position={[10, 0, 0]} />
+      </group>
+
+      {/* Students and Teachers with Colorful Uniforms */}
+      <WheelchairUser position={[-3, 0, 4]} moving={true} />
+      
+      <group position={[4, 0.8, 4]}>
+        <mesh position={[0, 1, 0]} castShadow>
+          <cylinderGeometry args={[0.25, 0.25, 1, 8]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+        
+        <mesh position={[0, 1.6, 0]} castShadow>
+          <sphereGeometry args={[0.2, 16, 16]} />
+          <meshStandardMaterial color="#ffdbac" />
+        </mesh>
+        
+        <Text position={[0, 2, 0]} fontSize={0.3} color="white" anchorX="center">
+          👩‍🏫
+        </Text>
+        
+        {/* Teacher's Tablet */}
+        <mesh position={[0.4, 1.3, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.5, 0.05]} />
+          <meshStandardMaterial color="#9b59b6" />
+        </mesh>
+      </group>
+
+      {/* Group of Students */}
+      <group position={[-6, 0, 2]}>
+        {[0, 1, 2].map((i) => (
+          <group key={i} position={[i * 1.5, 0, 0]}>
+            <mesh position={[0, 0.9, 0]} castShadow>
+              <cylinderGeometry args={[0.2, 0.2, 0.8, 8]} />
+              <meshStandardMaterial color={i === 0 ? "#3498db" : i === 1 ? "#e74c3c" : "#27ae60"} />
+            </mesh>
+            
+            <mesh position={[0, 1.5, 0]} castShadow>
+              <sphereGeometry args={[0.15, 8, 8]} />
+              <meshStandardMaterial color="#ffdbac" />
+            </mesh>
+            
+            <Text position={[0, 1.8, 0]} fontSize={0.2} color="white" anchorX="center">
+              {i === 0 ? "👦" : i === 1 ? "👧" : "🧒"}
+            </Text>
+          </group>
+        ))}
+      </group>
+
+      {/* Modern School Bus with Colorful Design */}
+      <group position={[-12, 0.8, 0]}>
+        <mesh castShadow>
+          <boxGeometry args={[4, 1.8, 2]} />
+          <meshStandardMaterial color="#FFD700" metalness={0.4} roughness={0.3} />
+        </mesh>
+
+        <mesh position={[0.8, 1.2, 0]} castShadow>
+          <boxGeometry args={[2, 1, 1.8]} />
+          <meshStandardMaterial color="#3498db" transparent opacity={0.8} />
+        </mesh>
+
+        {/* Colorful Stripes */}
+        <mesh position={[0, 1.9, 0.01]} castShadow>
+          <boxGeometry args={[3.8, 0.1, 0.1]} />
+          <meshStandardMaterial color="#e74c3c" />
+        </mesh>
+
+        <Text
+          position={[0, 2.1, 0]}
+          fontSize={0.25}
+          color="#e74c3c"
+          anchorX="center"
+          anchorY="middle"
+        >
+          SMART SCHOOL
         </Text>
 
-        {[-0.8, 0.8].map((x, i) => (
-          <group key={i} position={[x, -0.3, 0]}>
+        {[-1.2, 1.2].map((x, i) => (
+          <group key={i} position={[x, -0.4, 0]}>
             <mesh castShadow rotation={[0, 0, Math.PI/2]}>
-              <cylinderGeometry args={[0.25, 0.25, 0.2, 8]} />
-              <meshStandardMaterial color="#333333" />
+              <cylinderGeometry args={[0.3, 0.3, 0.25, 16]} />
+              <meshStandardMaterial color="#2c3e50" metalness={0.8} />
             </mesh>
           </group>
         ))}
 
         {/* Wheelchair Lift */}
-        <mesh position={[-1.2, 0.2, 0]} castShadow>
-          <boxGeometry args={[0.3, 0.4, 1.2]} />
-          <meshStandardMaterial color="#e74c3c" />
+        <mesh position={[-1.5, 0.3, 0]} castShadow>
+          <boxGeometry args={[0.4, 0.6, 1.5]} />
+          <meshStandardMaterial color="#27ae60" />
         </mesh>
       </group>
 
-      <Html position={[0, 12, 0]} transform>
+      <Html position={[0, 15, 0]} transform>
         <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          padding: '20px',
-          borderRadius: '15px',
-          boxShadow: '0 8px 25px rgba(0,0,0,0.3)',
-          minWidth: '300px',
+          background: 'linear-gradient(135deg, #3498db, #9b59b6)',
+          padding: '25px',
+          borderRadius: '20px',
+          boxShadow: '0 12px 35px rgba(0,0,0,0.4)',
+          minWidth: '380px',
           textAlign: 'center',
-          color: '#2c3e50',
-          border: '2px solid #3498db'
+          color: 'white',
+          border: '3px solid #f39c12',
+          backdropFilter: 'blur(10px)'
         }}>
-          <h3 style={{ margin: '0 0 15px 0', color: '#3498db', fontSize: '18px' }}>
-            🏫 Inclusive Glass School
+          <h3 style={{ 
+            margin: '0 0 20px 0', 
+            color: 'white', 
+            fontSize: '22px',
+            textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+          }}>
+            🏫 Modern Glass School
           </h3>
           
           <div style={{ 
             display: 'grid', 
             gridTemplateColumns: '1fr 1fr', 
-            gap: '10px',
-            marginBottom: '15px'
+            gap: '15px',
+            marginBottom: '20px'
           }}>
             <div style={{ textAlign: 'left' }}>
-              <div>👨‍🎓 Students: 500+</div>
-              <div>👩‍🏫 Teachers: 35</div>
-              <div>🏫 Classrooms: 25</div>
-              <div>🔬 Science Labs: 4</div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>👨‍🎓</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Students</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>600+ Enrolled</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>👩‍🏫</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Teachers</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>45 Professionals</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🏫</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Classrooms</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>30 Smart Rooms</div>
+                </div>
+              </div>
             </div>
             
             <div style={{ textAlign: 'left' }}>
-              <div>📚 Library: 10,000+ books</div>
-              <div>💻 Computer Lab: 50 PCs</div>
-              <div>🎨 Arts Center: Available</div>
-              <div>♿ Accessibility: Full</div>
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🔬</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Science Labs</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>6 Advanced Labs</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>💻</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Computer Lab</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>60 AI Workstations</div>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ marginRight: '8px' }}>🎨</span>
+                <div>
+                  <div style={{ fontWeight: 'bold' }}>Arts Center</div>
+                  <div style={{ fontSize: '12px', opacity: 0.9 }}>Creative Space</div>
+                </div>
+              </div>
             </div>
           </div>
 
           <div style={{ 
-            background: 'rgba(52, 152, 219, 0.1)', 
-            padding: '12px', 
-            borderRadius: '8px',
-            fontSize: '12px',
-            border: '1px solid #3498db'
+            background: 'rgba(255,255,255,0.2)', 
+            padding: '15px', 
+            borderRadius: '12px',
+            marginBottom: '15px',
+            border: '1px solid rgba(255,255,255,0.3)'
           }}>
-            <div><strong>🏗️ Building Features:</strong></div>
-            <div>✅ Hard Glass Construction</div>
-            <div>✅ Solar Powered</div>
-            <div>✅ Natural Lighting</div>
-            <div>✅ Temperature Controlled</div>
-            <div>✅ Eco-Friendly Design</div>
+            <h4 style={{ margin: '0 0 12px 0', color: 'white', fontSize: '16px' }}>🏗️ Smart Features</h4>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: '1fr 1fr', 
+              gap: '8px',
+              fontSize: '12px'
+            }}>
+              <div>✅ Solar Powered</div>
+              <div>✅ IoT Classrooms</div>
+              <div>✅ AI Learning</div>
+              <div>✅ Green Design</div>
+              <div>✅ Tech Labs</div>
+              <div>✅ Sports Facility</div>
+            </div>
           </div>
 
           <div style={{ 
-            marginTop: '10px',
-            background: 'rgba(39, 174, 96, 0.1)', 
-            padding: '8px', 
-            borderRadius: '6px',
-            fontSize: '11px'
+            background: 'rgba(243, 156, 18, 0.3)', 
+            padding: '12px', 
+            borderRadius: '10px',
+            fontSize: '13px',
+            border: '1px solid #f39c12'
           }}>
-            <div><strong>♿ Inclusive Features:</strong></div>
-            <div>Wheelchair Ramps • Elevators • Accessible Restrooms</div>
-            <div>Specialized Classrooms • Accessible Playground • Support Staff</div>
-            <div>Braille Materials • Hearing Assistance • Custom Desks</div>
+            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>♿ Inclusive Features</div>
+            <div style={{ fontSize: '11px', opacity: 0.9 }}>
+              Smart Ramps • Elevators • Accessible Restrooms • Specialized Classrooms • 
+              Accessible Playground • Support Staff • Braille Materials • Hearing Assistance
+            </div>
+          </div>
+
+          {/* Green Energy Status */}
+          <div style={{ 
+            marginTop: '15px',
+            padding: '10px',
+            background: 'rgba(39, 174, 96, 0.3)',
+            borderRadius: '8px',
+            border: '1px solid #27ae60'
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 'bold' }}>🌱 GREEN ENERGY STATUS</div>
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between',
+              fontSize: '11px',
+              marginTop: '5px'
+            }}>
+              <span>☀️ Solar: 85%</span>
+              <span>🌬️ Wind: 15%</span>
+              <span>⚡ Net: +200%</span>
+            </div>
           </div>
         </div>
       </Html>
 
       <Text
-        position={[0, 5, 0]}
-        fontSize={0.6}
+        position={[0, 6, 0]}
+        fontSize={0.8}
         color="#3498db"
         anchorX="center"
         anchorY="middle"
+        font="/fonts/inter-bold.woff"
       >
-        🏫 Inclusive School
+        🏫 SMART SCHOOL
       </Text>
+
+      {/* Interactive Learning Indicator */}
+      <group position={[0, 8, 0]}>
+        <mesh castShadow>
+          <cylinderGeometry args={[0.6, 0.6, 0.2, 16]} />
+          <meshStandardMaterial 
+            color={schoolLights ? "#f39c12" : "#3498db"}
+            emissive={schoolLights ? "#f39c12" : "#3498db"}
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+        <Text
+          position={[0, 0.2, 0]}
+          fontSize={0.3}
+          color="white"
+          anchorX="center"
+          anchorY="middle"
+        >
+          📚
+        </Text>
+      </group>
     </group>
   )
 }
-
 /* ----- ENHANCED CULTURAL CENTER ----- */
 function CulturalCenter({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
