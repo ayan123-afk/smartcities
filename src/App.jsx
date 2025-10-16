@@ -1321,6 +1321,7 @@ function ModernHospital({ position = [0, 0, 0] }) {
           <boxGeometry args={[1.5, 4, 0.05]} />
           <meshStandardMaterial color="#ecf0f1" transparent opacity={0.8} />
         </mesh>
+      </mesh>
 
       {/* Emergency Entrance with Red Accents */}
       <group position={[-8, -4, 9.1]}>
@@ -1709,14 +1710,6 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
   const [schoolLights, setSchoolLights] = useState(false)
-
-  useEffect(() => {
-    if (timeOfDay === 'night') {
-      setSchoolLights(true)
-    } else {
-      setSchoolLights(false)
-    }
-  }, [timeOfDay])
   
   // School lights animation
   useFrame(({ clock }) => {
