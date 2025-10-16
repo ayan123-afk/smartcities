@@ -5,7 +5,6 @@ import * as THREE from 'three'
 import { create } from 'zustand'
 
 const useStore = create((set) => ({
-  
   alert: null,
   setAlert: (a) => set({ alert: a }),
   focus: null,
@@ -64,163 +63,6 @@ const useStore = create((set) => ({
   },
   setWaterPlant: (plant) => set({ waterPlant: plant })
 }))
-
-/* ----- MISSING COMPONENTS ADD KARO ----- */
-
-// SolarPanel component add karo
-function SolarPanel({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
-  return (
-    <group position={position} rotation={rotation}>
-      <mesh castShadow>
-        <boxGeometry args={[1.5, 0.02, 1]} />
-        <meshStandardMaterial color="#1e3a8a" metalness={0.9} roughness={0.05} />
-      </mesh>
-      <mesh position={[0, -0.1, 0]} castShadow>
-        <boxGeometry args={[1.6, 0.08, 1.1]} />
-        <meshStandardMaterial color="#2c3e50" />
-      </mesh>
-    </group>
-  )
-}
-
-// WindTurbine component add karo
-function WindTurbine({ position = [0, 0, 0] }) {
-  const turbineRef = useRef()
-  
-  useFrame(() => {
-    if (turbineRef.current) {
-      turbineRef.current.rotation.y += 0.05
-    }
-  })
-
-  return (
-    <group position={position} scale={[0.7, 0.7, 0.7]}>
-      <mesh position={[0, 5, 0]} castShadow>
-        <cylinderGeometry args={[0.2, 0.3, 8, 8]} />
-        <meshStandardMaterial color="#708090" />
-      </mesh>
-      
-      <group ref={turbineRef} position={[0, 8, 0]}>
-        <mesh castShadow>
-          <sphereGeometry args={[0.4, 8, 8]} />
-          <meshStandardMaterial color="#2c3e50" />
-        </mesh>
-        
-        {[0, 1, 2].map((i) => (
-          <mesh 
-            key={i} 
-            rotation={[0, 0, (i * Math.PI * 2) / 3]} 
-            position={[1.5, 0, 0]}
-            castShadow
-          >
-            <boxGeometry args={[3, 0.15, 0.4]} />
-            <meshStandardMaterial color="#ecf0f1" />
-          </mesh>
-        ))}
-      </group>
-    </group>
-  )
-}
-
-/* ----- ROAD SYSTEM FIX KARO ----- */
-function RoadSystem() {
-  // Simple road texture use karo - base64 se avoid karo
-  const roadMaterial = new THREE.MeshStandardMaterial({ 
-    color: "#333333", 
-    roughness: 0.8, 
-    metalness: 0.1 
-  })
-
-  const mainRoads = [
-    // Main horizontal roads
-    { start: [-50, 0, 0], end: [50, 0, 0], width: 6 },
-    { start: [-50, 0, 25], end: [50, 0, 25], width: 6 },
-    { start: [-50, 0, -25], end: [50, 0, -25], width: 6 },
-    
-    // Main vertical roads
-    { start: [0, 0, -50], end: [0, 0, 50], width: 6 },
-    { start: [25, 0, -50], end: [25, 0, 50], width: 6 },
-    { start: [-25, 0, -50], end: [-25, 0, 50], width: 6 }
-  ]
-
-  return (
-    <group>
-      {mainRoads.map((road, index) => {
-        const length = Math.sqrt(
-          Math.pow(road.end[0] - road.start[0], 2) +
-          Math.pow(road.end[2] - road.start[2], 2)
-        )
-        const center = [
-          (road.start[0] + road.end[0]) / 2,
-          0.01,
-          (road.start[2] + road.end[2]) / 2
-        ]
-        const angle = Math.atan2(road.end[2] - road.start[2], road.end[0] - road.start[0])
-
-        return (
-          <mesh key={index} position={center} rotation={[-Math.PI / 2, 0, angle]}>
-            <planeGeometry args={[length, road.width]} />
-            <meshStandardMaterial 
-              color="#333333"
-              roughness={0.8}
-              metalness={0.1}
-            />
-          </mesh>
-        )
-      })}
-
-      {/* Simple road markings */}
-      {mainRoads.map((road, index) => {
-        const segments = Math.floor(Math.sqrt(
-          Math.pow(road.end[0] - road.start[0], 2) +
-          Math.pow(road.end[2] - road.start[2], 2)
-        ) / 8)
-        
-        return Array.from({ length: segments }).map((_, segIndex) => {
-          const t = (segIndex + 0.5) / segments
-          const pos = [
-            road.start[0] + (road.end[0] - road.start[0]) * t,
-            0.02,
-            road.start[2] + (road.end[2] - road.start[2]) * t
-          ]
-          
-          return (
-            <mesh key={`${index}-${segIndex}`} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[4, 0.4]} />
-              <meshStandardMaterial color="#ffff00" />
-            </mesh>
-          )
-        })
-      })}
-    </group>
-  )
-}
-
-/* ----- SIMPLIFIED CITY LAYOUT - PERFORMANCE KE LIYE ----- */
-function CityLayout() {
-  return (
-    <group>
-      {/* BASIC BUILDINGS - Pehle yeh load hone do */}
-      <EnhancedBuilding position={[-15, 0, 15]} height={6} color="#a67c52" name="Residence A" />
-      <EnhancedBuilding position={[15, 0, 15]} height={10} color="#8b4513" name="Office A" />
-      
-      {/* MAIN STRUCTURES */}
-      <ModernHospital position={[40, 0, 25]} />
-      <InclusiveGlassSchool position={[40, 0, -5]} />
-      
-      {/* UTILITIES */}
-      <WaterFilteringPlant position={[-35, 0, -25]} />
-      <VerticalGardenBuilding position={[25, 0, -35]} />
-
-      {/* BASIC CITIZENS */}
-      <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
-        [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
-      ]} />
-
-      <WheelchairUser position={[35, 0, 15]} moving={true} />
-    </group>
-  )
-}
 
 /* ----- ENHANCED STREET LIGHTS ----- */
 function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
@@ -4436,28 +4278,75 @@ function WasteMonitoringSystem({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- SIMPLIFIED CITY LAYOUT - PERFORMANCE KE LIYE ----- */
+/* ----- ENHANCED CITY LAYOUT WITH PROPER SPACING ----- */
 function CityLayout() {
   return (
     <group>
-      {/* BASIC BUILDINGS - Pehle yeh load hone do */}
-      <EnhancedBuilding position={[-15, 0, 15]} height={6} color="#a67c52" name="Residence A" />
-      <EnhancedBuilding position={[15, 0, 15]} height={10} color="#8b4513" name="Office A" />
-      
-      {/* MAIN STRUCTURES */}
+      {/* NORTH-WEST DISTRICT - Residential & Commercial */}
+      <group position={[-25, 0, 25]}>
+        <EnhancedBuilding position={[-15, 0, 15]} height={6} color="#a67c52" name="Residence A" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, 15]} height={8} color="#b5651d" name="Residence B" hasTurbine={false} />
+        <EnhancedBuilding position={[5, 0, 15]} height={7} color="#c19a6b" name="Residence C" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, 15]} height={10} color="#8b4513" name="Office A" hasTurbine={true} />
+        
+        <EnhancedBuilding position={[-15, 0, 5]} height={9} color="#a0522d" name="Office B" hasTurbine={false} />
+        <EnhancedBuilding position={[-5, 0, 5]} height={12} color="#cd853f" name="Office C" hasTurbine={true} />
+        <EnhancedBuilding position={[5, 0, 5]} height={8} color="#a67c52" name="Residence D" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, 5]} height={7} color="#b5651d" name="Residence E" hasTurbine={false} />
+        
+        <EnhancedBuilding position={[-15, 0, -5]} height={11} color="#c19a6b" name="Office D" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, -5]} height={6} color="#8b4513" name="Residence F" hasTurbine={true} />
+        <EnhancedBuilding position={[5, 0, -5]} height={9} color="#a0522d" name="Office E" hasTurbine={false} />
+        <EnhancedBuilding position={[15, 0, -5]} height={8} color="#cd853f" name="Residence G" hasTurbine={true} />
+        
+        <EnhancedBuilding position={[-15, 0, -15]} height={7} color="#a67c52" name="Residence H" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, -15]} height={10} color="#b5651d" name="Office F" hasTurbine={false} />
+        <EnhancedBuilding position={[5, 0, -15]} height={8} color="#c19a6b" name="Residence I" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, -15]} height={12} color="#8b4513" name="Office G" hasTurbine={true} />
+      </group>
+
+      {/* NORTH-EAST DISTRICT - Institutional */}
       <ModernHospital position={[40, 0, 25]} />
       <InclusiveGlassSchool position={[40, 0, -5]} />
-      
-      {/* UTILITIES */}
-      <WaterFilteringPlant position={[-35, 0, -25]} />
-      <VerticalGardenBuilding position={[25, 0, -35]} />
+      <CulturalCenter position={[25, 0, 40]} />
 
-      {/* BASIC CITIZENS */}
+      {/* SOUTH-WEST DISTRICT - Industrial & Utilities */}
+      <WaterFilteringPlant position={[-35, 0, -25]} />
+      <WasteManagementSystem position={[-35, 0, -40]} />
+      <DataCenter position={[-40, 0, -10]} />
+
+      {/* SOUTH-EAST DISTRICT - Green & Recreational */}
+      <VerticalGardenBuilding position={[25, 0, -35]} />
+      <EnergyEfficientSociety position={[0, 0, -45]} />
+
+      {/* CENTRAL DISTRICT - Public Services */}
+      <BusStation position={[0, 0, 0]} />
+      <WasteMonitoringSystem position={[0, 0, 10]} />
+
+      {/* Waste bins distributed around the city */}
+      <WasteBin position={[-15, 0, 10]} id="bin1" />
+      <WasteBin position={[20, 0, -8]} id="bin2" />
+      <WasteBin position={[-8, 0, -18]} id="bin3" />
+      <WasteBin position={[25, 0, 15]} id="bin4" />
+      <WasteBin position={[-20, 0, -25]} id="bin5" />
+      <WasteBin position={[10, 0, 25]} id="bin6" />
+
+      {/* Additional monitoring drones */}
+      <MonitoringDrone position={[30, 15, 20]} isMonitoring={true} />
+      <MonitoringDrone position={[-25, 12, -25]} isMonitoring={true} />
+      <MonitoringDrone position={[15, 18, -30]} isMonitoring={true} />
+
+      {/* Citizens */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
         [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
       ]} />
+      
+      <Person position={[-3, 0, 27]} color="#2c3e50" speed={0.4} path={[
+        [-3, 0.5, 27], [-5, 0.5, 25], [-7, 0.5, 27], [-5, 0.5, 29], [-3, 0.5, 27]
+      ]} />
 
       <WheelchairUser position={[35, 0, 15]} moving={true} />
+      <WheelchairUser position={[-35, 0, -5]} moving={true} />
     </group>
   )
 }
@@ -4816,13 +4705,13 @@ export default function App() {
           shadow-mapSize-height={1024}
         />
         
-         <Suspense fallback={
+        <Suspense fallback={
           <Html center>
             <div style={{ color: 'white', fontSize: '18px', background: 'rgba(139, 69, 19, 0.8)', padding: '20px', borderRadius: '10px' }}>
               Loading Smart City...
             </div>
           </Html>
-        }> 
+        }>
           <Sky {...skyConfig[timeOfDay]} />
           
           <Ground />
@@ -4872,4 +4761,4 @@ export default function App() {
       </div>
     </div>
   )
-}
+} 
