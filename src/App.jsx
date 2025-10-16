@@ -1709,6 +1709,14 @@ function InclusiveGlassSchool({ position = [0, 0, 0] }) {
   const setFocus = useStore((s) => s.setFocus)
   const timeOfDay = useStore((s) => s.timeOfDay)
   const [schoolLights, setSchoolLights] = useState(false)
+
+  useEffect(() => {
+    if (timeOfDay === 'night') {
+      setSchoolLights(true)
+    } else {
+      setSchoolLights(false)
+    }
+  }, [timeOfDay])
   
   // School lights animation
   useFrame(({ clock }) => {
