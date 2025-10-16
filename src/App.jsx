@@ -4275,8 +4275,9 @@ export default function App() {
           <ContactShadows position={[0, -0.1, 0]} opacity={0.4} width={40} blur={2} far={10} />
         </Suspense>
         
-        {/* Enhanced Camera Controls */}
-        <EnhancedCameraController />
+        {/* Custom Controls */}
+        <CustomOrbitControls />
+        <CameraController />
       </Canvas>
 
       <div style={{ 
