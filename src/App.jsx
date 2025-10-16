@@ -4705,13 +4705,13 @@ export default function App() {
           shadow-mapSize-height={1024}
         />
         
-        <Suspense fallback={
+        {/* <Suspense fallback={
           <Html center>
             <div style={{ color: 'white', fontSize: '18px', background: 'rgba(139, 69, 19, 0.8)', padding: '20px', borderRadius: '10px' }}>
               Loading Smart City...
             </div>
           </Html>
-        }>
+        }> */}
           <Sky {...skyConfig[timeOfDay]} />
           
           <Ground />
