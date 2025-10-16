@@ -108,18 +108,23 @@ function StreetLight({ position = [0, 0, 0], rotation = [0, 0, 0] }) {
 /* ----- ENHANCED STREET LIGHT SYSTEM ----- */
 function StreetLightSystem() {
   const lightPositions = [
-    ...Array.from({ length: 16 }).map((_, i) => [-35 + i * 5, 0, 0]),
-    ...Array.from({ length: 16 }).map((_, i) => [0, 0, -35 + i * 5]),
-    ...Array.from({ length: 12 }).map((_, i) => [-25 + i * 5, 0, -20]),
-    ...Array.from({ length: 10 }).map((_, i) => [-15 + i * 5, 0, 30]),
+    // Main roads
+    ...Array.from({ length: 20 }).map((_, i) => [-50 + i * 5, 0, 0]),
+    ...Array.from({ length: 20 }).map((_, i) => [0, 0, -50 + i * 5]),
+    ...Array.from({ length: 16 }).map((_, i) => [-40 + i * 5, 0, -25]),
+    ...Array.from({ length: 16 }).map((_, i) => [-40 + i * 5, 0, 25]),
+    ...Array.from({ length: 16 }).map((_, i) => [-25, 0, -40 + i * 5]),
+    ...Array.from({ length: 16 }).map((_, i) => [25, 0, -40 + i * 5]),
     
+    // District lighting
     [15, 0, 15], [-15, 0, 15], [0, 0, 0], [-8, 0, -2], [8, 0, -6],
-    
     [10, 0, 25], [-10, 0, 25], [0, 0, 20],
-    
-    // Additional lights for better coverage
     [-30, 0, 15], [30, 0, -15], [-25, 0, 25], [25, 0, -25],
-    [-20, 0, -30], [20, 0, 30], [-10, 0, -25], [10, 0, 25]
+    [-20, 0, -30], [20, 0, 30], [-10, 0, -25], [10, 0, 25],
+    
+    // New areas
+    [-35, 0, -35], [35, 0, 35], [-35, 0, 35], [35, 0, -35],
+    [0, 0, -45], [0, 0, 45], [-45, 0, 0], [45, 0, 0]
   ]
 
   return (
@@ -2444,10 +2449,19 @@ function RoadSystem() {
   })
 
   const mainRoads = [
-    { start: [-40, 0, 0], end: [40, 0, 0], width: 4 },
-    { start: [0, 0, -40], end: [0, 0, 40], width: 4 },
-    { start: [-30, 0, -20], end: [30, 0, -20], width: 3 },
-    { start: [-20, 0, 30], end: [20, 0, 30], width: 3 }
+    // Main horizontal roads
+    { start: [-50, 0, 0], end: [50, 0, 0], width: 6 },
+    { start: [-50, 0, 25], end: [50, 0, 25], width: 6 },
+    { start: [-50, 0, -25], end: [50, 0, -25], width: 6 },
+    
+    // Main vertical roads
+    { start: [0, 0, -50], end: [0, 0, 50], width: 6 },
+    { start: [25, 0, -50], end: [25, 0, 50], width: 6 },
+    { start: [-25, 0, -50], end: [-25, 0, 50], width: 6 },
+    
+    // District connecting roads
+    { start: [-40, 0, -40], end: [40, 0, -40], width: 4 },
+    { start: [-40, 0, 40], end: [40, 0, 40], width: 4 }
   ]
 
   return (
@@ -2477,11 +2491,12 @@ function RoadSystem() {
         )
       })}
 
+      {/* Road markings */}
       {mainRoads.map((road, index) => {
         const segments = Math.floor(Math.sqrt(
           Math.pow(road.end[0] - road.start[0], 2) +
           Math.pow(road.end[2] - road.start[2], 2)
-        ) / 4)
+        ) / 8)
         
         return Array.from({ length: segments }).map((_, segIndex) => {
           const t = (segIndex + 0.5) / segments
@@ -2493,12 +2508,27 @@ function RoadSystem() {
           
           return (
             <mesh key={`${index}-${segIndex}`} position={pos} rotation={[-Math.PI / 2, 0, 0]}>
-              <planeGeometry args={[2, 0.3]} />
+              <planeGeometry args={[4, 0.4]} />
               <meshStandardMaterial color="#ffff00" />
             </mesh>
           )
         })
       })}
+
+      {/* Crosswalks at major intersections */}
+      {[
+        [0, 0], [0, 25], [0, -25], [25, 0], [-25, 0],
+        [25, 25], [25, -25], [-25, 25], [-25, -25]
+      ].map(([x, z], index) => (
+        <group key={index} position={[x, 0.02, z]}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <mesh key={i} position={[i * 0.6 - 2.1, 0, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <planeGeometry args={[0.4, 1.5]} />
+              <meshStandardMaterial color="#ffffff" />
+            </mesh>
+          ))}
+        </group>
+      ))}
     </group>
   )
 }
@@ -2510,18 +2540,18 @@ function BusStation({ position = [0, 0, 0] }) {
   return (
     <group position={position}>
       <mesh position={[0, 0.1, 0]} receiveShadow>
-        <boxGeometry args={[6, 0.2, 2]} />
+        <boxGeometry args={[8, 0.2, 3]} />
         <meshStandardMaterial color="#7f8c8d" />
       </mesh>
       
       <mesh position={[0, 2, 0]} castShadow>
-        <boxGeometry args={[5, 0.1, 1.5]} />
+        <boxGeometry args={[7, 0.1, 2]} />
         <meshStandardMaterial color="#34495e" transparent opacity={0.7} />
       </mesh>
       
-      {[-2, 2].map((x) => (
+      {[-3, 3].map((x) => (
         <mesh key={x} position={[x, 1, 0]} castShadow>
-          <cylinderGeometry args={[0.1, 0.1, 2, 8]} />
+          <cylinderGeometry args={[0.15, 0.15, 2, 8]} />
           <meshStandardMaterial color="#2c3e50" />
         </mesh>
       ))}
@@ -2537,7 +2567,7 @@ function BusStation({ position = [0, 0, 0] }) {
       )}
       
       <Text
-        position={[0, 1.5, 1.1]}
+        position={[0, 1.5, 1.6]}
         fontSize={0.3}
         color="#e74c3c"
         anchorX="center"
@@ -2546,8 +2576,8 @@ function BusStation({ position = [0, 0, 0] }) {
         BUS STOP
       </Text>
       
-      <Person position={[-1, 0.5, 0]} color="#8b4513" speed={0} />
-      <Person position={[1, 0.5, 0]} color="#2c3e50" speed={0} />
+      <Person position={[-2, 0.5, 0]} color="#8b4513" speed={0} />
+      <Person position={[2, 0.5, 0]} color="#2c3e50" speed={0} />
     </group>
   )
 }
@@ -2738,22 +2768,27 @@ function TrafficSystem() {
   const trafficDensity = useStore((s) => s.trafficDensity)
   
   const carPaths = [
-    [[-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0]],
-    [[-35, 0.3, -20], [-25, 0.3, -20], [-15, 0.3, -20], [-5, 0.3, -20], [5, 0.3, -20], [15, 0.3, -20], [25, 0.3, -20], [35, 0.3, -20]],
+    // Horizontal routes
+    [[-45, 0.3, 0], [-35, 0.3, 0], [-25, 0.3, 0], [-15, 0.3, 0], [-5, 0.3, 0], [5, 0.3, 0], [15, 0.3, 0], [25, 0.3, 0], [35, 0.3, 0], [45, 0.3, 0]],
+    [[-45, 0.3, 25], [-35, 0.3, 25], [-25, 0.3, 25], [-15, 0.3, 25], [-5, 0.3, 25], [5, 0.3, 25], [15, 0.3, 25], [25, 0.3, 25], [35, 0.3, 25], [45, 0.3, 25]],
+    [[-45, 0.3, -25], [-35, 0.3, -25], [-25, 0.3, -25], [-15, 0.3, -25], [-5, 0.3, -25], [5, 0.3, -25], [15, 0.3, -25], [25, 0.3, -25], [35, 0.3, -25], [45, 0.3, -25]],
     
-    [[0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35]],
-    [[20, 0.3, -35], [20, 0.3, -25], [20, 0.3, -15], [20, 0.3, -5], [20, 0.3, 5], [20, 0.3, 15], [20, 0.3, 25], [20, 0.3, 35]]
+    // Vertical routes
+    [[0, 0.3, -45], [0, 0.3, -35], [0, 0.3, -25], [0, 0.3, -15], [0, 0.3, -5], [0, 0.3, 5], [0, 0.3, 15], [0, 0.3, 25], [0, 0.3, 35], [0, 0.3, 45]],
+    [[25, 0.3, -45], [25, 0.3, -35], [25, 0.3, -25], [25, 0.3, -15], [25, 0.3, -5], [25, 0.3, 5], [25, 0.3, 15], [25, 0.3, 25], [25, 0.3, 35], [25, 0.3, 45]],
+    [[-25, 0.3, -45], [-25, 0.3, -35], [-25, 0.3, -25], [-25, 0.3, -15], [-25, 0.3, -5], [-25, 0.3, 5], [-25, 0.3, 15], [-25, 0.3, 25], [-25, 0.3, 35], [-25, 0.3, 45]]
   ]
 
   const busPaths = [
-    [[-35, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [35, 0.4, 0]],
-    [[0, 0.4, -35], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 35]],
-    [[-30, 0.4, 25], [-15, 0.4, 25], [0, 0.4, 25], [15, 0.4, 25], [30, 0.4, 25]]
+    // Main bus routes
+    [[-45, 0.4, 0], [-30, 0.4, 0], [-15, 0.4, 0], [0, 0.4, 0], [15, 0.4, 0], [30, 0.4, 0], [45, 0.4, 0]],
+    [[0, 0.4, -45], [0, 0.4, -30], [0, 0.4, -15], [0, 0.4, 0], [0, 0.4, 15], [0, 0.4, 30], [0, 0.4, 45]],
+    [[-40, 0.4, 25], [-20, 0.4, 25], [0, 0.4, 25], [20, 0.4, 25], [40, 0.4, 25]]
   ]
 
   const carColors = ["#ff4444", "#44ff44", "#4444ff", "#ffff44", "#ff44ff", "#44ffff"]
-  const carCount = trafficDensity === 'low' ? 8 : trafficDensity === 'medium' ? 15 : 25
-  const busCount = trafficDensity === 'low' ? 1 : trafficDensity === 'medium' ? 2 : 4
+  const carCount = trafficDensity === 'low' ? 12 : trafficDensity === 'medium' ? 20 : 30
+  const busCount = trafficDensity === 'low' ? 2 : trafficDensity === 'medium' ? 3 : 5
 
   return (
     <group>
@@ -3303,7 +3338,7 @@ function WasteTruck({ position = [0, 0, 0], targetBin = null, onCollectionComple
 }
 
 /* ----- ENHANCED WASTE MANAGEMENT SYSTEM ----- */
-function WasteManagementSystem({ position = [25, 0, 25] }) {
+function WasteManagementSystem({ position = [35, 0, 35] }) {
   const [isTruckActive, setIsTruckActive] = useState(false)
   const [currentBinTarget, setCurrentBinTarget] = useState(null)
   const [collectedWaste, setCollectedWaste] = useState(0)
@@ -3316,8 +3351,8 @@ function WasteManagementSystem({ position = [25, 0, 25] }) {
   const timeOfDay = useStore((s) => s.timeOfDay)
   
   const binPositions = [
-    [-10, 0, 8], [12, 0, -5], [-5, 0, -12], 
-    [18, 0, 10], [-15, 0, -18], [5, 0, 20]
+    [-15, 0, 10], [20, 0, -8], [-8, 0, -18], 
+    [25, 0, 15], [-20, 0, -25], [10, 0, 25]
   ]
 
   const startProcessing = () => {
@@ -3730,9 +3765,9 @@ function MonitoringDrone({ position = [0, 0, 0], isMonitoring = true, onWasteDet
 /* ----- OPTIMIZED WASTE MONITORING SYSTEM ----- */
 function WasteMonitoringSystem({ position = [0, 0, 0] }) {
   const [drones] = useState([
-    { id: 1, position: [10, 8, 10] },
-    { id: 2, position: [-5, 12, 15] },
-    { id: 3, position: [20, 10, -8] }
+    { id: 1, position: [15, 8, 15] },
+    { id: 2, position: [-10, 12, 20] },
+    { id: 3, position: [25, 10, -12] }
   ])
   
   const setAlert = useStore((s) => s.setAlert)
@@ -3793,78 +3828,65 @@ function WasteMonitoringSystem({ position = [0, 0, 0] }) {
   )
 }
 
-/* ----- ENHANCED CITY LAYOUT ----- */
+/* ----- ENHANCED CITY LAYOUT WITH PROPER SPACING ----- */
 function CityLayout() {
-  const buildings = [
-    { position: [-25, 0, 15], height: 6, color: "#a67c52", name: "Residence A", hasTurbine: true },
-    { position: [-20, 0, 18], height: 8, color: "#b5651d", name: "Residence B", hasTurbine: false },
-    { position: [-30, 0, 20], height: 7, color: "#c19a6b", name: "Residence C", hasTurbine: true },
-    
-    { position: [20, 0, -15], height: 12, color: "#8b4513", name: "Office A", hasTurbine: true },
-    { position: [25, 0, -18], height: 10, color: "#a0522d", name: "Office B", hasTurbine: false },
-    { position: [15, 0, -20], height: 14, color: "#cd853f", name: "Office C", hasTurbine: true }
-  ]
-
   return (
     <group>
-      {/* Modern Hospital */}
-      <ModernHospital position={[40, 0, 10]} />
-      
-      {/* Inclusive Glass School */}
-      <InclusiveGlassSchool position={[-40, 0, -10]} />
-      
-      {/* Smart Vertical Garden with Sensors */}
-      <VerticalGardenBuilding position={[-35, 0, -15]} />
-      
-      {/* Enhanced Water Filtering Plant */}
-      <WaterFilteringPlant position={[30, 0, -25]} />
-      
-      {/* Waste Monitoring Drones */}
-      <WasteMonitoringSystem position={[0, 0, 0]} />
-      
-      {/* Cultural Center */}
-      <CulturalCenter position={[-15, 0, 35]} />
-      
-      {/* Bus Station */}
-      <BusStation position={[15, 0, 25]} />
-      
-      {/* Modern Tech Hub */}
-      <DataCenter position={[45, 0, -35]} />
-      
-      {/* Energy Efficient Society */}
+      {/* NORTH-WEST DISTRICT - Residential & Commercial */}
+      <group position={[-25, 0, 25]}>
+        <EnhancedBuilding position={[-15, 0, 15]} height={6} color="#a67c52" name="Residence A" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, 15]} height={8} color="#b5651d" name="Residence B" hasTurbine={false} />
+        <EnhancedBuilding position={[5, 0, 15]} height={7} color="#c19a6b" name="Residence C" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, 15]} height={10} color="#8b4513" name="Office A" hasTurbine={true} />
+        
+        <EnhancedBuilding position={[-15, 0, 5]} height={9} color="#a0522d" name="Office B" hasTurbine={false} />
+        <EnhancedBuilding position={[-5, 0, 5]} height={12} color="#cd853f" name="Office C" hasTurbine={true} />
+        <EnhancedBuilding position={[5, 0, 5]} height={8} color="#a67c52" name="Residence D" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, 5]} height={7} color="#b5651d" name="Residence E" hasTurbine={false} />
+        
+        <EnhancedBuilding position={[-15, 0, -5]} height={11} color="#c19a6b" name="Office D" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, -5]} height={6} color="#8b4513" name="Residence F" hasTurbine={true} />
+        <EnhancedBuilding position={[5, 0, -5]} height={9} color="#a0522d" name="Office E" hasTurbine={false} />
+        <EnhancedBuilding position={[15, 0, -5]} height={8} color="#cd853f" name="Residence G" hasTurbine={true} />
+        
+        <EnhancedBuilding position={[-15, 0, -15]} height={7} color="#a67c52" name="Residence H" hasTurbine={true} />
+        <EnhancedBuilding position={[-5, 0, -15]} height={10} color="#b5651d" name="Office F" hasTurbine={false} />
+        <EnhancedBuilding position={[5, 0, -15]} height={8} color="#c19a6b" name="Residence I" hasTurbine={true} />
+        <EnhancedBuilding position={[15, 0, -15]} height={12} color="#8b4513" name="Office G" hasTurbine={true} />
+      </group>
+
+      {/* NORTH-EAST DISTRICT - Institutional */}
+      <ModernHospital position={[40, 0, 25]} />
+      <InclusiveGlassSchool position={[40, 0, -5]} />
+      <CulturalCenter position={[25, 0, 40]} />
+
+      {/* SOUTH-WEST DISTRICT - Industrial & Utilities */}
+      <WaterFilteringPlant position={[-35, 0, -25]} />
+      <WasteManagementSystem position={[-35, 0, -40]} />
+      <DataCenter position={[-40, 0, -10]} />
+
+      {/* SOUTH-EAST DISTRICT - Green & Recreational */}
+      <VerticalGardenBuilding position={[25, 0, -35]} />
       <EnergyEfficientSociety position={[0, 0, -45]} />
-      
-      {/* Regular buildings */}
-      {buildings.map((building, index) => (
-        <EnhancedBuilding
-          key={index}
-          position={[building.position[0] + 5, building.position[1], building.position[2] + 5]}
-          height={building.height}
-          color={building.color}
-          name={building.name}
-          hasTurbine={building.hasTurbine}
-          hasSolar={true}
-          windows={true}
-        />
-      ))}
-      
-      {/* Enhanced Waste Management System */}
-      <WasteManagementSystem position={[25, 0, 25]} />
-      
-      {/* Waste bins around town */}
-      <WasteBin position={[-10, 0, 8]} id="bin1" />
-      <WasteBin position={[12, 0, -5]} id="bin2" />
-      <WasteBin position={[-5, 0, -12]} id="bin3" />
-      <WasteBin position={[18, 0, 10]} id="bin4" />
-      <WasteBin position={[-15, 0, -18]} id="bin5" />
-      <WasteBin position={[5, 0, 20]} id="bin6" />
-      
-      {/* Additional monitoring drones around the city */}
+
+      {/* CENTRAL DISTRICT - Public Services */}
+      <BusStation position={[0, 0, 0]} />
+      <WasteMonitoringSystem position={[0, 0, 10]} />
+
+      {/* Waste bins distributed around the city */}
+      <WasteBin position={[-15, 0, 10]} id="bin1" />
+      <WasteBin position={[20, 0, -8]} id="bin2" />
+      <WasteBin position={[-8, 0, -18]} id="bin3" />
+      <WasteBin position={[25, 0, 15]} id="bin4" />
+      <WasteBin position={[-20, 0, -25]} id="bin5" />
+      <WasteBin position={[10, 0, 25]} id="bin6" />
+
+      {/* Additional monitoring drones */}
       <MonitoringDrone position={[30, 15, 20]} isMonitoring={true} />
       <MonitoringDrone position={[-25, 12, -25]} isMonitoring={true} />
       <MonitoringDrone position={[15, 18, -30]} isMonitoring={true} />
 
-      {/* Reduced number of walking people for performance */}
+      {/* Citizens */}
       <Person position={[5, 0, 22]} color="#8b4513" speed={0.3} path={[
         [5, 0.5, 22], [3, 0.5, 24], [1, 0.5, 22], [3, 0.5, 20], [5, 0.5, 22]
       ]} />
@@ -3873,7 +3895,6 @@ function CityLayout() {
         [-3, 0.5, 27], [-5, 0.5, 25], [-7, 0.5, 27], [-5, 0.5, 29], [-3, 0.5, 27]
       ]} />
 
-      {/* Reduced number of wheelchair users */}
       <WheelchairUser position={[35, 0, 15]} moving={true} />
       <WheelchairUser position={[-35, 0, -5]} moving={true} />
     </group>
@@ -4003,15 +4024,15 @@ function ControlPanel() {
   }, [timeOfDay, setStreetLightsOn])
 
   const locations = {
-    '🏢 Smart Garden': { x: -35, y: 12, z: -15, lookAt: { x: -35, y: 0, z: -15 } },
-    '💧 Water Plant': { x: 30, y: 8, z: -25, lookAt: { x: 30, y: 0, z: -25 } },
-    '🚁 Drone Control': { x: 0, y: 10, z: 0, lookAt: { x: 0, y: 0, z: 0 } },
-    '🏥 Modern Hospital': { x: 40, y: 15, z: 10, lookAt: { x: 40, y: 0, z: 10 } },
-    '🏫 Glass School': { x: -40, y: 10, z: -10, lookAt: { x: -40, y: 0, z: -10 } },
-    '🎪 Cultural Center': { x: -15, y: 15, z: 35, lookAt: { x: -15, y: 0, z: 35 } },
-    '🚏 Bus Station': { x: 15, y: 10, z: 25, lookAt: { x: 15, y: 0, z: 25 } },
-    '🗑️ Waste Management': { x: 25, y: 10, z: 25, lookAt: { x: 25, y: 0, z: 25 } },
-    '🤖 Cloud Data Center': { x: 45, y: 10, z: -35, lookAt: { x: 45, y: 0, z: -35 } }
+    '🏢 Smart Garden': { x: 25, y: 12, z: -35, lookAt: { x: 25, y: 0, z: -35 } },
+    '💧 Water Plant': { x: -35, y: 8, z: -25, lookAt: { x: -35, y: 0, z: -25 } },
+    '🚁 Drone Control': { x: 0, y: 10, z: 10, lookAt: { x: 0, y: 0, z: 10 } },
+    '🏥 Modern Hospital': { x: 40, y: 15, z: 25, lookAt: { x: 40, y: 0, z: 25 } },
+    '🏫 Glass School': { x: 40, y: 10, z: -5, lookAt: { x: 40, y: 0, z: -5 } },
+    '🎪 Cultural Center': { x: 25, y: 15, z: 40, lookAt: { x: 25, y: 0, z: 40 } },
+    '🚏 Bus Station': { x: 0, y: 10, z: 0, lookAt: { x: 0, y: 0, z: 0 } },
+    '🗑️ Waste Management': { x: -35, y: 10, z: -40, lookAt: { x: -35, y: 0, z: -40 } },
+    '🤖 Cloud Data Center': { x: -40, y: 10, z: -10, lookAt: { x: -40, y: 0, z: -10 } }
   }
 
   if (!showCityControl) return null
